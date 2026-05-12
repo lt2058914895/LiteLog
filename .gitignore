@@ -1,23 +1,26 @@
-# Xcode
-.DS_Store
-*/build/*
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
-xcuserdata
-*.xccheckout
-*.moved-aside
-DerivedData
-*.hmap
-*.ipa
-*.xcuserstate
-*.xcworkspace
-!default.xcworkspace
+# #############################################################################
+# iOS 项目自动忽略文件（个人开发者标准模板）
+# #############################################################################
 
-# CocoaPods
+# Xcode 缓存、用户配置（自动忽略 xcuserstate）
+*.xcuserstate
+xcuserdata/
+*.xcworkspace
+*.xccheckout
+*.perspectivev3
+*.mode1v3
+*.mode2v3
+.DS_Store
+
+# 项目配置文件（只忽略个人修改，不忽略项目结构）
+*.pbxproj merge=union
+!project.pbxproj
+
+# 构建产物
+build/
+DerivedData/
+*.ipa
+*.dSYM
+
+# Pods 第三方库（可选，建议忽略）
 Pods/
