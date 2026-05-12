@@ -1,0 +1,118 @@
+/* 
+  Localizable.strings
+  LiteLog
+
+  Created by lt on 2026/5/11.
+  
+*/
+
+// Tab 标签
+"tab.home" = "首页";
+"tab.record" = "记录";
+"tab.statistics" = "统计";
+"tab.settings" = "设置";
+
+// 首页相关
+"home.today" = "今日";
+"home.add.weight" = "添加体重";
+"home.weight" = "体重";
+"home.kg" = "kg";
+"home.day" = "日";
+"home.week" = "周";
+"home.month" = "月";
+"home.history" = "历史记录";
+"home.no.records" = "暂无记录";
+"home.start.record" = "开始记录你的体重变化吧";
+"home.bmi" = "BMI";
+"home.progress" = "进度";
+"home.goal" = "目标";
+"home.trend" = "趋势";
+
+// 记录页相关
+"record.calendar" = "日历";
+"record.add" = "添加记录";
+"record.edit" = "编辑记录";
+"record.weight" = "体重";
+"record.body.fat" = "体脂率";
+"record.body.fat.optional" = "体脂率（可选）";
+"record.note" = "备注";
+"record.note.placeholder" = "添加备注...";
+"record.date" = "日期";
+"record.delete" = "删除记录";
+"record.delete.confirm" = "确定要删除这条记录吗？";
+"view.mode" = "视图模式";
+
+// 统计页相关
+"stats.title" = "统计";
+"stats.week" = "周";
+"stats.month" = "月";
+"stats.quarter" = "季度";
+"stats.no.data" = "暂无数据";
+"stats.average" = "平均";
+"stats.change" = "变化";
+"stats.bmi.trend" = "BMI趋势";
+"stats.loss.speed" = "减重速度";
+"stats.per.week" = "/周";
+
+// BMI分类
+"bmi.category.underweight" = "偏瘦";
+"bmi.category.normal" = "正常";
+"bmi.category.overweight" = "偏胖";
+"bmi.category.obese" = "肥胖";
+
+// 设置页相关
+"settings.title" = "设置";
+"settings.profile" = "个人资料";
+"settings.height" = "身高";
+"settings.gender" = "性别";
+"settings.male" = "男";
+"settings.female" = "女";
+"settings.age" = "年龄";
+"settings.goal.weight" = "目标体重";
+"settings.unit" = "单位";
+"settings.health" = "健康";
+"settings.healthkit" = "健康数据";
+"settings.healthkit.desc" = "同步体重数据到健康App";
+"settings.icloud" = "iCloud同步";
+"settings.icloud.desc" = "在设备间同步数据";
+"settings.notification" = "提醒通知";
+"settings.notification.desc" = "每日提醒记录体重";
+"settings.notification.time" = "提醒时间";
+"settings.export" = "数据";
+"settings.export.csv" = "导出CSV";
+"settings.delete.all" = "删除全部数据";
+"settings.delete.confirm" = "确定要删除所有数据吗？此操作不可撤销。";
+"settings.about" = "关于";
+"settings.version" = "版本";
+"app.name" = "轻身记";
+
+// 操作相关
+"action.save" = "保存";
+"action.cancel" = "取消";
+"action.edit" = "编辑";
+"action.delete" = "删除";
+"action.done" = "查看全部";
+"action.confirm" = "确定";
+
+// 通知相关
+"notification.title" = "轻身记";
+"notification.body" = "该记录今天的体重了！";
+"notification.weight.recorded.title" = "体重已记录";
+"notification.weight.recorded.body" = "今日体重：%.1f kg";
+
+// 错误相关
+"error.title" = "错误";
+"error.weight.invalid" = "请输入有效的体重值";
+"error.healthkit.not.available" = "健康数据不可用";
+"error.healthkit.not.authorized" = "未授权访问健康数据";
+"error.healthkit.save.failed" = "保存健康数据失败";
+"error.healthkit.fetch.failed" = "获取健康数据失败";
+
+// 单位相关
+"unit.kg" = "kg";
+"unit.lb" = "lb";
+"unit.cm" = "cm";
+"unit.inch" = "inch";
+
+// 日期格式
+"date.format.short" = "M/d";

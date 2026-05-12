@@ -1,0 +1,118 @@
+/* 
+  Localizable.strings
+  LiteLog
+
+  Created by lt on 2026/5/11.
+  
+*/
+
+// Tab labels
+"tab.home" = "Home";
+"tab.record" = "Record";
+"tab.statistics" = "Stats";
+"tab.settings" = "Settings";
+
+// Home related
+"home.today" = "Today";
+"home.add.weight" = "Add Weight";
+"home.weight" = "Weight";
+"home.kg" = "kg";
+"home.day" = "Day";
+"home.week" = "Week";
+"home.month" = "Month";
+"home.history" = "History";
+"home.no.records" = "No records";
+"home.start.record" = "Start tracking your weight changes";
+"home.bmi" = "BMI";
+"home.progress" = "Progress";
+"home.goal" = "Goal";
+"home.trend" = "Trend";
+
+// Record related
+"record.calendar" = "Calendar";
+"record.add" = "Add Record";
+"record.edit" = "Edit Record";
+"record.weight" = "Weight";
+"record.body.fat" = "Body Fat";
+"record.body.fat.optional" = "Body Fat (Optional)";
+"record.note" = "Note";
+"record.note.placeholder" = "Add note...";
+"record.date" = "Date";
+"record.delete" = "Delete Record";
+"record.delete.confirm" = "Are you sure you want to delete this record?";
+"view.mode" = "View Mode";
+
+// Statistics related
+"stats.title" = "Statistics";
+"stats.week" = "Week";
+"stats.month" = "Month";
+"stats.quarter" = "Quarter";
+"stats.no.data" = "No data";
+"stats.average" = "Average";
+"stats.change" = "Change";
+"stats.bmi.trend" = "BMI Trend";
+"stats.loss.speed" = "Weight Loss Speed";
+"stats.per.week" = "/week";
+
+// BMI categories
+"bmi.category.underweight" = "Underweight";
+"bmi.category.normal" = "Normal";
+"bmi.category.overweight" = "Overweight";
+"bmi.category.obese" = "Obese";
+
+// Settings related
+"settings.title" = "Settings";
+"settings.profile" = "Profile";
+"settings.height" = "Height";
+"settings.gender" = "Gender";
+"settings.male" = "Male";
+"settings.female" = "Female";
+"settings.age" = "Age";
+"settings.goal.weight" = "Goal Weight";
+"settings.unit" = "Unit";
+"settings.health" = "Health";
+"settings.healthkit" = "Health Data";
+"settings.healthkit.desc" = "Sync weight data to Health app";
+"settings.icloud" = "iCloud Sync";
+"settings.icloud.desc" = "Sync data across devices";
+"settings.notification" = "Reminders";
+"settings.notification.desc" = "Daily reminder to record weight";
+"settings.notification.time" = "Reminder Time";
+"settings.export" = "Data";
+"settings.export.csv" = "Export CSV";
+"settings.delete.all" = "Delete All Data";
+"settings.delete.confirm" = "Are you sure you want to delete all data? This action cannot be undone.";
+"settings.about" = "About";
+"settings.version" = "Version";
+"app.name" = "LiteLog";
+
+// Actions
+"action.save" = "Save";
+"action.cancel" = "Cancel";
+"action.edit" = "Edit";
+"action.delete" = "Delete";
+"action.done" = "View All";
+"action.confirm" = "OK";
+
+// Notifications
+"notification.title" = "LiteLog";
+"notification.body" = "Time to record today's weight!";
+"notification.weight.recorded.title" = "Weight Recorded";
+"notification.weight.recorded.body" = "Today's weight: %.1f kg";
+
+// Errors
+"error.title" = "Error";
+"error.weight.invalid" = "Please enter a valid weight value";
+"error.healthkit.not.available" = "Health data not available";
+"error.healthkit.not.authorized" = "Health data not authorized";
+"error.healthkit.save.failed" = "Failed to save health data";
+"error.healthkit.fetch.failed" = "Failed to fetch health data";
+
+// Units
+"unit.kg" = "kg";
+"unit.lb" = "lb";
+"unit.cm" = "cm";
+"unit.inch" = "inch";
+
+// Date format
+"date.format.short" = "M/d";
