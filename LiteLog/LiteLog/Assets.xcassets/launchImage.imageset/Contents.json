@@ -12,6 +12,15 @@
       "filename" : "launchImage@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
+    },
+    {
+      "idiom" : "ipad",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "launchImage@2x.png",
+      "idiom" : "ipad",
+      "scale" : "2x"
     }
   ],
   "info" : {
