@@ -1,6 +1,0 @@
-framework module Pods_LiteLog {
-  umbrella header "Pods-LiteLog-umbrella.h"
-
-  export *
-  module * { export * }
-}
