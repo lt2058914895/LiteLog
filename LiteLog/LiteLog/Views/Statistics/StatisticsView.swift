@@ -20,19 +20,30 @@ struct StatisticsView: View {
         case quarter = "stats.quarter"
 
         var localizedKey: String { rawValue }
+    }
 
-        var days: Int {
-            switch self {
-            case .week: return 7
-            case .month: return 30
-            case .quarter: return 90
-            }
+    private var startDate: Date {
+        let calendar = Calendar.current
+        switch selectedPeriod {
+        case .week:
+            return (calendar.date(byAdding: .day, value: -7, to: Date()) ?? Date()).startOfDay
+        case .month:
+            return (calendar.date(byAdding: .month, value: -1, to: Date()) ?? Date()).startOfDay
+        case .quarter:
+            return (calendar.date(byAdding: .month, value: -3, to: Date()) ?? Date()).startOfDay
         }
     }
 
     private var filteredRecords: [WeightRecord] {
-        let startDate = Calendar.current.date(byAdding: .day, value: -selectedPeriod.days, to: Date()) ?? Date()
-        return records.filter { $0.date >= startDate }
+        let filtered = records.filter { $0.date >= startDate }
+        let calendar = Calendar.current
+        
+        let grouped = Dictionary(grouping: filtered) { record in
+            calendar.startOfDay(for: record.date)
+        }
+        
+        return grouped.compactMap { $0.value.max(by: { $0.date < $1.date }) }
+            .sorted { $0.date < $1.date }
     }
 
     private var averageWeight: Double {
@@ -139,14 +150,14 @@ struct StatisticsView: View {
             } else {
                 Chart(filteredRecords) { record in
                     LineMark(
-                        x: .value("Date", record.date),
+                        x: .value("Date", record.date.startOfDay),
                         y: .value("Weight", unit.convertFromKg(record.weight))
                     )
                     .foregroundStyle(Color.primaryBlue)
                     .interpolationMethod(.catmullRom)
 
                     AreaMark(
-                        x: .value("Date", record.date),
+                        x: .value("Date", record.date.startOfDay),
                         y: .value("Weight", unit.convertFromKg(record.weight))
                     )
                     .foregroundStyle(
@@ -159,16 +170,21 @@ struct StatisticsView: View {
                     .interpolationMethod(.catmullRom)
 
                     PointMark(
-                        x: .value("Date", record.date),
+                        x: .value("Date", record.date.startOfDay),
                         y: .value("Weight", unit.convertFromKg(record.weight))
                     )
                     .foregroundStyle(Color.primaryBlue)
                     .symbolSize(30)
                 }
+                .chartXScale(domain: startDate...Date())
                 .chartXAxis {
-                    AxisMarks(values: .automatic(desiredCount: 5)) { value in
+                    AxisMarks(values: [startDate, Date()]) { value in
                         AxisGridLine()
-                        AxisValueLabel(format: .dateTime.month().day())
+                        AxisValueLabel {
+                            if let date = value.as(Date.self) {
+                                Text(date.shortDateString)
+                            }
+                        }
                     }
                 }
                 .chartYAxis {
@@ -188,7 +204,7 @@ struct StatisticsView: View {
                 .foregroundColor(.primaryText)
 
             let bmiData = filteredRecords.map { record -> (Date, Double) in
-                (record.date, profile.calculateBMI(weight: record.weight))
+                (record.date.startOfDay, profile.calculateBMI(weight: record.weight))
             }
 
             if bmiData.isEmpty {
@@ -214,10 +230,15 @@ struct StatisticsView: View {
                     .symbolSize(30)
                 }
                 .chartYScale(domain: 15...35)
+                .chartXScale(domain: startDate...Date())
                 .chartXAxis {
-                    AxisMarks(values: .automatic(desiredCount: 5)) { value in
+                    AxisMarks(values: [startDate, Date()]) { value in
                         AxisGridLine()
-                        AxisValueLabel(format: .dateTime.month().day())
+                        AxisValueLabel {
+                            if let date = value.as(Date.self) {
+                                Text(date.shortDateString)
+                            }
+                        }
                     }
                 }
                 .chartYAxis {

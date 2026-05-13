@@ -116,3 +116,7 @@
 
 // 日期格式
 "date.format.short" = "M/d";
+
+// 重复记录提示
+"record.duplicate.title" = "重复记录";
+"record.duplicate.message" = "当天已有记录，是否确认修改？";

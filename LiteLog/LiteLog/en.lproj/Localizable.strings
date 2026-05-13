@@ -116,3 +116,7 @@
 
 // Date format
 "date.format.short" = "M/d";
+
+// Duplicate record alert
+"record.duplicate.title" = "Duplicate Record";
+"record.duplicate.message" = "A record already exists for this date. Do you want to update it?";

@@ -151,7 +151,7 @@ final class HealthKitManager: ObservableObject {
                     return
                 }
 
-                guard let samples = samples as? [HKSample] else {
+                guard let samples = samples else {
                     continuation.resume()
                     return
                 }

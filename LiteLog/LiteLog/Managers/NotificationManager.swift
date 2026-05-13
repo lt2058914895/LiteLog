@@ -28,7 +28,7 @@ final class NotificationManager: ObservableObject {
     func scheduleDailyReminder(at time: Date) async throws {
         let center = UNUserNotificationCenter.current()
 
-        await center.removePendingNotificationRequests(withIdentifiers: ["daily_weight_reminder"])
+        center.removePendingNotificationRequests(withIdentifiers: ["daily_weight_reminder"])
 
         let content = UNMutableNotificationContent()
         content.title = NSLocalizedString("notification.title", comment: "")
@@ -50,7 +50,7 @@ final class NotificationManager: ObservableObject {
 
     func cancelDailyReminder() async {
         let center = UNUserNotificationCenter.current()
-        await center.removePendingNotificationRequests(withIdentifiers: ["daily_weight_reminder"])
+        center.removePendingNotificationRequests(withIdentifiers: ["daily_weight_reminder"])
     }
 
     func scheduleWeightReminderNotification(weight: Double, date: Date) async throws {

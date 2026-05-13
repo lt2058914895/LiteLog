@@ -239,14 +239,22 @@ struct QuickAddWeightView: View {
     @EnvironmentObject private var settingsManager: SettingsManager
     @Binding var isPresented: Bool
 
+    @Query(sort: \WeightRecord.date, order: .reverse) private var records: [WeightRecord]
+
     @State private var weightInput = ""
     @FocusState private var isKeyboardFocused: Bool
+    @State private var showingDuplicateAlert = false
 
     private var unit: WeightUnit { settingsManager.weightUnit }
 
     private var isValidWeight: Bool {
         guard let value = Double(weightInput) else { return false }
         return value > 0 && value < 500
+    }
+
+    private var todayHasRecord: Bool {
+        let today = Date().startOfDay
+        return records.contains { Calendar.current.isDate($0.date, inSameDayAs: today) }
     }
 
     var body: some View {
@@ -274,6 +282,14 @@ struct QuickAddWeightView: View {
                         isPresented = false
                     }
                 }
+            }
+            .alert(NSLocalizedString("record.duplicate.title", comment: ""), isPresented: $showingDuplicateAlert) {
+                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+                Button(NSLocalizedString("action.confirm", comment: "")) {
+                    confirmSaveWeight()
+                }
+            } message: {
+                Text(NSLocalizedString("record.duplicate.message", comment: ""))
             }
         }
     }
@@ -310,7 +326,23 @@ struct QuickAddWeightView: View {
     private func saveWeight() {
         guard let weightValue = Double(weightInput) else { return }
 
+        if todayHasRecord {
+            showingDuplicateAlert = true
+            return
+        }
+
+        confirmSaveWeight()
+    }
+
+    private func confirmSaveWeight() {
+        guard let weightValue = Double(weightInput) else { return }
+
         let weightInKg = unit.convertToKg(weightValue)
+        
+        if todayHasRecord {
+            deleteTodayRecords()
+        }
+        
         let record = WeightRecord(date: Date(), weight: weightInKg)
 
         modelContext.insert(record)
@@ -322,6 +354,14 @@ struct QuickAddWeightView: View {
         }
 
         isPresented = false
+    }
+
+    private func deleteTodayRecords() {
+        let today = Date().startOfDay
+        let todayRecords = records.filter { Calendar.current.isDate($0.date, inSameDayAs: today) }
+        for record in todayRecords {
+            modelContext.delete(record)
+        }
     }
 }
 

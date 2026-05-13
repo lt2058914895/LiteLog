@@ -189,18 +189,25 @@ struct AddRecordView: View {
 
     @Binding var isPresented: Bool
 
+    @Query(sort: \WeightRecord.date, order: .reverse) private var records: [WeightRecord]
+
     @State private var date = Date()
     @State private var weightString = ""
     @State private var bodyFatString = ""
     @State private var note = ""
     @State private var showingError = false
     @State private var errorMessage = ""
+    @State private var showingDuplicateAlert = false
 
     private var unit: WeightUnit { settingsManager.weightUnit }
 
     private var isValidWeight: Bool {
         guard let value = Double(weightString) else { return false }
         return value > 0 && value < 500
+    }
+
+    private var selectedDateHasRecord: Bool {
+        records.contains { Calendar.current.isDate($0.date, inSameDayAs: date) }
     }
 
     private var bodyFatPercentage: Double? {
@@ -265,6 +272,14 @@ struct AddRecordView: View {
             } message: {
                 Text(errorMessage)
             }
+            .alert(NSLocalizedString("record.duplicate.title", comment: ""), isPresented: $showingDuplicateAlert) {
+                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+                Button(NSLocalizedString("action.confirm", comment: "")) {
+                    confirmSaveRecord()
+                }
+            } message: {
+                Text(NSLocalizedString("record.duplicate.message", comment: ""))
+            }
         }
     }
 
@@ -275,7 +290,27 @@ struct AddRecordView: View {
             return
         }
 
+        if selectedDateHasRecord {
+            showingDuplicateAlert = true
+            return
+        }
+
+        confirmSaveRecord()
+    }
+
+    private func confirmSaveRecord() {
+        guard let weightValue = Double(weightString) else {
+            errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
+            showingError = true
+            return
+        }
+
         let weightInKg = unit.convertToKg(weightValue)
+        
+        if selectedDateHasRecord {
+            deleteRecordsForSelectedDate()
+        }
+        
         let record = WeightRecord(
             date: date,
             weight: weightInKg,
@@ -296,6 +331,13 @@ struct AddRecordView: View {
         }
 
         isPresented = false
+    }
+
+    private func deleteRecordsForSelectedDate() {
+        let dateRecords = records.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
+        for record in dateRecords {
+            modelContext.delete(record)
+        }
     }
 }
 
