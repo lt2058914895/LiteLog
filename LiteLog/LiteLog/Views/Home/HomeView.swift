@@ -11,7 +11,6 @@ struct HomeView: View {
 
     @State private var weightInput = ""
     @State private var showingAddSheet = false
-    @State private var showingBodyFatSheet = false
     @State private var showingWaistSheet = false
 
     @State private var trendType: WeightChartView.TrendType = .week
@@ -108,9 +107,6 @@ struct HomeView: View {
             .sheet(isPresented: $showingAddSheet) {
                 QuickAddWeightView(isPresented: $showingAddSheet)
             }
-            .sheet(isPresented: $showingBodyFatSheet) {
-                RecordFormView(record: todayRecord, isPresented: $showingBodyFatSheet)
-            }
             .sheet(isPresented: $showingWaistSheet) {
                 RecordFormView(record: todayRecord, isPresented: $showingWaistSheet)
             }
@@ -168,41 +164,41 @@ struct HomeView: View {
 
 
     private var bodyFatCard: some View {
-        VStack(spacing: 12) {
-            HStack(alignment: .top, spacing: 8) {
-                Text(NSLocalizedString("home.body.fat", comment: ""))
-                    .font(.subheadline)
-                    .foregroundColor(.secondaryText)
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.headline)
-                    .foregroundColor(.tertiaryText)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                if let bodyFat = latestBodyFat {
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(String(format: "%.1f", bodyFat))
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundColor(.primaryText)
+        NavigationLink(destination: BodyFatView()) {
+            VStack(spacing: 12) {
+                HStack(alignment: .top, spacing: 8) {
+                    Text(NSLocalizedString("home.body.fat", comment: ""))
+                        .font(.subheadline)
+                        .foregroundColor(.secondaryText)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.headline)
+                        .foregroundColor(.tertiaryText)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    if let bodyFat = latestBodyFat {
+                        HStack(alignment: .firstTextBaseline, spacing: 2) {
+                            Text(String(format: "%.1f", bodyFat))
+                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .foregroundColor(.primaryText)
 
-                        Text("%")
-                            .font(.title)
+                            Text("%")
+                                .font(.title)
+                                .foregroundColor(.secondaryText)
+                        }
+                    } else {
+                        Text("-- %")
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
                             .foregroundColor(.secondaryText)
                     }
-                } else {
-                    Text("-- %")
-                        .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(.secondaryText)
                 }
             }
+            .padding()
+            .cardStyle()
         }
-        .padding()
-        .cardStyle()
-        .onTapGesture {
-            showingBodyFatSheet = true
-        }
+        .buttonStyle(.plain)
     }
 
     private var waistCard: some View {
