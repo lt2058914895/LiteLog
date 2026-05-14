@@ -28,6 +28,9 @@
 "home.progress" = "Progress";
 "home.goal" = "Goal";
 "home.trend" = "Trend";
+"home.body.fat" = "Body Fat";
+"home.update.body.fat" = "Update Body Fat";
+"home.waist.circumference" = "Waist";
 
 // Record related
 "record.calendar" = "Calendar";

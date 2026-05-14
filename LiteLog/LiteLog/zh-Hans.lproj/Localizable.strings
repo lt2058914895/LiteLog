@@ -28,6 +28,9 @@
 "home.progress" = "进度";
 "home.goal" = "目标";
 "home.trend" = "趋势";
+"home.body.fat" = "体脂率";
+"home.update.body.fat" = "更新体脂率";
+"home.waist.circumference" = "腰围";
 
 // 记录页相关
 "record.calendar" = "日历";
