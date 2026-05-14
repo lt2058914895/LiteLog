@@ -11,8 +11,7 @@ struct HomeView: View {
 
     @State private var weightInput = ""
     @State private var showingAddSheet = false
-    @State private var selectedRecord: WeightRecord?
-    @State private var showingEditSheet = false
+
     @State private var trendType: WeightChartView.TrendType = .week
     @State private var isLoading = false
     @State private var showingError = false
@@ -65,8 +64,6 @@ struct HomeView: View {
                     }
 
                     WeightChartView(data: chartData, unit: unit, trendType: $trendType)
-
-                    historySection
                 }
                 .padding()
             }
@@ -83,11 +80,6 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingAddSheet) {
                 QuickAddWeightView(isPresented: $showingAddSheet)
-            }
-            .sheet(isPresented: $showingEditSheet) {
-                if let record = selectedRecord {
-                    RecordFormView(record: record, isPresented: $showingEditSheet)
-                }
             }
             .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
                 Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
@@ -159,49 +151,7 @@ struct HomeView: View {
         .cardStyle()
     }
 
-    private var historySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(NSLocalizedString("home.history", comment: ""))
-                    .font(.headline)
-                    .foregroundColor(.primaryText)
 
-                Spacer()
-
-                NavigationLink(destination: RecordHistoryView()) {
-                    Text(NSLocalizedString("action.done", comment: ""))
-                        .font(.subheadline)
-                        .foregroundColor(.primaryBlue)
-                }
-            }
-
-            if allRecords.isEmpty {
-                EmptyStateView(
-                    icon: "scalemass",
-                    title: NSLocalizedString("home.no.records", comment: ""),
-                    message: NSLocalizedString("home.start.record", comment: "")
-                )
-            } else {
-                RecordListView(
-                    records: Array(allRecords.prefix(5)),
-                    unit: unit,
-                    onEdit: { record in
-                        selectedRecord = record
-                        showingEditSheet = true
-                    },
-                    onDelete: { record in
-                        deleteRecord(record)
-                    }
-                )
-            }
-        }
-    }
-
-    private func deleteRecord(_ record: WeightRecord) {
-        withAnimation {
-            modelContext.delete(record)
-        }
-    }
 
     private func syncFromHealthKit() async {
         guard settingsManager.healthKitEnabled else { return }

@@ -18,15 +18,15 @@ struct ContentView: View {
                 }
                 .tag(0)
 
-            RecordView()
-                .tabItem {
-                    Label(NSLocalizedString("tab.record", comment: ""), systemImage: "plus.circle.fill")
-                }
-                .tag(1)
-
             StatisticsView()
                 .tabItem {
                     Label(NSLocalizedString("tab.statistics", comment: ""), systemImage: "chart.bar.fill")
+                }
+                .tag(1)
+
+            RecordView()
+                .tabItem {
+                    Label(NSLocalizedString("tab.record", comment: ""), systemImage: "plus.circle.fill")
                 }
                 .tag(2)
 
