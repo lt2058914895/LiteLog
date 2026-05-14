@@ -10,7 +10,6 @@ struct RecordView: View {
     @State private var selectedDate: Date?
     @State private var showingAddSheet = false
     @State private var selectedRecord: WeightRecord?
-    @State private var showingEditSheet = false
     @State private var viewMode: ViewMode = .list
 
     @Query private var userProfile: [UserProfile]
@@ -49,12 +48,10 @@ struct RecordView: View {
                 }
             }
             .sheet(isPresented: $showingAddSheet) {
-                AddRecordView(isPresented: $showingAddSheet)
+                RecordFormView(isPresented: $showingAddSheet)
             }
-            .sheet(isPresented: $showingEditSheet) {
-                if let record = selectedRecord {
-                    EditRecordView(record: record, isPresented: $showingEditSheet)
-                }
+            .sheet(item: $selectedRecord) { record in
+                RecordFormView(record: record, isPresented: .constant(false))
             }
         }
     }
@@ -93,7 +90,6 @@ struct RecordView: View {
                                     .contentShape(Rectangle())
                                     .onTapGesture {
                                         selectedRecord = record
-                                        showingEditSheet = true
                                     }
                                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                         Button(role: .destructive) {
@@ -105,7 +101,6 @@ struct RecordView: View {
                                     .swipeActions(edge: .leading) {
                                         Button {
                                             selectedRecord = record
-                                            showingEditSheet = true
                                         } label: {
                                             Label(NSLocalizedString("action.edit", comment: ""), systemImage: "pencil")
                                         }
@@ -157,7 +152,6 @@ struct RecordView: View {
                     RecordRowView(record: record, unit: unit)
                         .onTapGesture {
                             selectedRecord = record
-                            showingEditSheet = true
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
@@ -186,24 +180,29 @@ struct RecordView: View {
     }
 }
 
-struct AddRecordView: View {
+struct RecordFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var settingsManager: SettingsManager
 
+    let record: WeightRecord?
     @Binding var isPresented: Bool
 
     @Query(sort: \WeightRecord.date, order: .reverse) private var records: [WeightRecord]
 
-    @State private var date = Date()
-    @State private var weightString = ""
-    @State private var bodyFatString = ""
-    @State private var note = ""
+    @State private var date: Date
+    @State private var weightString: String
+    @State private var bodyFatString: String
+    @State private var waistString: String
+    @State private var note: String
+    @State private var showingDeleteAlert = false
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var showingDuplicateAlert = false
 
     private var unit: WeightUnit { settingsManager.weightUnit }
+
+    private var isEditMode: Bool { record != nil }
 
     private var isValidWeight: Bool {
         guard let value = Double(weightString) else { return false }
@@ -219,6 +218,30 @@ struct AddRecordView: View {
         return value
     }
 
+    private var waistCircumference: Double? {
+        guard !waistString.isEmpty, let value = Double(waistString) else { return nil }
+        return value
+    }
+
+    init(record: WeightRecord? = nil, isPresented: Binding<Bool>) {
+        self.record = record
+        self._isPresented = isPresented
+        
+        if let record = record {
+            self._date = State(initialValue: record.date)
+            self._weightString = State(initialValue: "")
+            self._bodyFatString = State(initialValue: record.bodyFatPercentage.map { String(format: "%.1f", $0) } ?? "")
+            self._waistString = State(initialValue: record.waistCircumference.map { String(format: "%.1f", $0) } ?? "")
+            self._note = State(initialValue: record.note ?? "")
+        } else {
+            self._date = State(initialValue: Date())
+            self._weightString = State(initialValue: "")
+            self._bodyFatString = State(initialValue: "")
+            self._waistString = State(initialValue: "")
+            self._note = State(initialValue: "")
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -226,7 +249,7 @@ struct AddRecordView: View {
                     DatePicker(
                         "Date",
                         selection: $date,
-                        displayedComponents: [.date, .hourAndMinute]
+                        displayedComponents: [.date]
                     )
                     .datePickerStyle(.graphical)
                 }
@@ -251,188 +274,46 @@ struct AddRecordView: View {
                     }
                 }
 
+                Section(NSLocalizedString("record.waist.circumference.optional", comment: "")) {
+                    HStack {
+                        TextField(NSLocalizedString("record.waist.circumference", comment: ""), text: $waistString)
+                            .keyboardType(.decimalPad)
+
+                        Text("cm")
+                            .foregroundColor(.secondaryText)
+                    }
+                }
+
                 Section(NSLocalizedString("record.note", comment: "")) {
                     TextField(NSLocalizedString("record.note.placeholder", comment: ""), text: $note)
                 }
+
+                if isEditMode {
+                    Section {
+                        Button(role: .destructive) {
+                            showingDeleteAlert = true
+                        } label: {
+                            HStack {
+                                Spacer()
+                                Text(NSLocalizedString("record.delete", comment: ""))
+                                Spacer()
+                            }
+                        }
+                    }
+                }
             }
-            .navigationTitle(NSLocalizedString("record.add", comment: ""))
+            .navigationTitle(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(NSLocalizedString("action.cancel", comment: "")) {
-                        isPresented = false
+                        dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(NSLocalizedString("action.save", comment: "")) {
                         saveRecord()
-                    }
-                    .disabled(!isValidWeight)
-                }
-            }
-            .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
-                Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
-            } message: {
-                Text(errorMessage)
-            }
-            .alert(NSLocalizedString("record.duplicate.title", comment: ""), isPresented: $showingDuplicateAlert) {
-                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-                Button(NSLocalizedString("action.confirm", comment: "")) {
-                    confirmSaveRecord()
-                }
-            } message: {
-                Text(NSLocalizedString("record.duplicate.message", comment: ""))
-            }
-        }
-    }
-
-    private func saveRecord() {
-        guard Double(weightString) != nil else {
-            errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
-            showingError = true
-            return
-        }
-
-        if selectedDateHasRecord {
-            showingDuplicateAlert = true
-            return
-        }
-
-        confirmSaveRecord()
-    }
-
-    private func confirmSaveRecord() {
-        guard let weightValue = Double(weightString) else {
-            errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
-            showingError = true
-            return
-        }
-
-        let weightInKg = unit.convertToKg(weightValue)
-        
-        if selectedDateHasRecord {
-            deleteRecordsForSelectedDate()
-        }
-        
-        let record = WeightRecord(
-            date: date,
-            weight: weightInKg,
-            bodyFatPercentage: bodyFatPercentage,
-            note: note.isEmpty ? nil : note
-        )
-
-        modelContext.insert(record)
-
-        if settingsManager.healthKitEnabled {
-            Task {
-                try? await HealthKitManager.shared.saveWeight(
-                    weightInKg: weightInKg,
-                    date: date,
-                    bodyFatPercentage: bodyFatPercentage
-                )
-            }
-        }
-
-        isPresented = false
-    }
-
-    private func deleteRecordsForSelectedDate() {
-        let dateRecords = records.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
-        for record in dateRecords {
-            modelContext.delete(record)
-        }
-    }
-}
-
-struct EditRecordView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var settingsManager: SettingsManager
-
-    let record: WeightRecord
-    @Binding var isPresented: Bool
-
-    @State private var date: Date = Date()
-    @State private var weightString: String = ""
-    @State private var bodyFatString: String = ""
-    @State private var note: String = ""
-    @State private var showingDeleteAlert = false
-    @State private var showingError = false
-    @State private var errorMessage = ""
-
-    private var unit: WeightUnit { settingsManager.weightUnit }
-
-    private var isValidWeight: Bool {
-        guard let value = Double(weightString) else { return false }
-        return value > 0 && value < 500
-    }
-
-    init(record: WeightRecord, isPresented: Binding<Bool>) {
-        self.record = record
-        self._isPresented = isPresented
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section(NSLocalizedString("record.date", comment: "")) {
-                    DatePicker(
-                        "Date",
-                        selection: $date,
-                        displayedComponents: [.date, .hourAndMinute]
-                    )
-                    .datePickerStyle(.graphical)
-                }
-
-                Section(NSLocalizedString("record.weight", comment: "")) {
-                    HStack {
-                        TextField(NSLocalizedString("record.weight", comment: ""), text: $weightString)
-                            .keyboardType(.decimalPad)
-
-                        Text(unit.shortName)
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-
-                Section(NSLocalizedString("record.body.fat.optional", comment: "")) {
-                    HStack {
-                        TextField(NSLocalizedString("record.body.fat", comment: ""), text: $bodyFatString)
-                            .keyboardType(.decimalPad)
-
-                        Text("%")
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-
-                Section(NSLocalizedString("record.note", comment: "")) {
-                    TextField(NSLocalizedString("record.note.placeholder", comment: ""), text: $note)
-                }
-
-                Section {
-                    Button(role: .destructive) {
-                        showingDeleteAlert = true
-                    } label: {
-                        HStack {
-                            Spacer()
-                            Text(NSLocalizedString("record.delete", comment: ""))
-                            Spacer()
-                        }
-                    }
-                }
-            }
-            .navigationTitle(NSLocalizedString("record.edit", comment: ""))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(NSLocalizedString("action.cancel", comment: "")) {
-                        isPresented = false
-                    }
-                }
-
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(NSLocalizedString("action.save", comment: "")) {
-                        updateRecord()
                     }
                     .disabled(!isValidWeight)
                 }
@@ -448,27 +329,104 @@ struct EditRecordView: View {
             } message: {
                 Text(errorMessage)
             }
+            .alert(NSLocalizedString("record.duplicate.title", comment: ""), isPresented: $showingDuplicateAlert) {
+                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+                Button(NSLocalizedString("action.confirm", comment: "")) {
+                    confirmSaveRecord()
+                }
+            } message: {
+                Text(NSLocalizedString("record.duplicate.message", comment: ""))
+            }
+            .onAppear {
+                if isEditMode && weightString.isEmpty, let record = record {
+                    weightString = String(format: "%.1f", unit.convertFromKg(record.weight))
+                }
+            }
         }
     }
 
-    private func updateRecord() {
+    private func saveRecord() {
         guard let weightValue = Double(weightString) else {
             errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
             showingError = true
             return
         }
 
-        record.date = date
+        if isEditMode {
+            updateRecord()
+        } else {
+            if selectedDateHasRecord {
+                showingDuplicateAlert = true
+                return
+            }
+            confirmSaveRecord()
+        }
+    }
+
+    private func confirmSaveRecord() {
+        guard let weightValue = Double(weightString) else {
+            errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
+            showingError = true
+            return
+        }
+
+        let weightInKg = unit.convertToKg(weightValue)
+        
+        if !isEditMode && selectedDateHasRecord {
+            deleteRecordsForSelectedDate()
+        }
+        
+        let newRecord = WeightRecord(
+            date: date.startOfDay,
+            weight: weightInKg,
+            bodyFatPercentage: bodyFatPercentage,
+            waistCircumference: waistCircumference,
+            note: note.isEmpty ? nil : note
+        )
+
+        modelContext.insert(newRecord)
+
+        if settingsManager.healthKitEnabled {
+            Task {
+                try? await HealthKitManager.shared.saveWeight(
+                    weightInKg: weightInKg,
+                    date: date,
+                    bodyFatPercentage: bodyFatPercentage
+                )
+            }
+        }
+
+        dismiss()
+    }
+
+    private func updateRecord() {
+        guard let record = record, let weightValue = Double(weightString) else {
+            errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
+            showingError = true
+            return
+        }
+
+        record.date = date.startOfDay
         record.weight = unit.convertToKg(weightValue)
         record.bodyFatPercentage = Double(bodyFatString)
+        record.waistCircumference = Double(waistString)
         record.note = note.isEmpty ? nil : note
         record.updatedAt = Date()
 
-        isPresented = false
+        dismiss()
     }
 
     private func deleteRecord() {
-        modelContext.delete(record)
-        isPresented = false
+        if let record = record {
+            modelContext.delete(record)
+        }
+        dismiss()
+    }
+
+    private func deleteRecordsForSelectedDate() {
+        let dateRecords = records.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
+        for record in dateRecords {
+            modelContext.delete(record)
+        }
     }
 }

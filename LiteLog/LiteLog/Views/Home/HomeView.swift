@@ -86,7 +86,7 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingEditSheet) {
                 if let record = selectedRecord {
-                    EditRecordView(record: record, isPresented: $showingEditSheet)
+                    RecordFormView(record: record, isPresented: $showingEditSheet)
                 }
             }
             .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {

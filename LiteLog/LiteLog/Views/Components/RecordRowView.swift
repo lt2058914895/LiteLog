@@ -25,6 +25,10 @@ struct RecordRowView: View {
                 bodyFatView(bodyFat)
             }
 
+            if let waist = record.waistCircumference {
+                waistView(waist)
+            }
+
             Image(systemName: "chevron.right")
                 .font(.caption)
                 .foregroundColor(.tertiaryText)
@@ -80,6 +84,18 @@ struct RecordRowView: View {
                 .foregroundColor(.primaryText)
 
             Text(NSLocalizedString("record.body.fat", comment: ""))
+                .font(.caption2)
+                .foregroundColor(.secondaryText)
+        }
+    }
+
+    private func waistView(_ waist: Double) -> some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text("\(waist.weightString)cm")
+                .font(.subheadline)
+                .foregroundColor(.primaryText)
+
+            Text(NSLocalizedString("record.waist.circumference", comment: ""))
                 .font(.caption2)
                 .foregroundColor(.secondaryText)
         }

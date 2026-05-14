@@ -7,6 +7,7 @@ final class WeightRecord {
     var date: Date
     var weight: Double
     var bodyFatPercentage: Double?
+    var waistCircumference: Double?
     var note: String?
     var createdAt: Date
     var updatedAt: Date
@@ -23,6 +24,7 @@ final class WeightRecord {
         date: Date = Date(),
         weight: Double,
         bodyFatPercentage: Double? = nil,
+        waistCircumference: Double? = nil,
         note: String? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
@@ -32,6 +34,7 @@ final class WeightRecord {
         self.date = date
         self.weight = weight
         self.bodyFatPercentage = bodyFatPercentage
+        self.waistCircumference = waistCircumference
         self.note = note
         self.createdAt = createdAt
         self.updatedAt = updatedAt

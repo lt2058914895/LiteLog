@@ -35,6 +35,8 @@
 "record.weight" = "Weight";
 "record.body.fat" = "Body Fat";
 "record.body.fat.optional" = "Body Fat (Optional)";
+"record.waist.circumference" = "Waist Circumference";
+"record.waist.circumference.optional" = "Waist Circumference (Optional)";
 "record.note" = "Note";
 "record.note.placeholder" = "Add note...";
 "record.date" = "Date";

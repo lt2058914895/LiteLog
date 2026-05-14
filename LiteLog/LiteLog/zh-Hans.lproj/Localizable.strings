@@ -35,6 +35,8 @@
 "record.weight" = "体重";
 "record.body.fat" = "体脂率";
 "record.body.fat.optional" = "体脂率（可选）";
+"record.waist.circumference" = "腰围";
+"record.waist.circumference.optional" = "腰围（可选）";
 "record.note" = "备注";
 "record.note.placeholder" = "添加备注...";
 "record.date" = "日期";
