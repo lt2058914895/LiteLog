@@ -20,6 +20,7 @@
 "home.day" = "日";
 "home.week" = "周";
 "home.month" = "月";
+"home.quarter" = "季度";
 "home.history" = "历史记录";
 "home.no.records" = "暂无记录";
 "home.start.record" = "开始记录你的体重变化吧";

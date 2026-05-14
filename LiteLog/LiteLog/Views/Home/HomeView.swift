@@ -29,23 +29,29 @@ struct HomeView: View {
         allRecords.first?.weight
     }
 
-    private var chartData: [WeightChartView.ChartDataPoint] {
+    private var chartStartDate: Date {
         let calendar = Calendar.current
-        let startDate: Date
-
         switch trendType {
-        case .day:
-            startDate = calendar.date(byAdding: .day, value: -7, to: Date()) ?? Date()
         case .week:
-            startDate = calendar.date(byAdding: .day, value: -30, to: Date()) ?? Date()
+            return (calendar.date(byAdding: .day, value: -7, to: Date()) ?? Date()).startOfDay
         case .month:
-            startDate = calendar.date(byAdding: .month, value: -3, to: Date()) ?? Date()
+            return (calendar.date(byAdding: .month, value: -1, to: Date()) ?? Date()).startOfDay
+        case .quarter:
+            return (calendar.date(byAdding: .month, value: -3, to: Date()) ?? Date()).startOfDay
+        }
+    }
+
+    private var chartData: [WeightChartView.ChartDataPoint] {
+        let filtered = allRecords.filter { $0.date >= chartStartDate }
+        let calendar = Calendar.current
+
+        let grouped = Dictionary(grouping: filtered) { record in
+            calendar.startOfDay(for: record.date)
         }
 
-        return allRecords
-            .filter { $0.date >= startDate }
+        return grouped.compactMap { $0.value.max(by: { $0.date < $1.date }) }
             .sorted { $0.date < $1.date }
-            .map { WeightChartView.ChartDataPoint(date: $0.date, weight: $0.weight) }
+            .map { WeightChartView.ChartDataPoint(date: $0.date.startOfDay, weight: $0.weight) }
     }
 
     var body: some View {
@@ -63,7 +69,7 @@ struct HomeView: View {
                         )
                     }
 
-                    WeightChartView(data: chartData, unit: unit, trendType: $trendType)
+                    WeightChartView(data: chartData, unit: unit, trendType: $trendType, startDate: chartStartDate)
                 }
                 .padding()
             }
@@ -288,11 +294,11 @@ struct QuickAddWeightView: View {
         guard let weightValue = Double(weightInput) else { return }
 
         let weightInKg = unit.convertToKg(weightValue)
-        
+
         if todayHasRecord {
             deleteTodayRecords()
         }
-        
+
         let record = WeightRecord(date: Date(), weight: weightInKg)
 
         modelContext.insert(record)
@@ -310,48 +316,6 @@ struct QuickAddWeightView: View {
         let today = Date().startOfDay
         let todayRecords = records.filter { Calendar.current.isDate($0.date, inSameDayAs: today) }
         for record in todayRecords {
-            modelContext.delete(record)
-        }
-    }
-}
-
-struct RecordHistoryView: View {
-    @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject private var settingsManager: SettingsManager
-
-    @Query(sort: \WeightRecord.date, order: .reverse) private var records: [WeightRecord]
-
-    private var unit: WeightUnit { settingsManager.weightUnit }
-
-    var body: some View {
-        List {
-            ForEach(groupedRecords.keys.sorted(by: >), id: \.self) { date in
-                Section(header: Text(date.mediumDateString)) {
-                    ForEach(groupedRecords[date] ?? [], id: \.id) { record in
-                        RecordRowView(record: record, unit: unit)
-                            .listRowInsets(EdgeInsets())
-                            .listRowBackground(Color.clear)
-                    }
-                    .onDelete { indexSet in
-                        deleteRecords(at: indexSet, for: date)
-                    }
-                }
-            }
-        }
-        .listStyle(.insetGrouped)
-        .navigationTitle(NSLocalizedString("home.history", comment: ""))
-    }
-
-    private var groupedRecords: [Date: [WeightRecord]] {
-        Dictionary(grouping: records) { record in
-            Calendar.current.startOfDay(for: record.date)
-        }
-    }
-
-    private func deleteRecords(at offsets: IndexSet, for date: Date) {
-        guard let recordsForDate = groupedRecords[date] else { return }
-        for index in offsets {
-            let record = recordsForDate[index]
             modelContext.delete(record)
         }
     }

@@ -20,6 +20,7 @@
 "home.day" = "Day";
 "home.week" = "Week";
 "home.month" = "Month";
+"home.quarter" = "Quarter";
 "home.history" = "History";
 "home.no.records" = "No records";
 "home.start.record" = "Start tracking your weight changes";
