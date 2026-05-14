@@ -176,9 +176,9 @@ struct StatisticsView: View {
                     .foregroundStyle(Color.primaryBlue)
                     .symbolSize(30)
                 }
-                .chartXScale(domain: startDate...Date())
+                .chartXScale(domain: startDate...Date().startOfDay)
                 .chartXAxis {
-                    AxisMarks(values: [startDate, Date()]) { value in
+                    AxisMarks(values: [startDate, Date().startOfDay]) { value in
                         AxisGridLine()
                         AxisValueLabel {
                             if let date = value.as(Date.self) {
@@ -230,9 +230,9 @@ struct StatisticsView: View {
                     .symbolSize(30)
                 }
                 .chartYScale(domain: 15...35)
-                .chartXScale(domain: startDate...Date())
+                .chartXScale(domain: startDate...Date().startOfDay)
                 .chartXAxis {
-                    AxisMarks(values: [startDate, Date()]) { value in
+                    AxisMarks(values: [startDate, Date().startOfDay]) { value in
                         AxisGridLine()
                         AxisValueLabel {
                             if let date = value.as(Date.self) {
