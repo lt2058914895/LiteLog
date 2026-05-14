@@ -20,11 +20,6 @@ struct HomeView: View {
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
 
-    private var todayRecords: [WeightRecord] {
-        let today = Date().startOfDay
-        return allRecords.filter { Calendar.current.isDate($0.date, inSameDayAs: today) }
-    }
-
     private var latestWeight: Double? {
         allRecords.first?.weight
     }
@@ -75,15 +70,6 @@ struct HomeView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("tab.home", comment: ""))
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showingAddSheet = true }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(.primaryBlue)
-                    }
-                }
-            }
             .sheet(isPresented: $showingAddSheet) {
                 QuickAddWeightView(isPresented: $showingAddSheet)
             }
@@ -124,25 +110,6 @@ struct HomeView: View {
                 }
 
                 Spacer()
-
-                if !todayRecords.isEmpty {
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("\(todayRecords.count) \(NSLocalizedString("home.today", comment: ""))")
-                            .font(.caption)
-                            .foregroundColor(.secondaryText)
-
-                        if todayRecords.count > 1 {
-                            let change = todayRecords.first!.weight - todayRecords.last!.weight
-                            HStack(spacing: 2) {
-                                Image(systemName: change >= 0 ? "arrow.up" : "arrow.down")
-                                    .font(.caption2)
-                                Text("\(abs(unit.convertFromKg(change)).weightString)")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(change >= 0 ? .red : .green)
-                        }
-                    }
-                }
             }
 
             Button(action: { showingAddSheet = true }) {
