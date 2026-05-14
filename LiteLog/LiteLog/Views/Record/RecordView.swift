@@ -83,11 +83,13 @@ struct RecordView: View {
             } else {
                 List {
                     ForEach(groupedRecords.keys.sorted(by: >), id: \.self) { date in
-                        Section(header: Text(date.mediumDateString)) {
+                        Section(header: Text(date.monthYearString)) {
                             ForEach(groupedRecords[date] ?? [], id: \.id) { record in
                                 RecordRowView(record: record, unit: unit)
                                     .listRowInsets(EdgeInsets())
                                     .listRowBackground(Color.clear)
+                                    .listRowSeparator(.hidden)
+                                    .padding(.bottom, 8)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
                                         selectedRecord = record
@@ -171,7 +173,9 @@ struct RecordView: View {
 
     private var groupedRecords: [Date: [WeightRecord]] {
         Dictionary(grouping: records) { record in
-            Calendar.current.startOfDay(for: record.date)
+            let calendar = Calendar.current
+            let components = calendar.dateComponents([.year, .month], from: record.date)
+            return calendar.date(from: components) ?? record.date
         }
     }
 
@@ -284,7 +288,7 @@ struct AddRecordView: View {
     }
 
     private func saveRecord() {
-        guard let weightValue = Double(weightString) else {
+        guard Double(weightString) != nil else {
             errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
             showingError = true
             return

@@ -324,7 +324,7 @@ struct QuickAddWeightView: View {
     }
 
     private func saveWeight() {
-        guard let weightValue = Double(weightInput) else { return }
+        guard Double(weightInput) != nil else { return }
 
         if todayHasRecord {
             showingDuplicateAlert = true

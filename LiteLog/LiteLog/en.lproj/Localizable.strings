@@ -116,6 +116,7 @@
 
 // Date format
 "date.format.short" = "M/d";
+"date.format.month.year" = "MMMM yyyy";
 
 // Duplicate record alert
 "record.duplicate.title" = "Duplicate Record";

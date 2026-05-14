@@ -116,6 +116,12 @@ extension Date {
         return formatter.string(from: self)
     }
 
+    var monthYearString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = NSLocalizedString("date.format.month.year", comment: "")
+        return formatter.string(from: self)
+    }
+
     var timeString: String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short

@@ -116,6 +116,7 @@
 
 // 日期格式
 "date.format.short" = "M/d";
+"date.format.month.year" = "yyyy年MM月";
 
 // 重复记录提示
 "record.duplicate.title" = "重复记录";
