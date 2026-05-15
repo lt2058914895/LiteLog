@@ -9,6 +9,9 @@ struct FeedbackView: View {
     @State private var allowContact: Bool = false
     @State private var isAnonymous: Bool = false
     @State private var showingSuccess = false
+    @State private var isSubmitting = false
+    @State private var showingError = false
+    @State private var errorMessage = ""
     
     enum FeedbackType: String, CaseIterable, Identifiable {
         case bug = "feedback.type.bug"
@@ -115,19 +118,35 @@ struct FeedbackView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(NSLocalizedString("action.submit", comment: "")) {
-                        submitFeedback()
+                    Button(action: submitFeedback) {
+                        if isSubmitting {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.white)
+                                Text(NSLocalizedString("action.submitting", comment: ""))
+                            }
+                        } else {
+                            Text(NSLocalizedString("action.submit", comment: ""))
+                        }
                     }
-                    .disabled(message.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(message.trimmingCharacters(in: .whitespaces).isEmpty || isSubmitting)
                 }
             }
             .sheet(isPresented: $showingSuccess) {
                 FeedbackSuccessView(dismiss: dismiss)
             }
+            .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
+                Button(NSLocalizedString("action.ok", comment: "")) {}
+            } message: {
+                Text(errorMessage)
+            }
         }
     }
     
     private func submitFeedback() {
+        isSubmitting = true
+        
         let feedback = UserFeedback(
             type: feedbackType.rawValue,
             message: message,
@@ -136,8 +155,23 @@ struct FeedbackView: View {
             deviceInfo: "\(UIDevice.current.model) - \(UIDevice.current.systemVersion)"
         )
         
-        FeedbackManager.shared.submit(feedback)
-        showingSuccess = true
+        Task {
+            do {
+                try await APIService.shared.submitFeedback(feedback)
+                FeedbackManager.shared.submit(feedback)
+                
+                DispatchQueue.main.async {
+                    isSubmitting = false
+                    showingSuccess = true
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    isSubmitting = false
+                    errorMessage = error.localizedDescription
+                    showingError = true
+                }
+            }
+        }
     }
 }
 

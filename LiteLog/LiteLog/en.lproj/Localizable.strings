@@ -118,6 +118,7 @@
 "action.done" = "View All";
 "action.confirm" = "OK";
 "action.submit" = "Submit";
+"action.submitting" = "Submitting...";
 "action.ok" = "OK";
 
 // Notifications

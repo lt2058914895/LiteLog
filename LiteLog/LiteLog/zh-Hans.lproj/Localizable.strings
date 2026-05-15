@@ -118,6 +118,7 @@
 "action.done" = "查看全部";
 "action.confirm" = "确定";
 "action.submit" = "提交";
+"action.submitting" = "提交中...";
 "action.ok" = "好的";
 
 // 通知相关
