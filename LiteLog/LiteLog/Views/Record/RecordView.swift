@@ -249,6 +249,7 @@ struct RecordFormView: View {
                     DatePicker(
                         "Date",
                         selection: $date,
+                        in: ...Date(),
                         displayedComponents: [.date]
                     )
                     .datePickerStyle(.graphical)
@@ -346,7 +347,7 @@ struct RecordFormView: View {
     }
 
     private func saveRecord() {
-        guard let weightValue = Double(weightString) else {
+        guard Double(weightString) != nil else {
             errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
             showingError = true
             return
