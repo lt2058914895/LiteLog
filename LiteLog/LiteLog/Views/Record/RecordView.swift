@@ -253,6 +253,7 @@ struct RecordFormView: View {
                         displayedComponents: [.date]
                     )
                     .datePickerStyle(.graphical)
+                    .disabled(isEditMode)
                 }
 
                 Section(NSLocalizedString("record.weight", comment: "")) {
