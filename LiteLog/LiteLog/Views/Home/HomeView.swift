@@ -81,13 +81,6 @@ struct HomeView: View {
                 VStack(spacing: 20) {
                     todayWeightCard
 
-                    HStack(spacing: 16) {
-                        bodyFatCard
-                            .frame(maxWidth: .infinity)
-                        waistCard
-                            .frame(maxWidth: .infinity)
-                    }
-
                     if let latest = latestWeight, let profile = profile {
                         BMIProgressView(
                             currentWeight: latest,
@@ -95,6 +88,13 @@ struct HomeView: View {
                             height: profile.height,
                             unit: unit
                         )
+                    }
+
+                    HStack(spacing: 16) {
+                        bodyFatCard
+                            .frame(maxWidth: .infinity)
+                        waistCard
+                            .frame(maxWidth: .infinity)
                     }
 
                     WeightChartView(data: chartData, unit: unit, trendType: $trendType, startDate: chartStartDate)
