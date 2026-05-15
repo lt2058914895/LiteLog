@@ -16,6 +16,7 @@ struct SettingsView: View {
     @State private var exportURL: URL?
     @State private var showingExportError = false
     @State private var notificationTime = SettingsManager.defaultNotificationTime()
+    @State private var showingFeedbackSheet = false
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -35,6 +36,8 @@ struct SettingsView: View {
 
                 dataSection
 
+                feedbackSection
+
                 aboutSection
             }
             .navigationTitle(NSLocalizedString("settings.title", comment: ""))
@@ -43,6 +46,9 @@ struct SettingsView: View {
             }
             .adaptiveSheet(item: $exportURL) { url in
                 ShareSheet(items: [url])
+            }
+            .adaptiveSheet(isPresented: $showingFeedbackSheet) {
+                FeedbackView()
             }
             .alert(NSLocalizedString("settings.delete.confirm", comment: ""), isPresented: $showingDeleteAlert) {
                 Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
@@ -231,6 +237,15 @@ struct SettingsView: View {
             Button(role: .destructive, action: { showingDeleteAlert = true }) {
                 Label(NSLocalizedString("settings.delete.all", comment: ""), systemImage: "trash")
                     .foregroundColor(.red)
+            }
+        }
+    }
+
+    private var feedbackSection: some View {
+        Section(NSLocalizedString("settings.feedback", comment: "")) {
+            Button(action: { showingFeedbackSheet = true }) {
+                Label(NSLocalizedString("settings.send.feedback", comment: ""), systemImage: "message.badge")
+                    .foregroundColor(.primaryBlue)
             }
         }
     }

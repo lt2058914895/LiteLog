@@ -91,7 +91,24 @@
 "settings.delete.confirm" = "确定要删除所有数据吗？此操作不可撤销。";
 "settings.about" = "关于";
 "settings.version" = "版本";
+"settings.feedback" = "用户反馈";
+"settings.send.feedback" = "发送反馈";
 "app.name" = "轻身记";
+
+// 反馈相关
+"feedback.title" = "反馈建议";
+"feedback.type" = "反馈类型";
+"feedback.type.bug" = "Bug报告";
+"feedback.type.suggestion" = "功能建议";
+"feedback.type.praise" = "表扬鼓励";
+"feedback.type.other" = "其他";
+"feedback.content" = "反馈内容";
+"feedback.anonymous" = "匿名反馈";
+"feedback.allow.contact" = "允许我们联系您";
+"feedback.email" = "电子邮箱";
+"feedback.privacy.note" = "您的反馈信息仅用于产品改进，我们不会向第三方透露您的个人信息。";
+"feedback.thank.you" = "感谢您的反馈！";
+"feedback.appreciate" = "您的建议对我们非常重要，我们会认真对待每一条反馈。";
 
 // 操作相关
 "action.save" = "保存";
@@ -100,6 +117,8 @@
 "action.delete" = "删除";
 "action.done" = "查看全部";
 "action.confirm" = "确定";
+"action.submit" = "提交";
+"action.ok" = "好的";
 
 // 通知相关
 "notification.title" = "轻身记";

@@ -91,7 +91,24 @@
 "settings.delete.confirm" = "Are you sure you want to delete all data? This action cannot be undone.";
 "settings.about" = "About";
 "settings.version" = "Version";
+"settings.feedback" = "Feedback";
+"settings.send.feedback" = "Send Feedback";
 "app.name" = "LiteLog";
+
+// Feedback related
+"feedback.title" = "Feedback";
+"feedback.type" = "Feedback Type";
+"feedback.type.bug" = "Bug Report";
+"feedback.type.suggestion" = "Feature Request";
+"feedback.type.praise" = "Praise";
+"feedback.type.other" = "Other";
+"feedback.content" = "Feedback Content";
+"feedback.anonymous" = "Anonymous Feedback";
+"feedback.allow.contact" = "Allow us to contact you";
+"feedback.email" = "Email Address";
+"feedback.privacy.note" = "Your feedback is only used for product improvement. We will not disclose your personal information to third parties.";
+"feedback.thank.you" = "Thank you for your feedback!";
+"feedback.appreciate" = "Your suggestions are very important to us. We take every feedback seriously.";
 
 // Actions
 "action.save" = "Save";
@@ -100,6 +117,8 @@
 "action.delete" = "Delete";
 "action.done" = "View All";
 "action.confirm" = "OK";
+"action.submit" = "Submit";
+"action.ok" = "OK";
 
 // Notifications
 "notification.title" = "LiteLog";
