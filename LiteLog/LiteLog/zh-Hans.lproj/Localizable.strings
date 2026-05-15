@@ -110,6 +110,7 @@
 // 错误相关
 "error.title" = "错误";
 "error.weight.invalid" = "请输入有效的体重值";
+"error.save.failed" = "保存失败，请重试";
 "error.healthkit.not.available" = "健康数据不可用";
 "error.healthkit.not.authorized" = "未授权访问健康数据";
 "error.healthkit.save.failed" = "保存健康数据失败";

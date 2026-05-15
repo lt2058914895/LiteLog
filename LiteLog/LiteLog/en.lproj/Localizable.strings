@@ -110,6 +110,7 @@
 // Errors
 "error.title" = "Error";
 "error.weight.invalid" = "Please enter a valid weight value";
+"error.save.failed" = "Save failed, please try again";
 "error.healthkit.not.available" = "Health data not available";
 "error.healthkit.not.authorized" = "Health data not authorized";
 "error.healthkit.save.failed" = "Failed to save health data";

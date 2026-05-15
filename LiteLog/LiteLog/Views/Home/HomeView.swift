@@ -378,6 +378,13 @@ struct QuickAddWeightView: View {
         let record = WeightRecord(date: Date(), weight: weightInKg)
 
         modelContext.insert(record)
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to save weight: \(error)")
+            return
+        }
 
         if settingsManager.healthKitEnabled {
             Task {

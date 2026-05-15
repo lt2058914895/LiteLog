@@ -387,6 +387,14 @@ struct RecordFormView: View {
         )
 
         modelContext.insert(newRecord)
+        
+        do {
+            try modelContext.save()
+        } catch {
+            errorMessage = NSLocalizedString("error.save.failed", comment: "")
+            showingError = true
+            return
+        }
 
         if settingsManager.healthKitEnabled {
             Task {
@@ -414,6 +422,14 @@ struct RecordFormView: View {
         record.waistCircumference = Double(waistString)
         record.note = note.isEmpty ? nil : note
         record.updatedAt = Date()
+        
+        do {
+            try modelContext.save()
+        } catch {
+            errorMessage = NSLocalizedString("error.save.failed", comment: "")
+            showingError = true
+            return
+        }
 
         dismiss()
     }
@@ -421,6 +437,12 @@ struct RecordFormView: View {
     private func deleteRecord() {
         if let record = record {
             modelContext.delete(record)
+            
+            do {
+                try modelContext.save()
+            } catch {
+                print("Failed to delete record: \(error)")
+            }
         }
         dismiss()
     }
@@ -429,6 +451,12 @@ struct RecordFormView: View {
         let dateRecords = records.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
         for record in dateRecords {
             modelContext.delete(record)
+        }
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to delete records for selected date: \(error)")
         }
     }
 }

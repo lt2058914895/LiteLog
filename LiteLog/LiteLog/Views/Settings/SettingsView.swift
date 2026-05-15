@@ -273,6 +273,12 @@ struct SettingsView: View {
         for profileItem in userProfile {
             modelContext.delete(profileItem)
         }
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to delete all data: \(error)")
+        }
     }
 }
 
