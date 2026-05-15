@@ -64,9 +64,7 @@ struct BodyFatView: View {
                 }
             }
             .sheet(isPresented: $showingAddSheet) {
-                let today = Date().startOfDay
-                let todayRecord = records.first { Calendar.current.isDate($0.date, inSameDayAs: today) }
-                RecordFormView(record: todayRecord, isPresented: $showingAddSheet)
+                RecordFormView(isPresented: $showingAddSheet)
             }
             .sheet(item: $selectedRecord) { record in
                 RecordFormView(record: record, isPresented: .constant(false))
