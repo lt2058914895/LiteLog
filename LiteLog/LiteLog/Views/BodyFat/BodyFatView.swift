@@ -10,6 +10,8 @@ struct BodyFatView: View {
     @State private var showingAddSheet = false
     @State private var selectedRecord: WeightRecord?
 
+    private var unit: WeightUnit { settingsManager.weightUnit }
+
     private var chartData: [BodyFatChartView.ChartDataPoint] {
         let filtered = records.filter { $0.bodyFatPercentage != nil }
         let calendar = Calendar.current
@@ -31,7 +33,12 @@ struct BodyFatView: View {
         records.filter { $0.bodyFatPercentage != nil }
     }
 
-
+    private var groupedRecords: [Date: [WeightRecord]] {
+        Dictionary(grouping: bodyFatRecords) { record in
+            let components = Calendar.current.dateComponents([.year, .month], from: record.date)
+            return Calendar.current.date(from: components) ?? record.date
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -82,13 +89,23 @@ struct BodyFatView: View {
                     action: { showingAddSheet = true }
                 )
             } else {
-                LazyVStack(spacing: 12) {
-                    ForEach(bodyFatRecords, id: \.id) { record in
-                        BodyFatRowView(record: record)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedRecord = record
+                LazyVStack(spacing: 8) {
+                    ForEach(groupedRecords.keys.sorted(by: >), id: \.self) { date in
+                        Section {
+                            ForEach(groupedRecords[date] ?? [], id: \.id) { record in
+                                RecordRowView(record: record, unit: unit)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        selectedRecord = record
+                                    }
                             }
+                        } header: {
+                            Text(date.monthYearString)
+                                .font(.subheadline)
+                                .foregroundColor(.secondaryText)
+                                .padding(.top, 16)
+                                .padding(.bottom, 8)
+                        }
                     }
                 }
             }
@@ -96,42 +113,3 @@ struct BodyFatView: View {
     }
 }
 
-struct BodyFatRowView: View {
-    let record: WeightRecord
-
-    var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(record.date.formatted(date: .omitted, time: .omitted))
-                    .font(.subheadline)
-                    .foregroundColor(.secondaryText)
-
-                if let bodyFat = record.bodyFatPercentage {
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(String(format: "%.1f", bodyFat))
-                            .font(.title)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.primaryText)
-
-                        Text("%")
-                            .font(.subheadline)
-                            .foregroundColor(.secondaryText)
-                    }
-                } else {
-                    Text("-- %")
-                        .font(.title)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.secondaryText)
-                }
-            }
-
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.headline)
-                .foregroundColor(.tertiaryText)
-        }
-        .padding()
-        .cardStyle()
-    }
-}

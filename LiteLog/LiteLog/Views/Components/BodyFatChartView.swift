@@ -72,13 +72,8 @@ struct BodyFatChartView: View {
             .symbolSize(30)
         }
         .chartXAxis {
-            AxisMarks { value in
+            AxisMarks(values: [data.first?.date, data.last?.date].compactMap { $0 }) { value in
                 AxisGridLine()
-                AxisValueLabel {
-                    if let date = value.as(Date.self) {
-                        Text(date.shortDateString)
-                    }
-                }
             }
         }
         .chartYAxis {
