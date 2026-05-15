@@ -11,7 +11,6 @@ struct HomeView: View {
 
     @State private var weightInput = ""
     @State private var showingAddSheet = false
-    @State private var showingWaistSheet = false
 
     @State private var trendType: WeightChartView.TrendType = .week
     @State private var isLoading = false
@@ -107,9 +106,6 @@ struct HomeView: View {
             .sheet(isPresented: $showingAddSheet) {
                 QuickAddWeightView(isPresented: $showingAddSheet)
             }
-            .sheet(isPresented: $showingWaistSheet) {
-                RecordFormView(record: todayRecord, isPresented: $showingWaistSheet)
-            }
             .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
                 Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
             } message: {
@@ -202,41 +198,41 @@ struct HomeView: View {
     }
 
     private var waistCard: some View {
-        VStack(spacing: 12) {
-            HStack(alignment: .top, spacing: 8) {
-                Text(NSLocalizedString("home.waist.circumference", comment: ""))
-                    .font(.subheadline)
-                    .foregroundColor(.secondaryText)
+        NavigationLink(destination: WaistCircumferenceView()) {
+            VStack(spacing: 12) {
+                HStack(alignment: .top, spacing: 8) {
+                    Text(NSLocalizedString("home.waist.circumference", comment: ""))
+                        .font(.subheadline)
+                        .foregroundColor(.secondaryText)
 
-                Spacer()
+                    Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.headline)
-                    .foregroundColor(.tertiaryText)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                if let waist = latestWaist {
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(String(format: "%.1f", waist))
+                    Image(systemName: "chevron.right")
+                        .font(.headline)
+                        .foregroundColor(.tertiaryText)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    if let waist = latestWaist {
+                        HStack(alignment: .firstTextBaseline, spacing: 2) {
+                            Text(String(format: "%.1f", waist))
+                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .foregroundColor(.primaryText)
+
+                            Text("cm")
+                                .font(.title)
+                                .foregroundColor(.secondaryText)
+                        }
+                    } else {
+                        Text("-- cm")
                             .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundColor(.primaryText)
-
-                        Text("cm")
-                            .font(.title)
                             .foregroundColor(.secondaryText)
                     }
-                } else {
-                    Text("-- cm")
-                        .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(.secondaryText)
                 }
             }
+            .padding()
+            .cardStyle()
         }
-        .padding()
-        .cardStyle()
-        .onTapGesture {
-            showingWaistSheet = true
-        }
+        .buttonStyle(.plain)
     }
 
     private func syncFromHealthKit() async {
