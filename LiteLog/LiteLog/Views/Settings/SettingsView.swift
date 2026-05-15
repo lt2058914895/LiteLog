@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var showingExportError = false
     @State private var notificationTime = SettingsManager.defaultNotificationTime()
     @State private var showingFeedbackSheet = false
+    @State private var showingLoginSheet = false
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -52,6 +53,9 @@ struct SettingsView: View {
             .adaptiveSheet(isPresented: $showingFeedbackSheet) {
                 FeedbackView()
             }
+            .adaptiveSheet(isPresented: $showingLoginSheet) {
+                LoginView()
+            }
             .alert(NSLocalizedString("settings.delete.confirm", comment: ""), isPresented: $showingDeleteAlert) {
                 Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
                 Button(NSLocalizedString("action.delete", comment: ""), role: .destructive) {
@@ -66,18 +70,29 @@ struct SettingsView: View {
 
     private var userHeaderSection: some View {
             Section {
-                HStack(alignment: .center, spacing: 16) {
-                    Image(systemName: "person.circle.fill")
-                        .resizable()
-                        .frame(width: 54, height: 54)
-                        .foregroundColor(settingsManager.isLoggedIn ? .primaryBlue : .gray)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(settingsManager.isLoggedIn ? NSLocalizedString("settings.user", comment: "") : NSLocalizedString("settings.not.logged.in", comment: ""))
-                            .font(.title3)
+                Button(action: {
+                    if !settingsManager.isLoggedIn {
+                        showingLoginSheet = true
                     }
-                    
-                    Spacer()
+                }) {
+                    HStack(alignment: .center, spacing: 16) {
+                        Image(systemName: "person.circle.fill")
+                            .resizable()
+                            .frame(width: 54, height: 54)
+                            .foregroundColor(settingsManager.isLoggedIn ? .primaryBlue : .gray)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(settingsManager.isLoggedIn ? NSLocalizedString("settings.user", comment: "") : NSLocalizedString("settings.not.logged.in", comment: ""))
+                                .font(.title3)
+                        }
+                        
+                        Spacer()
+                        
+                        if !settingsManager.isLoggedIn {
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondaryText)
+                        }
+                    }
                 }
             }
         }

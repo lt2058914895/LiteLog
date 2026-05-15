@@ -96,6 +96,21 @@
 "settings.not.logged.in" = "未登录";
 "app.name" = "轻身记";
 
+// 登录相关
+"login.title" = "登录";
+"login.type" = "登录方式";
+"login.type.password" = "密码登录";
+"login.type.sms" = "验证码登录";
+"login.phone" = "手机号";
+"login.password" = "密码";
+"login.sms.code" = "验证码";
+"login.get.code" = "获取验证码";
+"action.login" = "登录";
+"login.forgot.password" = "忘记密码";
+"login.register" = "注册";
+"login.error" = "登录失败，请检查手机号和密码";
+"login.no.account" = "还没有账号？";
+
 // 反馈相关
 "feedback.title" = "反馈建议";
 "feedback.type" = "反馈类型";

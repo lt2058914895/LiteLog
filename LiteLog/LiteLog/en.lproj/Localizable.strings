@@ -96,6 +96,21 @@
 "settings.not.logged.in" = "Not Logged In";
 "app.name" = "LiteLog";
 
+// Login related
+"login.title" = "Login";
+"login.type" = "Login Type";
+"login.type.password" = "Password Login";
+"login.type.sms" = "SMS Login";
+"login.phone" = "Phone Number";
+"login.password" = "Password";
+"login.sms.code" = "Verification Code";
+"login.get.code" = "Get Code";
+"action.login" = "Login";
+"login.forgot.password" = "Forgot Password";
+"login.register" = "Register";
+"login.error" = "Login failed, please check your phone number and password";
+"login.no.account" = "Don't have an account?";
+
 // Feedback related
 "feedback.title" = "Feedback";
 "feedback.type" = "Feedback Type";
