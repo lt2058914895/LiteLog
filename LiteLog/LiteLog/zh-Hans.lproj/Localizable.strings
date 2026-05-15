@@ -93,6 +93,7 @@
 "settings.version" = "版本";
 "settings.feedback" = "用户反馈";
 "settings.send.feedback" = "发送反馈";
+"settings.not.logged.in" = "未登录";
 "app.name" = "轻身记";
 
 // 反馈相关

@@ -17,6 +17,8 @@ final class SettingsManager: ObservableObject {
         static let reminderTime = "reminderTime"
         static let language = "language"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
+        static let isLoggedIn = "isLoggedIn"
+        static let userId = "userId"
     }
 
     @Published var weightUnit: WeightUnit {
@@ -58,6 +60,10 @@ final class SettingsManager: ObservableObject {
     @AppStorage(Keys.language) var language: String = "system"
 
     @AppStorage(Keys.hasCompletedOnboarding) var hasCompletedOnboarding: Bool = false
+    
+    @AppStorage(Keys.isLoggedIn) var isLoggedIn: Bool = false
+    
+    @AppStorage(Keys.userId) var userId: String = ""
 
     private init() {
         let savedUnit = defaults.string(forKey: Keys.weightUnit) ?? WeightUnit.kg.rawValue
@@ -86,6 +92,16 @@ final class SettingsManager: ObservableObject {
         iCloudSyncEnabled = true
         notificationsEnabled = false
         notificationTime = Self.defaultNotificationTime()
+    }
+    
+    func login(userId: String) {
+        self.userId = userId
+        self.isLoggedIn = true
+    }
+    
+    func logout() {
+        self.userId = ""
+        self.isLoggedIn = false
     }
 }
 

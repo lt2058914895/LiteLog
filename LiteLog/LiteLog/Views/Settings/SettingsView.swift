@@ -24,6 +24,8 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
+                userHeaderSection
+                
                 profileSection
 
                 unitSection
@@ -40,7 +42,7 @@ struct SettingsView: View {
 
                 aboutSection
             }
-            .navigationTitle(NSLocalizedString("settings.title", comment: ""))
+            .navigationBarHidden(true)
             .adaptiveSheet(isPresented: $showingProfileEditor) {
                 ProfileEditorView()
             }
@@ -62,7 +64,25 @@ struct SettingsView: View {
         }
     }
 
-    private var profileSection: some View {
+    private var userHeaderSection: some View {
+            Section {
+                HStack(alignment: .center, spacing: 16) {
+                    Image(systemName: "person.circle.fill")
+                        .resizable()
+                        .frame(width: 54, height: 54)
+                        .foregroundColor(settingsManager.isLoggedIn ? .primaryBlue : .gray)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(settingsManager.isLoggedIn ? NSLocalizedString("settings.user", comment: "") : NSLocalizedString("settings.not.logged.in", comment: ""))
+                            .font(.title3)
+                    }
+                    
+                    Spacer()
+                }
+            }
+        }
+        
+        private var profileSection: some View {
         Section(NSLocalizedString("settings.profile", comment: "")) {
             if let profile = profile {
                 HStack {

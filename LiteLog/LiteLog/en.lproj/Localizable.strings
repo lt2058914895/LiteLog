@@ -93,6 +93,7 @@
 "settings.version" = "Version";
 "settings.feedback" = "Feedback";
 "settings.send.feedback" = "Send Feedback";
+"settings.not.logged.in" = "Not Logged In";
 "app.name" = "LiteLog";
 
 // Feedback related
