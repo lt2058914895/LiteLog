@@ -103,7 +103,7 @@ struct HomeView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("tab.home", comment: ""))
-            .sheet(isPresented: $showingAddSheet) {
+            .adaptiveSheet(isPresented: $showingAddSheet) {
                 QuickAddWeightView(isPresented: $showingAddSheet)
             }
             .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {

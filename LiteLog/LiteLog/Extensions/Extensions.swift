@@ -1,4 +1,37 @@
 import SwiftUI
+import UIKit
+
+extension UIDevice {
+    static var isPad: Bool {
+        current.userInterfaceIdiom == .pad
+    }
+    
+    static var isPhone: Bool {
+        current.userInterfaceIdiom == .phone
+    }
+}
+
+extension View {
+    func adaptiveSheet<Item, Content>(item: Binding<Item?>, onDismiss: (() -> Void)? = nil, content: @escaping (Item) -> Content) -> some View where Item: Identifiable, Content: View {
+        Group {
+            if UIDevice.isPad {
+                self.popover(item: item, content: content)
+            } else {
+                self.sheet(item: item, onDismiss: onDismiss, content: content)
+            }
+        }
+    }
+    
+    func adaptiveSheet<Content>(isPresented: Binding<Bool>, onDismiss: (() -> Void)? = nil, content: @escaping () -> Content) -> some View where Content: View {
+        Group {
+            if UIDevice.isPad {
+                self.popover(isPresented: isPresented, content: content)
+            } else {
+                self.sheet(isPresented: isPresented, onDismiss: onDismiss, content: content)
+            }
+        }
+    }
+}
 
 extension Color {
     static let primaryBlue = Color(hex: "4A90E2")

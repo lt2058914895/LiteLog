@@ -63,10 +63,10 @@ struct BodyFatView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingAddSheet) {
+            .adaptiveSheet(isPresented: $showingAddSheet) {
                 RecordFormView(isPresented: $showingAddSheet)
             }
-            .sheet(item: $selectedRecord) { record in
+            .adaptiveSheet(item: $selectedRecord) { record in
                 RecordFormView(record: record, isPresented: .constant(false))
             }
         }

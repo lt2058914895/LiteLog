@@ -38,10 +38,10 @@ struct SettingsView: View {
                 aboutSection
             }
             .navigationTitle(NSLocalizedString("settings.title", comment: ""))
-            .sheet(isPresented: $showingProfileEditor) {
+            .adaptiveSheet(isPresented: $showingProfileEditor) {
                 ProfileEditorView()
             }
-            .sheet(item: $exportURL) { url in
+            .adaptiveSheet(item: $exportURL) { url in
                 ShareSheet(items: [url])
             }
             .alert(NSLocalizedString("settings.delete.confirm", comment: ""), isPresented: $showingDeleteAlert) {
