@@ -14,7 +14,7 @@ struct SettingsView: View {
     @State private var showingExportSheet = false
     @State private var showingDeleteAlert = false
     @State private var exportURL: URL?
-    @State private var showingShareSheet = false
+    @State private var showingExportError = false
     @State private var notificationTime = SettingsManager.defaultNotificationTime()
 
     private var profile: UserProfile? { userProfile.first }
@@ -41,16 +41,17 @@ struct SettingsView: View {
             .sheet(isPresented: $showingProfileEditor) {
                 ProfileEditorView()
             }
-            .sheet(isPresented: $showingShareSheet) {
-                if let url = exportURL {
-                    ShareSheet(items: [url])
-                }
+            .sheet(item: $exportURL) { url in
+                ShareSheet(items: [url])
             }
             .alert(NSLocalizedString("settings.delete.confirm", comment: ""), isPresented: $showingDeleteAlert) {
                 Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
                 Button(NSLocalizedString("action.delete", comment: ""), role: .destructive) {
                     deleteAllData()
                 }
+            }
+            .alert(NSLocalizedString("settings.export.error", comment: ""), isPresented: $showingExportError) {
+                Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
             }
         }
     }
@@ -253,9 +254,15 @@ struct SettingsView: View {
     }
 
     private func exportData() {
+        guard !records.isEmpty else {
+            showingExportError = true
+            return
+        }
+        
         if let url = ExportManager.shared.exportToCSV(records: records, unit: unit) {
             exportURL = url
-            showingShareSheet = true
+        } else {
+            showingExportError = true
         }
     }
 
@@ -383,8 +390,22 @@ struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        
+        // iPad support - configure popover presentation
+        if let popover = controller.popoverPresentationController {
+            popover.sourceView = UIView()
+            popover.sourceRect = CGRect(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+        
+        return controller
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+// Make URL conform to Identifiable for sheet(item:)
+extension URL: Identifiable {
+    public var id: String { absoluteString }
 }
