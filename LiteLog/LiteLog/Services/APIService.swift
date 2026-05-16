@@ -4,12 +4,12 @@ import Alamofire
 class APIService {
     static let shared = APIService()
     
-    private let baseURL = URL(string: "https://api.litelog.app")!
+    private let baseURL = URL(string: "https://litelog.com")!
     
     private init() {}
     
     func submitFeedback(_ feedback: UserFeedback) async throws {
-        let endpoint = baseURL.appending(path: "/api/feedback")
+        let endpoint = baseURL.appending(path: "/feedback")
         
         let parameters: [String: Any] = [
             "id": feedback.id.uuidString,
@@ -36,7 +36,7 @@ class APIService {
     }
     
     func sendSMSCode(phone: String, type: String = "login") async throws -> Bool {
-        let endpoint = baseURL.appending(path: "/api/sms/send")
+        let endpoint = baseURL.appending(path: "/login/sms/send")
         
         let parameters: [String: Any] = [
             "phone": phone,
@@ -64,7 +64,7 @@ class APIService {
     }
     
     func loginWithPassword(phone: String, password: String) async throws -> LoginResponse {
-        let endpoint = baseURL.appending(path: "/api/auth/login/password")
+        let endpoint = baseURL.appending(path: "/login/password")
         
         let parameters: [String: Any] = [
             "phone": phone,
@@ -92,7 +92,7 @@ class APIService {
     }
     
     func loginWithSMSCode(phone: String, code: String) async throws -> LoginResponse {
-        let endpoint = baseURL.appending(path: "/api/auth/login/sms")
+        let endpoint = baseURL.appending(path: "/login/sms")
         
         let parameters: [String: Any] = [
             "phone": phone,
