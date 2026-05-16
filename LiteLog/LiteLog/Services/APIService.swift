@@ -34,6 +34,90 @@ class APIService {
                 }
         }
     }
+    
+    func sendSMSCode(phone: String, type: String = "login") async throws -> Bool {
+        let endpoint = baseURL.appending(path: "/api/sms/send")
+        
+        let parameters: [String: Any] = [
+            "phone": phone,
+            "type": type
+        ]
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            AF.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
+                .validate(statusCode: 200..<300)
+                .response { response in
+                    switch response.result {
+                    case .success:
+                        if let data = response.data,
+                           let result = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                           let success = result["success"] as? Bool {
+                            continuation.resume(returning: success)
+                        } else {
+                            continuation.resume(returning: true)
+                        }
+                    case .failure:
+                        continuation.resume(throwing: APIError.networkError)
+                    }
+                }
+        }
+    }
+    
+    func loginWithPassword(phone: String, password: String) async throws -> LoginResponse {
+        let endpoint = baseURL.appending(path: "/api/auth/login/password")
+        
+        let parameters: [String: Any] = [
+            "phone": phone,
+            "password": password
+        ]
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            AF.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
+                .validate(statusCode: 200..<300)
+                .responseData { response in
+                    switch response.result {
+                    case .success(let data):
+                        do {
+                            let decoder = JSONDecoder()
+                            let loginResponse = try decoder.decode(LoginResponse.self, from: data)
+                            continuation.resume(returning: loginResponse)
+                        } catch {
+                            continuation.resume(throwing: APIError.decodingError)
+                        }
+                    case .failure:
+                        continuation.resume(throwing: APIError.invalidResponse)
+                    }
+                }
+        }
+    }
+    
+    func loginWithSMSCode(phone: String, code: String) async throws -> LoginResponse {
+        let endpoint = baseURL.appending(path: "/api/auth/login/sms")
+        
+        let parameters: [String: Any] = [
+            "phone": phone,
+            "code": code
+        ]
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            AF.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
+                .validate(statusCode: 200..<300)
+                .responseData { response in
+                    switch response.result {
+                    case .success(let data):
+                        do {
+                            let decoder = JSONDecoder()
+                            let loginResponse = try decoder.decode(LoginResponse.self, from: data)
+                            continuation.resume(returning: loginResponse)
+                        } catch {
+                            continuation.resume(throwing: APIError.decodingError)
+                        }
+                    case .failure:
+                        continuation.resume(throwing: APIError.invalidResponse)
+                    }
+                }
+        }
+    }
 }
 
 enum APIError: Error, LocalizedError {
@@ -50,4 +134,12 @@ enum APIError: Error, LocalizedError {
         case .serverError(let message): return message
         }
     }
+}
+
+@frozen
+public struct LoginResponse: Codable, Sendable {
+    public let success: Bool
+    public let token: String?
+    public let userId: String?
+    public let message: String?
 }

@@ -114,6 +114,7 @@
 "login.phone.placeholder" = "请输入手机号";
 "login.password.placeholder" = "请输入密码";
 "login.sms.code.placeholder" = "请输入验证码";
+"login.sms.send.failed" = "验证码发送失败，请稍后重试";
 
 // 反馈相关
 "feedback.title" = "反馈建议";

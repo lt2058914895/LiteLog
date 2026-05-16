@@ -114,6 +114,7 @@
 "login.phone.placeholder" = "Enter phone number";
 "login.password.placeholder" = "Enter password";
 "login.sms.code.placeholder" = "Enter verification code";
+"login.sms.send.failed" = "Failed to send verification code, please try again later";
 
 // Feedback related
 "feedback.title" = "Feedback";

@@ -278,7 +278,31 @@ struct LoginView: View {
         guard phoneNumber.count >= 7 && phoneNumber.count <= 15 else { return }
         
         codeButtonDisabled = true
+        codeCountdown = 60
         
+        Task {
+            do {
+                let fullPhoneNumber = "\(selectedCountry.dialCode)\(phoneNumber)"
+                let success = try await APIService.shared.sendSMSCode(phone: fullPhoneNumber)
+                
+                await MainActor.run {
+                    if success {
+                        self.startCountdown()
+                    } else {
+                        self.codeButtonDisabled = false
+                        self.showError(message: NSLocalizedString("login.sms.send.failed", comment: ""))
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.codeButtonDisabled = false
+                    self.showError(message: NSLocalizedString("login.sms.send.failed", comment: ""))
+                }
+            }
+        }
+    }
+    
+    private func startCountdown() {
         Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
             if codeCountdown > 1 {
                 codeCountdown -= 1
@@ -290,13 +314,45 @@ struct LoginView: View {
         }
     }
     
+    private func showError(message: String) {
+        let alert = UIAlertController(title: NSLocalizedString("error.title", comment: ""),
+                                      message: message,
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: NSLocalizedString("action.ok", comment: ""),
+                                       style: .default))
+        UIApplication.shared.windows.first?.rootViewController?.present(alert, animated: true)
+    }
+    
     private func login() {
         isLoading = true
+        let fullPhoneNumber = "\(selectedCountry.dialCode)\(phoneNumber)"
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            settingsManager.login(userId: "\(selectedCountry.dialCode)\(phoneNumber)")
-            dismiss()
-            isLoading = false
+        Task {
+            do {
+                let response: LoginResponse
+                
+                if loginType == .password {
+                    response = try await APIService.shared.loginWithPassword(phone: fullPhoneNumber, password: password)
+                } else {
+                    response = try await APIService.shared.loginWithSMSCode(phone: fullPhoneNumber, code: smsCode)
+                }
+                
+                await MainActor.run {
+                    self.isLoading = false
+                    
+                    if response.success, let userId = response.userId {
+                        self.settingsManager.login(userId: userId)
+                        self.dismiss()
+                    } else {
+                        self.showError(message: response.message ?? NSLocalizedString("login.error", comment: ""))
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoading = false
+                    self.showError(message: NSLocalizedString("login.error", comment: ""))
+                }
+            }
         }
     }
     
