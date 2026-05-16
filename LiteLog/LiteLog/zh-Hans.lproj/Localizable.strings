@@ -116,6 +116,14 @@
 "login.sms.code.placeholder" = "请输入验证码";
 "login.sms.send.failed" = "验证码发送失败，请稍后重试";
 
+// 注册相关
+"register.title" = "注册";
+"register.confirm.password" = "确认密码";
+"register.confirm.password.placeholder" = "请再次输入密码";
+"register.have.account" = "已有账号？";
+"action.register" = "注册";
+"register.error" = "注册失败，请重试";
+
 // 反馈相关
 "feedback.title" = "反馈建议";
 "feedback.type" = "反馈类型";

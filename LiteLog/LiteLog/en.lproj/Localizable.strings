@@ -116,6 +116,14 @@
 "login.sms.code.placeholder" = "Enter verification code";
 "login.sms.send.failed" = "Failed to send verification code, please try again later";
 
+// Register related
+"register.title" = "Register";
+"register.confirm.password" = "Confirm Password";
+"register.confirm.password.placeholder" = "Enter password again";
+"register.have.account" = "Already have an account?";
+"action.register" = "Register";
+"register.error" = "Registration failed, please try again";
+
 // Feedback related
 "feedback.title" = "Feedback";
 "feedback.type" = "Feedback Type";

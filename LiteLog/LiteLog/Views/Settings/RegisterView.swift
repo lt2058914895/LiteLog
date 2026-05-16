@@ -1,30 +1,24 @@
 import SwiftUI
 
-struct LoginView: View {
+struct RegisterView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var settingsManager: SettingsManager
     
-    enum LoginType {
-        case password
-        case smsCode
-    }
-    
-    @State private var loginType: LoginType = .password
     @State private var selectedCountry = CountryCode.defaultCountry
     @State private var showCountryPicker = false
     @State private var phoneNumber = ""
     @State private var password = ""
+    @State private var confirmPassword = ""
     @State private var smsCode = ""
     @State private var isLoading = false
     @State private var codeButtonDisabled = false
     @State private var codeCountdown = 60
-    @State private var showRegister = false
     
     var body: some View {
         NavigationStack {
             ZStack {
                 ScrollView {
-                    VStack(spacing: 32) {                        
+                    VStack(spacing: 32) {
                         cardView
                         
                         bottomLinks
@@ -41,9 +35,6 @@ struct LoginView: View {
             .sheet(isPresented: $showCountryPicker) {
                 countryPickerSheet
             }
-            .sheet(isPresented: $showRegister) {
-                RegisterView()
-            }
         }
     }
     
@@ -53,18 +44,16 @@ struct LoginView: View {
     
     private var cardView: some View {
         VStack(spacing: 24) {
-            Text(NSLocalizedString("login.title", comment: ""))
+            Text(NSLocalizedString("register.title", comment: ""))
                 .font(.title)
                 .fontWeight(.semibold)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
                 .onTapGesture { hideKeyboard() }
             
-            loginTypeSegment
-            
             inputFields
             
-            loginButton
+            registerButton
         }
         .padding(24)
         .background(Color.white)
@@ -72,38 +61,6 @@ struct LoginView: View {
         .shadow(color: .black.opacity(0.08), radius: 20, x: 0, y: 10)
         .contentShape(Rectangle())
         .onTapGesture { hideKeyboard() }
-    }
-    
-    private var loginTypeSegment: some View {
-        HStack(spacing: 8) {
-            Button(action: { 
-                hideKeyboard()
-                loginType = .password 
-            }) {
-                Text(NSLocalizedString("login.type.password", comment: ""))
-                    .font(.subheadline)
-                    .fontWeight(loginType == .password ? .semibold : .regular)
-                    .foregroundColor(loginType == .password ? .white : .primaryBlue)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(loginType == .password ? Color.primaryBlue : Color.primaryBlue.opacity(0.1))
-                    .cornerRadius(12)
-            }
-            
-            Button(action: { 
-                hideKeyboard()
-                loginType = .smsCode 
-            }) {
-                Text(NSLocalizedString("login.type.sms", comment: ""))
-                    .font(.subheadline)
-                    .fontWeight(loginType == .smsCode ? .semibold : .regular)
-                    .foregroundColor(loginType == .smsCode ? .white : .primaryBlue)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(loginType == .smsCode ? Color.primaryBlue : Color.primaryBlue.opacity(0.1))
-                    .cornerRadius(12)
-            }
-        }
     }
     
     private var inputFields: some View {
@@ -125,43 +82,47 @@ struct LoginView: View {
                 }
             }
             
-            if loginType == .password {
-                secureInputField(
-                    title: NSLocalizedString("login.password", comment: ""),
-                    text: $password,
-                    placeholder: NSLocalizedString("login.password.placeholder", comment: "")
-                )
-            } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(NSLocalizedString("login.sms.code", comment: ""))
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(NSLocalizedString("login.sms.code", comment: ""))
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.secondary)
+                
+                HStack(spacing: 12) {
+                    inputField(
+                        text: $smsCode,
+                        keyboardType: .numberPad,
+                        placeholder: NSLocalizedString("login.sms.code.placeholder", comment: "")
+                    )
                     
-                    HStack(spacing: 12) {
-                        inputField(
-                            text: $smsCode,
-                            keyboardType: .numberPad,
-                            placeholder: NSLocalizedString("login.sms.code.placeholder", comment: "")
-                        )
-                        
-                        Button(action: sendSmsCode) {
-                            Text(codeButtonDisabled ? "\(codeCountdown)s" : NSLocalizedString("login.get.code", comment: ""))
-                                .font(.subheadline)
-                                .foregroundColor(codeButtonDisabled || phoneNumber.count < 7 ? .gray : .primaryBlue)
-                                .frame(height: 50)
-                                .frame(width: 100)
-                                .background((codeButtonDisabled || phoneNumber.count < 7) ? Color.gray.opacity(0.1) : Color.primaryBlue.opacity(0.1))
-                                .cornerRadius(12)
-                        }
-                        .disabled(codeButtonDisabled || phoneNumber.count < 7)
+                    Button(action: sendSmsCode) {
+                        Text(codeButtonDisabled ? "\(codeCountdown)s" : NSLocalizedString("login.get.code", comment: ""))
+                            .font(.subheadline)
+                            .foregroundColor(codeButtonDisabled || phoneNumber.count < 7 ? .gray : .primaryBlue)
+                            .frame(height: 50)
+                            .frame(width: 100)
+                            .background((codeButtonDisabled || phoneNumber.count < 7) ? Color.gray.opacity(0.1) : Color.primaryBlue.opacity(0.1))
+                            .cornerRadius(12)
                     }
+                    .disabled(codeButtonDisabled || phoneNumber.count < 7)
                 }
             }
+            
+            secureInputField(
+                title: NSLocalizedString("login.password", comment: ""),
+                text: $password,
+                placeholder: NSLocalizedString("login.password.placeholder", comment: "")
+            )
+            
+            secureInputField(
+                title: NSLocalizedString("register.confirm.password", comment: ""),
+                text: $confirmPassword,
+                placeholder: NSLocalizedString("register.confirm.password.placeholder", comment: "")
+            )
         }
     }
     
-    private func inputField(text: Binding<String>, keyboardType: UIKeyboardType, placeholder: String, width: CGFloat = .infinity) -> some View {
+    private func inputField(text: Binding<String>, keyboardType: UIKeyboardType, placeholder: String) -> some View {
         TextField(placeholder, text: text)
             .keyboardType(keyboardType)
             .font(.body)
@@ -220,45 +181,37 @@ struct LoginView: View {
         }
     }
     
-    private var loginButton: some View {
-        Button(action: login) {
+    private var registerButton: some View {
+        Button(action: register) {
             if isLoading {
                 ProgressView()
                     .tint(.white)
             } else {
-                Text(NSLocalizedString("action.login", comment: ""))
+                Text(NSLocalizedString("action.register", comment: ""))
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
             }
         }
-        .disabled(isLoading || !canLogin)
+        .disabled(isLoading || !canRegister)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
-        .background(isLoading || !canLogin ? Color.gray : Color.primaryBlue)
+        .background(isLoading || !canRegister ? Color.gray : Color.primaryBlue)
         .cornerRadius(12)
-        .shadow(color: isLoading || !canLogin ? .clear : Color.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 4)
-        .animation(.easeInOut(duration: 0.2), value: canLogin)
+        .shadow(color: isLoading || !canRegister ? .clear : Color.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 4)
+        .animation(.easeInOut(duration: 0.2), value: canRegister)
     }
     
     private var bottomLinks: some View {
         VStack(spacing: 12) {
-            if loginType == .password {
-                Button(NSLocalizedString("login.forgot.password", comment: "")) {
-                    hideKeyboard()
-                }
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            }
-            
             HStack(spacing: 4) {
-                Text(NSLocalizedString("login.no.account", comment: ""))
+                Text(NSLocalizedString("register.have.account", comment: ""))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
-                Button(NSLocalizedString("login.register", comment: "")) {
+                Button(NSLocalizedString("action.login", comment: "")) {
                     hideKeyboard()
-                    showRegister = true
+                    dismiss()
                 }
                 .font(.subheadline)
                 .fontWeight(.semibold)
@@ -270,13 +223,12 @@ struct LoginView: View {
         .onTapGesture { hideKeyboard() }
     }
     
-    private var canLogin: Bool {
+    private var canRegister: Bool {
         guard phoneNumber.count >= 7 && phoneNumber.count <= 15 else { return false }
-        if loginType == .password {
-            return !password.isEmpty
-        } else {
-            return smsCode.count >= 4
-        }
+        guard smsCode.count >= 4 else { return false }
+        guard password.count >= 6 else { return false }
+        guard password == confirmPassword else { return false }
+        return true
     }
     
     private func sendSmsCode() {
@@ -288,7 +240,7 @@ struct LoginView: View {
         Task {
             do {
                 let fullPhoneNumber = "\(selectedCountry.dialCode)\(phoneNumber)"
-                let success = try await APIService.shared.sendSMSCode(phone: fullPhoneNumber)
+                let success = try await APIService.shared.sendSMSCode(phone: fullPhoneNumber, type: "register")
                 
                 await MainActor.run {
                     if success {
@@ -328,19 +280,13 @@ struct LoginView: View {
         UIApplication.shared.windows.first?.rootViewController?.present(alert, animated: true)
     }
     
-    private func login() {
+    private func register() {
         isLoading = true
         let fullPhoneNumber = "\(selectedCountry.dialCode)\(phoneNumber)"
         
         Task {
             do {
-                let response: LoginResponse
-                
-                if loginType == .password {
-                    response = try await APIService.shared.loginWithPassword(phone: fullPhoneNumber, password: password)
-                } else {
-                    response = try await APIService.shared.loginWithSMSCode(phone: fullPhoneNumber, code: smsCode)
-                }
+                let response = try await APIService.shared.register(phone: fullPhoneNumber, code: smsCode, password: password)
                 
                 await MainActor.run {
                     self.isLoading = false
@@ -349,13 +295,13 @@ struct LoginView: View {
                         self.settingsManager.login(userId: userId)
                         self.dismiss()
                     } else {
-                        self.showError(message: response.message ?? NSLocalizedString("login.error", comment: ""))
+                        self.showError(message: response.message ?? NSLocalizedString("register.error", comment: ""))
                     }
                 }
             } catch {
                 await MainActor.run {
                     self.isLoading = false
-                    self.showError(message: NSLocalizedString("login.error", comment: ""))
+                    self.showError(message: NSLocalizedString("register.error", comment: ""))
                 }
             }
         }
@@ -402,9 +348,9 @@ struct LoginView: View {
     }
 }
 
-struct LoginView_Previews: PreviewProvider {
+struct RegisterView_Previews: PreviewProvider {
     static var previews: some View {
-        LoginView()
+        RegisterView()
             .environmentObject(SettingsManager.shared)
     }
 }

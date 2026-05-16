@@ -118,6 +118,35 @@ class APIService {
                 }
         }
     }
+    
+    func register(phone: String, code: String, password: String) async throws -> LoginResponse {
+        let endpoint = baseURL.appending(path: "/register")
+        
+        let parameters: [String: Any] = [
+            "phone": phone,
+            "code": code,
+            "password": password
+        ]
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            AF.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
+                .validate(statusCode: 200..<300)
+                .responseData { response in
+                    switch response.result {
+                    case .success(let data):
+                        do {
+                            let decoder = JSONDecoder()
+                            let registerResponse = try decoder.decode(LoginResponse.self, from: data)
+                            continuation.resume(returning: registerResponse)
+                        } catch {
+                            continuation.resume(throwing: APIError.decodingError)
+                        }
+                    case .failure:
+                        continuation.resume(throwing: APIError.invalidResponse)
+                    }
+                }
+        }
+    }
 }
 
 enum APIError: Error, LocalizedError {
