@@ -111,6 +111,9 @@
 "login.error" = "Login failed, please check your phone number and password";
 "login.no.account" = "Don't have an account?";
 "login.select.country" = "Select Country";
+"login.phone.placeholder" = "Enter phone number";
+"login.password.placeholder" = "Enter password";
+"login.sms.code.placeholder" = "Enter verification code";
 
 // Feedback related
 "feedback.title" = "Feedback";

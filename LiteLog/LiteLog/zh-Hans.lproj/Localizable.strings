@@ -111,6 +111,9 @@
 "login.error" = "登录失败，请检查手机号和密码";
 "login.no.account" = "还没有账号？";
 "login.select.country" = "选择国家";
+"login.phone.placeholder" = "请输入手机号";
+"login.password.placeholder" = "请输入密码";
+"login.sms.code.placeholder" = "请输入验证码";
 
 // 反馈相关
 "feedback.title" = "反馈建议";

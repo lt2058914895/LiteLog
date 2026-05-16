@@ -116,7 +116,7 @@ struct LoginView: View {
                     inputField(
                         text: $phoneNumber,
                         keyboardType: .phonePad,
-                        placeholder: "请输入手机号"
+                        placeholder: NSLocalizedString("login.phone.placeholder", comment: "")
                     )
                 }
             }
@@ -125,7 +125,7 @@ struct LoginView: View {
                 secureInputField(
                     title: NSLocalizedString("login.password", comment: ""),
                     text: $password,
-                    placeholder: "请输入密码"
+                    placeholder: NSLocalizedString("login.password.placeholder", comment: "")
                 )
             } else {
                 VStack(alignment: .leading, spacing: 8) {
@@ -138,7 +138,7 @@ struct LoginView: View {
                         inputField(
                             text: $smsCode,
                             keyboardType: .numberPad,
-                            placeholder: "请输入验证码"
+                            placeholder: NSLocalizedString("login.sms.code.placeholder", comment: "")
                         )
                         
                         Button(action: sendSmsCode) {
