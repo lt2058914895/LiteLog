@@ -10,6 +10,8 @@ struct LoginView: View {
     }
     
     @State private var loginType: LoginType = .password
+    @State private var selectedCountry = CountryCode.defaultCountry
+    @State private var showCountryPicker = false
     @State private var phoneNumber = ""
     @State private var password = ""
     @State private var smsCode = ""
@@ -35,6 +37,9 @@ struct LoginView: View {
                 LinearGradient(gradient: Gradient(colors: [Color.primaryBlue.opacity(0.05), Color.primaryBlue.opacity(0.1)]), startPoint: .top, endPoint: .bottom)
                     .ignoresSafeArea()
             )
+            .sheet(isPresented: $showCountryPicker) {
+                countryPickerSheet
+            }
         }
     }
     
@@ -99,12 +104,22 @@ struct LoginView: View {
     
     private var inputFields: some View {
         VStack(spacing: 16) {
-            inputField(
-                title: NSLocalizedString("login.phone", comment: ""),
-                text: $phoneNumber,
-                keyboardType: .phonePad,
-                placeholder: "请输入手机号"
-            )
+            VStack(alignment: .leading, spacing: 8) {
+                Text(NSLocalizedString("login.phone", comment: ""))
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.secondary)
+                
+                HStack(spacing: 12) {
+                    countryCodePicker
+                    
+                    inputField(
+                        text: $phoneNumber,
+                        keyboardType: .phonePad,
+                        placeholder: "请输入手机号"
+                    )
+                }
+            }
             
             if loginType == .password {
                 secureInputField(
@@ -113,51 +128,71 @@ struct LoginView: View {
                     placeholder: "请输入密码"
                 )
             } else {
-                HStack(spacing: 12) {
-                    inputField(
-                        title: NSLocalizedString("login.sms.code", comment: ""),
-                        text: $smsCode,
-                        keyboardType: .numberPad,
-                        placeholder: "请输入验证码",
-                        width: .infinity,
-                        showLabel: false
-                    )
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(NSLocalizedString("login.sms.code", comment: ""))
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
                     
-                    Button(action: sendSmsCode) {
-                        Text(codeButtonDisabled ? "\(codeCountdown)s" : NSLocalizedString("login.get.code", comment: ""))
-                            .font(.subheadline)
-                            .foregroundColor(codeButtonDisabled || phoneNumber.count < 11 ? .gray : .primaryBlue)
-                            .frame(height: 50)
-                            .frame(width: 100)
-                            .background((codeButtonDisabled || phoneNumber.count < 11) ? Color.gray.opacity(0.1) : Color.primaryBlue.opacity(0.1))
-                            .cornerRadius(12)
+                    HStack(spacing: 12) {
+                        inputField(
+                            text: $smsCode,
+                            keyboardType: .numberPad,
+                            placeholder: "请输入验证码"
+                        )
+                        
+                        Button(action: sendSmsCode) {
+                            Text(codeButtonDisabled ? "\(codeCountdown)s" : NSLocalizedString("login.get.code", comment: ""))
+                                .font(.subheadline)
+                                .foregroundColor(codeButtonDisabled || phoneNumber.count < 7 ? .gray : .primaryBlue)
+                                .frame(height: 50)
+                                .frame(width: 100)
+                                .background((codeButtonDisabled || phoneNumber.count < 7) ? Color.gray.opacity(0.1) : Color.primaryBlue.opacity(0.1))
+                                .cornerRadius(12)
+                        }
+                        .disabled(codeButtonDisabled || phoneNumber.count < 7)
                     }
-                    .disabled(codeButtonDisabled || phoneNumber.count < 11)
                 }
             }
         }
     }
     
-    private func inputField(title: String, text: Binding<String>, keyboardType: UIKeyboardType, placeholder: String, width: CGFloat = .infinity, showLabel: Bool = true) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if showLabel {
-                Text(title)
-                    .font(.caption)
+    private func inputField(text: Binding<String>, keyboardType: UIKeyboardType, placeholder: String, width: CGFloat = .infinity) -> some View {
+        TextField(placeholder, text: text)
+            .keyboardType(keyboardType)
+            .font(.body)
+            .frame(height: 50)
+            .padding(.horizontal, 16)
+            .background(Color(UIColor.systemBackground))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+            )
+    }
+    
+    private var countryCodePicker: some View {
+        Button(action: {
+            hideKeyboard()
+            showCountryPicker = true
+        }) {
+            HStack(spacing: 4) {
+                Text(selectedCountry.dialCode)
+                    .font(.body)
                     .fontWeight(.medium)
-                    .foregroundColor(.secondary)
+                
+                Image(systemName: "chevron.down")
+                    .font(.caption)
+                    .foregroundColor(.gray)
             }
-            
-            TextField(placeholder, text: text)
-                .keyboardType(keyboardType)
-                .font(.body)
-                .frame(height: 50)
-                .padding(.horizontal, 16)
-                .background(Color(UIColor.systemBackground))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                )
+            .frame(height: 50)
+            .padding(.horizontal, 12)
+            .background(Color(UIColor.systemBackground))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+            )
         }
     }
     
@@ -231,7 +266,7 @@ struct LoginView: View {
     }
     
     private var canLogin: Bool {
-        guard phoneNumber.count >= 11 else { return false }
+        guard phoneNumber.count >= 7 && phoneNumber.count <= 15 else { return false }
         if loginType == .password {
             return !password.isEmpty
         } else {
@@ -240,7 +275,7 @@ struct LoginView: View {
     }
     
     private func sendSmsCode() {
-        guard phoneNumber.count >= 11 else { return }
+        guard phoneNumber.count >= 7 && phoneNumber.count <= 15 else { return }
         
         codeButtonDisabled = true
         
@@ -259,10 +294,50 @@ struct LoginView: View {
         isLoading = true
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            settingsManager.login(userId: phoneNumber)
+            settingsManager.login(userId: "\(selectedCountry.dialCode)\(phoneNumber)")
             dismiss()
             isLoading = false
         }
+    }
+    
+    private var countryPickerSheet: some View {
+        NavigationStack {
+            List {
+                ForEach(CountryCode.commonCountries) { country in
+                    HStack {
+                        Text(country.name)
+                            .font(.body)
+                        
+                        Spacer()
+                        
+                        Text(country.dialCode)
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                        
+                        if selectedCountry.code == country.code {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.primaryBlue)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedCountry = country
+                        showCountryPicker = false
+                    }
+                }
+            }
+            .listStyle(.plain)
+            .navigationTitle(NSLocalizedString("login.select.country", comment: ""))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(NSLocalizedString("action.cancel", comment: "")) {
+                        showCountryPicker = false
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
     }
 }
 

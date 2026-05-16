@@ -110,6 +110,7 @@
 "login.register" = "Register";
 "login.error" = "Login failed, please check your phone number and password";
 "login.no.account" = "Don't have an account?";
+"login.select.country" = "Select Country";
 
 // Feedback related
 "feedback.title" = "Feedback";

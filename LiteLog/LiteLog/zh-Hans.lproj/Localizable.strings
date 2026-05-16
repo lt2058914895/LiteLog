@@ -110,6 +110,7 @@
 "login.register" = "注册";
 "login.error" = "登录失败，请检查手机号和密码";
 "login.no.account" = "还没有账号？";
+"login.select.country" = "选择国家";
 
 // 反馈相关
 "feedback.title" = "反馈建议";
