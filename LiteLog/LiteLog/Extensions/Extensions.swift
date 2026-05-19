@@ -13,23 +13,11 @@ extension UIDevice {
 
 extension View {
     func adaptiveSheet<Item, Content>(item: Binding<Item?>, onDismiss: (() -> Void)? = nil, content: @escaping (Item) -> Content) -> some View where Item: Identifiable, Content: View {
-        Group {
-            if UIDevice.isPad {
-                self.popover(item: item, content: content)
-            } else {
-                self.sheet(item: item, onDismiss: onDismiss, content: content)
-            }
-        }
+        self.sheet(item: item, onDismiss: onDismiss, content: content)
     }
     
     func adaptiveSheet<Content>(isPresented: Binding<Bool>, onDismiss: (() -> Void)? = nil, content: @escaping () -> Content) -> some View where Content: View {
-        Group {
-            if UIDevice.isPad {
-                self.popover(isPresented: isPresented, content: content)
-            } else {
-                self.sheet(isPresented: isPresented, onDismiss: onDismiss, content: content)
-            }
-        }
+        self.sheet(isPresented: isPresented, onDismiss: onDismiss, content: content)
     }
 }
 

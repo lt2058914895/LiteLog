@@ -25,7 +25,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                userHeaderSection
+//                userHeaderSection
                 
                 profileSection
 
@@ -39,7 +39,7 @@ struct SettingsView: View {
 
                 dataSection
 
-                feedbackSection
+//                feedbackSection
 
                 aboutSection
             }
