@@ -4,7 +4,6 @@ import SwiftData
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var settingsManager: SettingsManager
-    @StateObject private var healthKitManager = HealthKitManager.shared
     @StateObject private var notificationManager = NotificationManager.shared
 
     @Query private var userProfile: [UserProfile]
@@ -30,8 +29,6 @@ struct SettingsView: View {
                 profileSection
 
                 unitSection
-
-                healthSection
 
                 syncSection
 
@@ -174,31 +171,6 @@ struct SettingsView: View {
         }
     }
 
-    private var healthSection: some View {
-        Section(NSLocalizedString("settings.health", comment: "")) {
-            Toggle(isOn: $settingsManager.healthKitEnabled) {
-                Label {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(NSLocalizedString("settings.healthkit", comment: ""))
-                        Text(NSLocalizedString("settings.healthkit.desc", comment: ""))
-                            .font(.caption)
-                            .foregroundColor(.secondaryText)
-                    }
-                } icon: {
-                    Image(systemName: "heart.fill")
-                        .foregroundColor(.red)
-                }
-            }
-            .onChange(of: settingsManager.healthKitEnabled) { _, newValue in
-                if newValue {
-                    Task {
-                        try? await healthKitManager.requestAuthorization()
-                    }
-                }
-            }
-        }
-    }
-
     private var syncSection: some View {
         Section(NSLocalizedString("settings.icloud", comment: "")) {
             Toggle(isOn: $settingsManager.iCloudSyncEnabled) {
@@ -323,7 +295,7 @@ struct SettingsView: View {
         for profileItem in userProfile {
             modelContext.delete(profileItem)
         }
-        
+
         do {
             try modelContext.save()
         } catch {

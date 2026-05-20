@@ -396,16 +396,6 @@ struct RecordFormView: View {
             return
         }
 
-        if settingsManager.healthKitEnabled {
-            Task {
-                try? await HealthKitManager.shared.saveWeight(
-                    weightInKg: weightInKg,
-                    date: date,
-                    bodyFatPercentage: bodyFatPercentage
-                )
-            }
-        }
-
         dismiss()
     }
 

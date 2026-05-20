@@ -4,7 +4,6 @@ import SwiftData
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var settingsManager: SettingsManager
-    @StateObject private var healthKitManager = HealthKitManager.shared
 
     @Query(sort: \WeightRecord.date, order: .reverse) private var allRecords: [WeightRecord]
     @Query private var userProfile: [UserProfile]
@@ -110,9 +109,6 @@ struct HomeView: View {
                 Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
             } message: {
                 Text(errorMessage)
-            }
-            .refreshable {
-                await syncFromHealthKit()
             }
         }
     }
@@ -233,35 +229,6 @@ struct HomeView: View {
             .cardStyle()
         }
         .buttonStyle(.plain)
-    }
-
-    private func syncFromHealthKit() async {
-        guard settingsManager.healthKitEnabled else { return }
-
-        do {
-            try await healthKitManager.requestAuthorization()
-            let startDate = Calendar.current.date(byAdding: .month, value: -3, to: Date()) ?? Date()
-            let healthData = try await healthKitManager.fetchWeightData(from: startDate)
-
-            for dataPoint in healthData {
-                let existingRecord = allRecords.first { record in
-                    Calendar.current.isDate(record.date, inSameDayAs: dataPoint.date)
-                }
-
-                if existingRecord == nil {
-                    let newRecord = WeightRecord(
-                        date: dataPoint.date,
-                        weight: dataPoint.weightInKg
-                    )
-                    modelContext.insert(newRecord)
-                }
-            }
-        } catch {
-            await MainActor.run {
-                errorMessage = error.localizedDescription
-                showingError = true
-            }
-        }
     }
 }
 
@@ -384,12 +351,6 @@ struct QuickAddWeightView: View {
         } catch {
             print("Failed to save weight: \(error)")
             return
-        }
-
-        if settingsManager.healthKitEnabled {
-            Task {
-                try? await HealthKitManager.shared.saveWeight(weightInKg: weightInKg, date: Date())
-            }
         }
 
         isPresented = false

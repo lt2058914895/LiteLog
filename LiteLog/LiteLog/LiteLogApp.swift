@@ -12,7 +12,6 @@ import SwiftData
 @main
 struct LiteLogApp: App {
     @StateObject private var settingsManager = SettingsManager.shared
-    @StateObject private var healthKitManager = HealthKitManager.shared
     
     @State private var hasPopulatedMockData = false
 
@@ -45,7 +44,6 @@ struct LiteLogApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(settingsManager)
-                .environmentObject(healthKitManager)
         }
         .modelContainer(sharedModelContainer)
     }

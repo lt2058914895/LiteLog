@@ -10,7 +10,6 @@ final class SettingsManager: ObservableObject {
     private enum Keys {
         static let weightUnit = "weightUnit"
         static let heightUnit = "heightUnit"
-        static let healthKitEnabled = "healthKitEnabled"
         static let iCloudSyncEnabled = "iCloudSyncEnabled"
         static let notificationsEnabled = "notificationsEnabled"
         static let notificationTime = "notificationTime"
@@ -30,12 +29,6 @@ final class SettingsManager: ObservableObject {
     @Published var heightUnit: HeightUnit {
         didSet {
             defaults.set(heightUnit.rawValue, forKey: Keys.heightUnit)
-        }
-    }
-
-    @Published var healthKitEnabled: Bool {
-        didSet {
-            defaults.set(healthKitEnabled, forKey: Keys.healthKitEnabled)
         }
     }
 
@@ -72,7 +65,6 @@ final class SettingsManager: ObservableObject {
         let savedHeightUnit = defaults.string(forKey: Keys.heightUnit) ?? HeightUnit.cm.rawValue
         self.heightUnit = HeightUnit(rawValue: savedHeightUnit) ?? .cm
 
-        self.healthKitEnabled = defaults.bool(forKey: Keys.healthKitEnabled)
         self.iCloudSyncEnabled = defaults.bool(forKey: Keys.iCloudSyncEnabled)
         self.notificationsEnabled = defaults.bool(forKey: Keys.notificationsEnabled)
         self.notificationTime = defaults.object(forKey: Keys.notificationTime) as? Date ?? Self.defaultNotificationTime()
@@ -88,7 +80,6 @@ final class SettingsManager: ObservableObject {
     func resetToDefaults() {
         weightUnit = .kg
         heightUnit = .cm
-        healthKitEnabled = false
         iCloudSyncEnabled = true
         notificationsEnabled = false
         notificationTime = Self.defaultNotificationTime()
