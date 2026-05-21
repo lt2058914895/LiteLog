@@ -348,8 +348,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiteLog/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "轻身记";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "轻身记需要读取您的体重数据，以便在应用中展示体重趋势和历史记录。";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "轻身记需要写入您的体重数据，以便将您的记录同步到健康应用。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen";
@@ -389,8 +387,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiteLog/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "轻身记";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "轻身记需要读取您的体重数据，以便在应用中展示体重趋势和历史记录。";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "轻身记需要写入您的体重数据，以便将您的记录同步到健康应用。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen";
