@@ -92,9 +92,7 @@ struct StatisticsView: View {
 
                         weightChart
 
-                        if let profile = profile {
-                            bmiChart(for: profile)
-                        }
+                        bmiChartSection
 
                         statsDetails
                     }
@@ -247,6 +245,78 @@ struct StatisticsView: View {
                 .frame(height: 150)
 
                 bmiLegend
+            }
+        }
+        .padding()
+        .cardStyle()
+    }
+
+    private var bmiChartSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(NSLocalizedString("stats.bmi.trend", comment: ""))
+                .font(.headline)
+                .foregroundColor(.primaryText)
+
+            if let profile = profile {
+                if filteredRecords.isEmpty {
+                    Text(NSLocalizedString("stats.no.data", comment: ""))
+                        .font(.subheadline)
+                        .foregroundColor(.secondaryText)
+                        .frame(height: 150)
+                        .frame(maxWidth: .infinity)
+                } else {
+                    let bmiData = filteredRecords.map { record -> (Date, Double) in
+                        (record.date.startOfDay, profile.calculateBMI(weight: record.weight))
+                    }
+
+                    Chart(bmiData, id: \.0) { item in
+                        LineMark(
+                            x: .value("Date", item.0),
+                            y: .value("BMI", item.1)
+                        )
+                        .foregroundStyle(Color.green)
+                        .interpolationMethod(.catmullRom)
+
+                        PointMark(
+                            x: .value("Date", item.0),
+                            y: .value("BMI", item.1)
+                        )
+                        .foregroundStyle(bmiCategoryColor(item.1))
+                        .symbolSize(30)
+                    }
+                    .chartYScale(domain: 15...35)
+                    .chartXScale(domain: startDate...Date().startOfDay)
+                    .chartXAxis {
+                        AxisMarks(values: [startDate, Date().startOfDay]) { value in
+                            AxisGridLine()
+                            AxisValueLabel {
+                                if let date = value.as(Date.self) {
+                                    Text(date.shortDateString)
+                                }
+                            }
+                        }
+                    }
+                    .chartYAxis {
+                        AxisMarks(position: .leading)
+                    }
+                    .frame(height: 150)
+
+                    bmiLegend
+                }
+            } else {
+                VStack(spacing: 8) {
+                    Text(NSLocalizedString("stats.bmi.no.profile", comment: ""))
+                        .font(.subheadline)
+                        .foregroundColor(.secondaryText)
+                    
+                    Button(NSLocalizedString("action.edit", comment: "")) {
+                        NotificationCenter.default.post(name: .showProfileEditor, object: nil)
+                    }
+                    .foregroundColor(.primaryBlue)
+                    .font(.subheadline)
+                }
+                .frame(height: 150)
+                .frame(maxWidth: .infinity)
             }
         }
         .padding()

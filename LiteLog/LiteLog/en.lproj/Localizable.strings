@@ -25,6 +25,8 @@
 "home.no.records" = "No records";
 "home.start.record" = "Start tracking your weight changes";
 "home.bmi" = "BMI";
+"home.bmi.no.data" = "No data";
+"home.bmi.no.profile" = "Please edit profile to view BMI";
 "home.progress" = "Progress";
 "home.goal" = "Goal";
 "home.trend" = "Trend";
@@ -57,6 +59,7 @@
 "stats.average" = "Average";
 "stats.change" = "Change";
 "stats.bmi.trend" = "BMI Trend";
+"stats.bmi.no.profile" = "Please edit profile to view BMI trend";
 "stats.loss.speed" = "Weight Loss Speed";
 "stats.per.week" = "/week";
 

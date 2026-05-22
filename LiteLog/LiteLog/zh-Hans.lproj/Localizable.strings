@@ -25,6 +25,8 @@
 "home.no.records" = "暂无记录";
 "home.start.record" = "开始记录你的体重变化吧";
 "home.bmi" = "BMI";
+"home.bmi.no.data" = "暂无数据";
+"home.bmi.no.profile" = "请先编辑个人资料以查看BMI";
 "home.progress" = "进度";
 "home.goal" = "目标";
 "home.trend" = "趋势";
@@ -57,6 +59,7 @@
 "stats.average" = "平均";
 "stats.change" = "变化";
 "stats.bmi.trend" = "BMI趋势";
+"stats.bmi.no.profile" = "请先编辑个人资料以查看BMI趋势";
 "stats.loss.speed" = "减重速度";
 "stats.per.week" = "/周";
 

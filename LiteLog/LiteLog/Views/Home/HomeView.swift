@@ -80,14 +80,7 @@ struct HomeView: View {
                 VStack(spacing: 20) {
                     todayWeightCard
 
-                    if let latest = latestWeight, let profile = profile {
-                        BMIProgressView(
-                            currentWeight: latest,
-                            goalWeight: profile.goalWeight,
-                            height: profile.height,
-                            unit: unit
-                        )
-                    }
+                    bmiProgressSection
 
                     HStack(spacing: 16) {
                         bodyFatCard
@@ -173,7 +166,7 @@ struct HomeView: View {
                     if let bodyFat = latestBodyFat {
                         HStack(alignment: .firstTextBaseline, spacing: 2) {
                             Text(String(format: "%.1f", bodyFat))
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(.primaryText)
 
                             Text("%")
@@ -182,7 +175,7 @@ struct HomeView: View {
                         }
                     } else {
                         Text("-- %")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
                             .foregroundColor(.secondaryText)
                     }
                 }
@@ -211,7 +204,7 @@ struct HomeView: View {
                     if let waist = latestWaist {
                         HStack(alignment: .firstTextBaseline, spacing: 2) {
                             Text(String(format: "%.1f", waist))
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(.primaryText)
 
                             Text("cm")
@@ -220,7 +213,7 @@ struct HomeView: View {
                         }
                     } else {
                         Text("-- cm")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
                             .foregroundColor(.secondaryText)
                     }
                 }
@@ -229,6 +222,64 @@ struct HomeView: View {
             .cardStyle()
         }
         .buttonStyle(.plain)
+    }
+
+    private var bmiProgressSection: some View {
+        VStack(spacing: 16) {
+            if let profile = profile {
+                if let latest = latestWeight {
+                    BMIProgressView(
+                        currentWeight: latest,
+                        goalWeight: profile.goalWeight,
+                        height: profile.height,
+                        unit: unit
+                    )
+                } else {
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text(NSLocalizedString("home.bmi", comment: ""))
+                                .font(.subheadline)
+                                .foregroundColor(.secondaryText)
+                            
+                            Spacer()
+                        }
+                        
+                        Text(NSLocalizedString("home.bmi.no.data", comment: ""))
+                            .font(.subheadline)
+                            .foregroundColor(.secondaryText)
+                            .padding(.vertical, 20)
+                    }
+                    .padding()
+                    .cardStyle()
+                }
+            } else {
+                VStack(spacing: 8) {
+                    HStack {
+                        Text(NSLocalizedString("home.bmi", comment: ""))
+                            .font(.subheadline)
+                            .foregroundColor(.secondaryText)
+                        
+                        Spacer()
+                    }
+                    
+                    VStack(spacing: 8) {
+                        Text(NSLocalizedString("home.bmi.no.profile", comment: ""))
+                            .font(.subheadline)
+                            .foregroundColor(.secondaryText)
+                        
+                        Button(NSLocalizedString("action.edit", comment: "")) {
+                            NotificationCenter.default.post(name: .showProfileEditor, object: nil)
+                        }
+                        .foregroundColor(.primaryBlue)
+                        .font(.subheadline)
+                    }
+                    .frame(height: 100)
+                    .frame(maxWidth: .infinity)
+                }
+                .padding()
+                .cardStyle()
+            }
+        }
     }
 }
 

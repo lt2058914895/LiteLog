@@ -41,6 +41,9 @@ struct SettingsView: View {
                 aboutSection
             }
             .navigationBarHidden(true)
+            .onReceive(NotificationCenter.default.publisher(for: .showProfileEditor)) { _ in
+                showingProfileEditor = true
+            }
             .adaptiveSheet(isPresented: $showingProfileEditor) {
                 ProfileEditorView()
             }

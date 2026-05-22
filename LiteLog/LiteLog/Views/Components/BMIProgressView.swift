@@ -11,28 +11,27 @@ struct BMIProgressView: View {
         return currentWeight / (heightInMeters * heightInMeters)
     }
 
-    private var goalBMI: Double {
-        let heightInMeters = height / 100.0
-        return goalWeight / (heightInMeters * heightInMeters)
-    }
-
     private var bmiCategory: UserProfile.BMICategory {
         let profile = UserProfile(height: height)
         return profile.bmiCategory(bmi: currentBMI)
     }
 
-    private var progress: Double {
-        guard goalWeight < currentWeight else { return 1.0 }
-        let totalLoss = currentWeight - goalWeight
-        return min(max(totalLoss / 10.0, 0), 1.0)
+    private var bmiCategoryColor: Color {
+        switch bmiCategory {
+        case .underweight:
+            return .blue
+        case .normal:
+            return .green
+        case .overweight:
+            return .orange
+        case .obese:
+            return .red
+        }
     }
 
     var body: some View {
         VStack(spacing: 16) {
-            HStack(spacing: 24) {
-                bmiView
-                progressView
-            }
+            bmiView
 
             goalView
         }
@@ -63,59 +62,44 @@ struct BMIProgressView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var bmiCategoryColor: Color {
-        switch bmiCategory {
-        case .underweight:
-            return .blue
-        case .normal:
-            return .green
-        case .overweight:
-            return .orange
-        case .obese:
-            return .red
-        }
+    private var weightDifference: Double {
+        goalWeight - currentWeight
     }
 
-    private var progressView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(NSLocalizedString("home.progress", comment: ""))
-                .font(.subheadline)
-                .foregroundColor(.secondaryText)
-
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.secondaryBackground)
-                    .frame(width: 80, height: 12)
-
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.primaryBlue)
-                    .frame(width: 80 * progress, height: 12)
-            }
-
-            Text("\(Int(progress * 100))%")
-                .font(.caption)
-                .foregroundColor(.secondaryText)
+    private var weightDifferenceString: String {
+        let difference = unit.convertFromKg(weightDifference)
+        if weightDifference > 0 {
+            return "+\(difference.weightString)"
+        } else if weightDifference < 0 {
+            return difference.weightString
+        } else {
+            return "0"
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var goalView: some View {
-        HStack {
-            Image(systemName: "target")
-                .foregroundColor(.primaryBlue)
+        VStack(spacing: 8) {
+            HStack {
+                Image(systemName: "target")
+                    .foregroundColor(.primaryBlue)
 
-            Text("\(NSLocalizedString("home.goal", comment: "")): ")
-                .foregroundColor(.secondaryText)
+                Text("\(NSLocalizedString("home.goal", comment: "")): ")
+                    .foregroundColor(.secondaryText)
 
-            Text("\(unit.convertFromKg(goalWeight).weightString) \(unit.shortName)")
-                .fontWeight(.medium)
-                .foregroundColor(.primaryText)
+                Text("\(unit.convertFromKg(goalWeight).weightString) \(unit.shortName)")
+                    .fontWeight(.medium)
+                    .foregroundColor(.primaryText)
 
-            Text("(\(unit.convertFromKg(currentWeight).weightString) \(unit.shortName))")
-                .foregroundColor(.secondaryText)
+                Text("(\(unit.convertFromKg(currentWeight).weightString) \(unit.shortName))")
+                    .foregroundColor(.secondaryText)
 
-            Spacer()
+                Spacer()
+                
+                Text("\(weightDifferenceString) \(unit.shortName)")
+                    .fontWeight(.medium)
+                    .foregroundColor(.primaryText)
+            }
+            .font(.subheadline)
         }
-        .font(.subheadline)
     }
 }

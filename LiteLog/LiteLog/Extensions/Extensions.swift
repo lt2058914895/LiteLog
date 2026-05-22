@@ -1,6 +1,10 @@
 import SwiftUI
 import UIKit
 
+extension Notification.Name {
+    static let showProfileEditor = Notification.Name("showProfileEditor")
+}
+
 extension UIDevice {
     static var isPad: Bool {
         current.userInterfaceIdiom == .pad
