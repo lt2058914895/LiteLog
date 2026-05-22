@@ -70,11 +70,16 @@
 "settings.title" = "Settings";
 "settings.profile" = "Profile";
 "settings.height" = "Height";
+"settings.height.required" = "Please enter height";
+"settings.height.invalid" = "Please enter a valid height";
 "settings.gender" = "Gender";
 "settings.male" = "Male";
 "settings.female" = "Female";
 "settings.age" = "Age";
 "settings.goal.weight" = "Goal Weight";
+"settings.goal.weight.required" = "Please enter goal weight";
+"settings.goal.weight.invalid" = "Please enter a valid goal weight";
+"settings.error" = "Alert";
 "settings.unit" = "Unit";
 "settings.icloud" = "iCloud Sync";
 "settings.icloud.desc" = "Sync data across devices";

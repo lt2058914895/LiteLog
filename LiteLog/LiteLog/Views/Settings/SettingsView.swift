@@ -315,6 +315,8 @@ struct ProfileEditorView: View {
     @State private var gender: UserProfile.Gender = .male
     @State private var age: Int = 30
     @State private var goalWeightString: String = ""
+    @State private var showingValidationAlert = false
+    @State private var validationErrorMessage = ""
 
     private var existingProfile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -342,7 +344,7 @@ struct ProfileEditorView: View {
                 }
 
                 Section(NSLocalizedString("settings.age", comment: "")) {
-                    Stepper("\(age) \(NSLocalizedString("settings.age", comment: ""))", value: $age, in: 1...120)
+                    Stepper("\(age)", value: $age, in: 1...120)
                 }
 
                 Section(NSLocalizedString("settings.goal.weight", comment: "")) {
@@ -357,6 +359,11 @@ struct ProfileEditorView: View {
             }
             .navigationTitle(NSLocalizedString("settings.profile", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
+            .alert(NSLocalizedString("settings.error", comment: ""), isPresented: $showingValidationAlert) {
+                Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
+            } message: {
+                Text(validationErrorMessage)
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(NSLocalizedString("action.cancel", comment: "")) {
@@ -386,6 +393,26 @@ struct ProfileEditorView: View {
     }
 
     private func saveProfile() {
+        var errors: [String] = []
+        
+        if heightString.trimmingCharacters(in: .whitespaces).isEmpty {
+            errors.append(NSLocalizedString("settings.height.required", comment: ""))
+        } else if let heightValue = Double(heightString), heightValue <= 0 {
+            errors.append(NSLocalizedString("settings.height.invalid", comment: ""))
+        }
+        
+        if goalWeightString.trimmingCharacters(in: .whitespaces).isEmpty {
+            errors.append(NSLocalizedString("settings.goal.weight.required", comment: ""))
+        } else if let goalWeightValue = Double(goalWeightString), goalWeightValue <= 0 {
+            errors.append(NSLocalizedString("settings.goal.weight.invalid", comment: ""))
+        }
+        
+        if !errors.isEmpty {
+            validationErrorMessage = errors.joined(separator: "\n")
+            showingValidationAlert = true
+            return
+        }
+
         guard let heightValue = Double(heightString),
               let goalWeightValue = Double(goalWeightString) else {
             return

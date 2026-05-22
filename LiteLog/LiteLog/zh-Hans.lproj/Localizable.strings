@@ -70,11 +70,16 @@
 "settings.title" = "设置";
 "settings.profile" = "个人资料";
 "settings.height" = "身高";
+"settings.height.required" = "请输入身高";
+"settings.height.invalid" = "请输入有效的身高";
 "settings.gender" = "性别";
 "settings.male" = "男";
 "settings.female" = "女";
 "settings.age" = "年龄";
 "settings.goal.weight" = "目标体重";
+"settings.goal.weight.required" = "请输入目标体重";
+"settings.goal.weight.invalid" = "请输入有效的目标体重";
+"settings.error" = "提示";
 "settings.unit" = "单位";
 "settings.icloud" = "iCloud同步";
 "settings.icloud.desc" = "在设备间同步数据";
