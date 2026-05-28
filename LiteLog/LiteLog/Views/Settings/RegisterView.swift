@@ -13,6 +13,7 @@ struct RegisterView: View {
     @State private var isLoading = false
     @State private var codeButtonDisabled = false
     @State private var codeCountdown = 60
+    @State private var hasSentCode = false
     
     var body: some View {
         NavigationStack {
@@ -96,12 +97,12 @@ struct RegisterView: View {
                     )
                     
                     Button(action: sendSmsCode) {
-                        Text(codeButtonDisabled ? "\(codeCountdown)s" : NSLocalizedString("login.get.code", comment: ""))
+                        Text(codeButtonDisabled ? "\(codeCountdown)s" : (hasSentCode ? NSLocalizedString("login.resend.code", comment: "") : NSLocalizedString("login.get.code", comment: "")))
                             .font(.subheadline)
-                            .foregroundColor(codeButtonDisabled || phoneNumber.count < 7 ? Color(.systemGray4) : .primaryBlue)
+                            .foregroundColor(codeButtonDisabled || phoneNumber.count < 7 ? .gray : .primaryBlue)
                             .frame(height: 50)
                             .frame(width: 100)
-                            .background((codeButtonDisabled || phoneNumber.count < 7) ? Color(.systemGray5) : Color.primaryBlue.opacity(0.1))
+                            .background((codeButtonDisabled || phoneNumber.count < 7) ? Color.gray.opacity(0.1) : Color.primaryBlue.opacity(0.1))
                             .cornerRadius(12)
                     }
                     .disabled(codeButtonDisabled || phoneNumber.count < 7)
@@ -207,7 +208,7 @@ struct RegisterView: View {
             HStack(spacing: 4) {
                 Text(NSLocalizedString("register.have.account", comment: ""))
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color(.secondaryLabel))
                 
                 Button(NSLocalizedString("action.login", comment: "")) {
                     hideKeyboard()
@@ -236,23 +237,21 @@ struct RegisterView: View {
         
         codeButtonDisabled = true
         codeCountdown = 60
+        hasSentCode = true
+        startCountdown()
         
         Task {
             do {
                 let fullPhoneNumber = "\(selectedCountry.dialCode)\(phoneNumber)"
                 let success = try await APIService.shared.sendSMSCode(phone: fullPhoneNumber, type: "register")
                 
-                await MainActor.run {
-                    if success {
-                        self.startCountdown()
-                    } else {
-                        self.codeButtonDisabled = false
+                if !success {
+                    await MainActor.run {
                         self.showError(message: NSLocalizedString("login.sms.send.failed", comment: ""))
                     }
                 }
             } catch {
                 await MainActor.run {
-                    self.codeButtonDisabled = false
                     self.showError(message: NSLocalizedString("login.sms.send.failed", comment: ""))
                 }
             }
@@ -260,13 +259,17 @@ struct RegisterView: View {
     }
     
     private func startCountdown() {
-        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
-            if codeCountdown > 1 {
-                codeCountdown -= 1
-            } else {
+        Task {
+            for i in (1...60).reversed() {
+                await MainActor.run {
+                    codeCountdown = i
+                }
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+            }
+            
+            await MainActor.run {
                 codeCountdown = 60
                 codeButtonDisabled = false
-                timer.invalidate()
             }
         }
     }
@@ -319,7 +322,7 @@ struct RegisterView: View {
                         
                         Text(country.dialCode)
                             .font(.body)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color(.secondaryLabel))
                         
                         if selectedCountry.code == country.code {
                             Image(systemName: "checkmark")

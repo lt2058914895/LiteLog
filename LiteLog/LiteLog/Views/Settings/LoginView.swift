@@ -19,6 +19,7 @@ struct LoginView: View {
     @State private var codeButtonDisabled = false
     @State private var codeCountdown = 60
     @State private var showRegister = false
+    @State private var hasSentCode = false
     
     var body: some View {
         NavigationStack {
@@ -146,7 +147,7 @@ struct LoginView: View {
                         )
                         
                         Button(action: sendSmsCode) {
-                            Text(codeButtonDisabled ? "\(codeCountdown)s" : NSLocalizedString("login.get.code", comment: ""))
+                            Text(codeButtonDisabled ? "\(codeCountdown)s" : (hasSentCode ? NSLocalizedString("login.resend.code", comment: "") : NSLocalizedString("login.get.code", comment: "")))
                                 .font(.subheadline)
                                 .foregroundColor(codeButtonDisabled || phoneNumber.count < 7 ? .gray : .primaryBlue)
                                 .frame(height: 50)
@@ -284,23 +285,21 @@ struct LoginView: View {
         
         codeButtonDisabled = true
         codeCountdown = 60
+        hasSentCode = true
+        startCountdown()
         
         Task {
             do {
                 let fullPhoneNumber = "\(selectedCountry.dialCode)\(phoneNumber)"
                 let success = try await APIService.shared.sendSMSCode(phone: fullPhoneNumber)
                 
-                await MainActor.run {
-                    if success {
-                        self.startCountdown()
-                    } else {
-                        self.codeButtonDisabled = false
+                if !success {
+                    await MainActor.run {
                         self.showError(message: NSLocalizedString("login.sms.send.failed", comment: ""))
                     }
                 }
             } catch {
                 await MainActor.run {
-                    self.codeButtonDisabled = false
                     self.showError(message: NSLocalizedString("login.sms.send.failed", comment: ""))
                 }
             }
@@ -308,13 +307,17 @@ struct LoginView: View {
     }
     
     private func startCountdown() {
-        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
-            if codeCountdown > 1 {
-                codeCountdown -= 1
-            } else {
+        Task {
+            for i in (1...60).reversed() {
+                await MainActor.run {
+                    codeCountdown = i
+                }
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+            }
+            
+            await MainActor.run {
                 codeCountdown = 60
                 codeButtonDisabled = false
-                timer.invalidate()
             }
         }
     }

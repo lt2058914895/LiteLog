@@ -110,6 +110,7 @@
 "login.password" = "Password";
 "login.sms.code" = "Verification Code";
 "login.get.code" = "Get Code";
+"login.resend.code" = "Resend";
 "action.login" = "Login";
 "login.forgot.password" = "Forgot Password";
 "login.register" = "Register";
