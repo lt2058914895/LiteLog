@@ -29,7 +29,7 @@ struct RegisterView: View {
             }
             .navigationBarHidden(true)
             .background(
-                LinearGradient(gradient: Gradient(colors: [Color.primaryBlue.opacity(0.05), Color.primaryBlue.opacity(0.1)]), startPoint: .top, endPoint: .bottom)
+                LinearGradient(gradient: Gradient(colors: [Color(.systemBackground), Color(.systemGray6).opacity(0.3)]), startPoint: .top, endPoint: .bottom)
                     .ignoresSafeArea()
             )
             .sheet(isPresented: $showCountryPicker) {
@@ -56,9 +56,9 @@ struct RegisterView: View {
             registerButton
         }
         .padding(24)
-        .background(Color.white)
+        .background(Color(.systemBackground))
         .cornerRadius(20)
-        .shadow(color: .black.opacity(0.08), radius: 20, x: 0, y: 10)
+        .shadow(color: Color(.systemGray5).opacity(0.5), radius: 20, x: 0, y: 10)
         .contentShape(Rectangle())
         .onTapGesture { hideKeyboard() }
     }
@@ -69,7 +69,7 @@ struct RegisterView: View {
                 Text(NSLocalizedString("login.phone", comment: ""))
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color(.secondaryLabel))
                 
                 HStack(spacing: 12) {
                     countryCodePicker
@@ -86,7 +86,7 @@ struct RegisterView: View {
                 Text(NSLocalizedString("login.sms.code", comment: ""))
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color(.secondaryLabel))
                 
                 HStack(spacing: 12) {
                     inputField(
@@ -98,10 +98,10 @@ struct RegisterView: View {
                     Button(action: sendSmsCode) {
                         Text(codeButtonDisabled ? "\(codeCountdown)s" : NSLocalizedString("login.get.code", comment: ""))
                             .font(.subheadline)
-                            .foregroundColor(codeButtonDisabled || phoneNumber.count < 7 ? .gray : .primaryBlue)
+                            .foregroundColor(codeButtonDisabled || phoneNumber.count < 7 ? Color(.systemGray4) : .primaryBlue)
                             .frame(height: 50)
                             .frame(width: 100)
-                            .background((codeButtonDisabled || phoneNumber.count < 7) ? Color.gray.opacity(0.1) : Color.primaryBlue.opacity(0.1))
+                            .background((codeButtonDisabled || phoneNumber.count < 7) ? Color(.systemGray5) : Color.primaryBlue.opacity(0.1))
                             .cornerRadius(12)
                     }
                     .disabled(codeButtonDisabled || phoneNumber.count < 7)
@@ -128,11 +128,11 @@ struct RegisterView: View {
             .font(.body)
             .frame(height: 50)
             .padding(.horizontal, 16)
-            .background(Color(UIColor.systemBackground))
+            .background(Color(.secondarySystemBackground))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                    .stroke(Color(.systemGray4), lineWidth: 1)
             )
     }
     
@@ -148,15 +148,15 @@ struct RegisterView: View {
                 
                 Image(systemName: "chevron.down")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color(.systemGray4))
             }
             .frame(height: 50)
             .padding(.horizontal, 12)
-            .background(Color(UIColor.systemBackground))
+            .background(Color(.secondarySystemBackground))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                    .stroke(Color(.systemGray4), lineWidth: 1)
             )
         }
     }
@@ -166,17 +166,17 @@ struct RegisterView: View {
             Text(title)
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color(.secondaryLabel))
             
             SecureField(placeholder, text: text)
                 .font(.body)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-                .background(Color(UIColor.systemBackground))
+                .background(Color(.secondarySystemBackground))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
                 )
         }
     }
