@@ -15,6 +15,8 @@ struct RegisterView: View {
     @State private var codeCountdown = 60
     @State private var hasSentCode = false
     
+    @StateObject private var errorAlertManager = ErrorAlertManager()
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -36,6 +38,7 @@ struct RegisterView: View {
             .sheet(isPresented: $showCountryPicker) {
                 countryPickerSheet
             }
+            .errorAlert(manager: errorAlertManager)
         }
     }
     
@@ -253,12 +256,12 @@ struct RegisterView: View {
                 
                 if !success {
                     await MainActor.run {
-                        self.showError(message: NSLocalizedString("login.sms.send.failed", comment: ""))
+                        self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: NSLocalizedString("login.sms.send.failed", comment: ""))
                     }
                 }
             } catch {
                 await MainActor.run {
-                    self.showError(message: NSLocalizedString("login.sms.send.failed", comment: ""))
+                    self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: NSLocalizedString("login.sms.send.failed", comment: ""))
                 }
             }
         }
@@ -280,15 +283,6 @@ struct RegisterView: View {
         }
     }
     
-    private func showError(message: String) {
-        let alert = UIAlertController(title: NSLocalizedString("error.title", comment: ""),
-                                      message: message,
-                                      preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: NSLocalizedString("action.ok", comment: ""),
-                                       style: .default))
-        UIApplication.shared.windows.first?.rootViewController?.present(alert, animated: true)
-    }
-    
     private func register() {
         isLoading = true
         let fullPhoneNumber = "\(selectedCountry.dialCode)\(phoneNumber)"
@@ -304,13 +298,13 @@ struct RegisterView: View {
                         self.settingsManager.login(userId: userId)
                         self.dismiss()
                     } else {
-                        self.showError(message: response.message ?? NSLocalizedString("register.error", comment: ""))
+                        self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: response.message ?? NSLocalizedString("register.error", comment: ""))
                     }
                 }
             } catch {
                 await MainActor.run {
                     self.isLoading = false
-                    self.showError(message: NSLocalizedString("register.error", comment: ""))
+                    self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: NSLocalizedString("register.error", comment: ""))
                 }
             }
         }

@@ -21,6 +21,8 @@ struct LoginView: View {
     @State private var showRegister = false
     @State private var hasSentCode = false
     
+    @StateObject private var errorAlertManager = ErrorAlertManager()
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -44,7 +46,9 @@ struct LoginView: View {
             }
             .sheet(isPresented: $showRegister) {
                 RegisterView()
+                    .environmentObject(settingsManager)
             }
+            .errorAlert(manager: errorAlertManager)
         }
     }
     
@@ -295,12 +299,12 @@ struct LoginView: View {
                 
                 if !success {
                     await MainActor.run {
-                        self.showError(message: NSLocalizedString("login.sms.send.failed", comment: ""))
+                        self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: NSLocalizedString("login.sms.send.failed", comment: ""))
                     }
                 }
             } catch {
                 await MainActor.run {
-                    self.showError(message: NSLocalizedString("login.sms.send.failed", comment: ""))
+                    self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: NSLocalizedString("login.sms.send.failed", comment: ""))
                 }
             }
         }
@@ -320,15 +324,6 @@ struct LoginView: View {
                 codeButtonDisabled = false
             }
         }
-    }
-    
-    private func showError(message: String) {
-        let alert = UIAlertController(title: NSLocalizedString("error.title", comment: ""),
-                                      message: message,
-                                      preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: NSLocalizedString("action.ok", comment: ""),
-                                       style: .default))
-        UIApplication.shared.windows.first?.rootViewController?.present(alert, animated: true)
     }
     
     private func login() {
@@ -352,13 +347,13 @@ struct LoginView: View {
                         self.settingsManager.login(userId: userId)
                         self.dismiss()
                     } else {
-                        self.showError(message: response.message ?? NSLocalizedString("login.error", comment: ""))
+                        self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: response.message ?? NSLocalizedString("login.error", comment: ""))
                     }
                 }
             } catch {
                 await MainActor.run {
                     self.isLoading = false
-                    self.showError(message: NSLocalizedString("login.error", comment: ""))
+                    self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: NSLocalizedString("login.error", comment: ""))
                 }
             }
         }
