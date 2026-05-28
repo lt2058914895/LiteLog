@@ -129,6 +129,7 @@
 "register.have.account" = "Already have an account?";
 "action.register" = "Register";
 "register.error" = "Registration failed, please try again";
+"register.password.rule" = "Password must be at least 6 characters";
 
 // Feedback related
 "feedback.title" = "Feedback";

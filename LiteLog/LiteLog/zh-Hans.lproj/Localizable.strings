@@ -129,6 +129,7 @@
 "register.have.account" = "已有账号？";
 "action.register" = "注册";
 "register.error" = "注册失败，请重试";
+"register.password.rule" = "密码长度至少6位";
 
 // 反馈相关
 "feedback.title" = "反馈建议";

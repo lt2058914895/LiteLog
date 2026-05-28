@@ -109,11 +109,17 @@ struct RegisterView: View {
                 }
             }
             
-            secureInputField(
-                title: NSLocalizedString("login.password", comment: ""),
-                text: $password,
-                placeholder: NSLocalizedString("login.password.placeholder", comment: "")
-            )
+            VStack(alignment: .leading, spacing: 8) {
+                secureInputField(
+                    title: NSLocalizedString("login.password", comment: ""),
+                    text: $password,
+                    placeholder: NSLocalizedString("login.password.placeholder", comment: "")
+                )
+                
+                Text(NSLocalizedString("register.password.rule", comment: ""))
+                    .font(.subheadline)
+                    .foregroundColor(Color(.systemGray2))
+            }
             
             secureInputField(
                 title: NSLocalizedString("register.confirm.password", comment: ""),
