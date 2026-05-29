@@ -21,6 +21,7 @@ struct LiteLogApp: App {
             UserProfile.self,
         ])
         let modelConfiguration = ModelConfiguration(
+            "LiteLog",
             schema: schema,
             isStoredInMemoryOnly: false,
             cloudKitDatabase: .automatic

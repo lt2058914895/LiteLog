@@ -372,7 +372,7 @@ struct LoginView: View {
                     self.isLoading = false
                     
                     if response.success, let userId = response.userId {
-                        self.settingsManager.login(userId: String(userId))
+                        self.settingsManager.login(userId: String(userId), phone: fullPhoneNumber)
                         self.dismiss()
                     } else {
                         self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: response.message ?? NSLocalizedString("login.error", comment: ""))

@@ -181,3 +181,11 @@
 // Duplicate record alert
 "record.duplicate.title" = "Duplicate Record";
 "record.duplicate.message" = "A record already exists for this date. Do you want to update it?";
+
+// User profile edit related
+"profile.edit.title" = "Edit Profile";
+"profile.edit.avatar.hint" = "Tap to change avatar";
+"profile.edit.nickname" = "Nickname";
+"profile.edit.nickname.placeholder" = "Enter nickname";
+"profile.logout.confirm" = "Are you sure you want to logout?";
+"action.logout" = "Logout";

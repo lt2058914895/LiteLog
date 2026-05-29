@@ -10,6 +10,7 @@ struct SettingsView: View {
     @Query(sort: \WeightRecord.date, order: .reverse) private var records: [WeightRecord]
 
     @State private var showingProfileEditor = false
+    @State private var showingUserInfoEditor = false
     @State private var showingExportSheet = false
     @State private var showingDeleteAlert = false
     @State private var exportURL: URL?
@@ -47,6 +48,9 @@ struct SettingsView: View {
             .adaptiveSheet(isPresented: $showingProfileEditor) {
                 ProfileEditorView()
             }
+            .adaptiveSheet(isPresented: $showingUserInfoEditor) {
+                UserInfoEditorView()
+            }
             .adaptiveSheet(item: $exportURL) { url in
                 ShareSheet(items: [url])
             }
@@ -71,7 +75,9 @@ struct SettingsView: View {
     private var userHeaderSection: some View {
             Section {
                 Button(action: {
-                    if !settingsManager.isLoggedIn {
+                    if settingsManager.isLoggedIn {
+                        showingUserInfoEditor = true
+                    } else {
                         showingLoginSheet = true
                     }
                 }) {
@@ -82,16 +88,14 @@ struct SettingsView: View {
                             .foregroundColor(settingsManager.isLoggedIn ? .primaryBlue : .gray)
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(settingsManager.isLoggedIn ? NSLocalizedString("settings.user", comment: "") : NSLocalizedString("settings.not.logged.in", comment: ""))
+                            Text(settingsManager.isLoggedIn ? settingsManager.displayName : NSLocalizedString("settings.not.logged.in", comment: ""))
                                 .font(.title3)
                         }
                         
                         Spacer()
                         
-                        if !settingsManager.isLoggedIn {
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondaryText)
-                        }
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.secondaryText)
                     }
                 }
             }

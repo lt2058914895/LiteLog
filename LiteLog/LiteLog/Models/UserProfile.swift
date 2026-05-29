@@ -4,6 +4,7 @@ import SwiftData
 @Model
 final class UserProfile {
     var id: UUID
+    var nickname: String
     var height: Double
     var gender: Gender
     var age: Int
@@ -25,6 +26,7 @@ final class UserProfile {
 
     init(
         id: UUID = UUID(),
+        nickname: String = "",
         height: Double = 170.0,
         gender: Gender = .male,
         age: Int = 30,
@@ -33,6 +35,7 @@ final class UserProfile {
         updatedAt: Date = Date()
     ) {
         self.id = id
+        self.nickname = nickname
         self.height = height
         self.gender = gender
         self.age = age

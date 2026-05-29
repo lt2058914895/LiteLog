@@ -18,6 +18,7 @@ final class SettingsManager: ObservableObject {
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
         static let isLoggedIn = "isLoggedIn"
         static let userId = "userId"
+        static let userPhone = "userPhone"
     }
 
     @Published var weightUnit: WeightUnit {
@@ -57,6 +58,8 @@ final class SettingsManager: ObservableObject {
     @AppStorage(Keys.isLoggedIn) var isLoggedIn: Bool = false
     
     @AppStorage(Keys.userId) var userId: String = ""
+    
+    @AppStorage(Keys.userPhone) var userPhone: String = ""
 
     private init() {
         let savedUnit = defaults.string(forKey: Keys.weightUnit) ?? WeightUnit.kg.rawValue
@@ -85,14 +88,33 @@ final class SettingsManager: ObservableObject {
         notificationTime = Self.defaultNotificationTime()
     }
     
-    func login(userId: String) {
+    func login(userId: String, phone: String? = nil) {
         self.userId = userId
+        if let phone = phone {
+            self.userPhone = phone
+        }
         self.isLoggedIn = true
     }
     
     func logout() {
         self.userId = ""
+        self.userPhone = ""
         self.isLoggedIn = false
+    }
+    
+    var displayName: String {
+        let profile = UserProfile.defaultProfile
+        if !profile.nickname.isEmpty {
+            return profile.nickname
+        }
+        return generateRandomNickname()
+    }
+    
+    private func generateRandomNickname() -> String {
+        let words = ["Ace", "Brave", "Champ", "Dash", "Echo", "Flash", "Glow", "Hero", "Iggy", "Jazz", "Kai", "Luna", "Max", "Nova", "Onyx", "Pulse", "Quest", "Rush", "Sky", "Tiger", "Ultra", "Vibe", "Wave", "Xen", "Yolo", "Zest"]
+        let word = words.randomElement() ?? "User"
+        let suffix = String(Int.random(in: 100...999))
+        return "\(word)\(suffix)"
     }
 }
 
