@@ -261,7 +261,15 @@ struct RegisterView: View {
                 }
             } catch {
                 await MainActor.run {
-                    self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: NSLocalizedString("login.sms.send.failed", comment: ""))
+                    let errorMessage: String
+                    if let apiError = error as? APIError {
+                        errorMessage = apiError.errorDescription ?? "未知错误"
+                    } else if let localizedError = error as? LocalizedError {
+                        errorMessage = localizedError.errorDescription ?? "未知错误"
+                    } else {
+                        errorMessage = error.localizedDescription
+                    }
+                    self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: errorMessage)
                 }
             }
         }
