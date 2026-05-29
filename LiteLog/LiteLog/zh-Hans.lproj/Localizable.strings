@@ -183,7 +183,7 @@
 "record.duplicate.message" = "当天已有记录，是否确认修改？";
 
 // 用户信息编辑相关
-"profile.edit.title" = "编辑资料";
+"profile.title" = "用户信息";
 "profile.edit.avatar.hint" = "点击更换头像";
 "profile.edit.nickname" = "昵称";
 "profile.edit.nickname.placeholder" = "请输入昵称";

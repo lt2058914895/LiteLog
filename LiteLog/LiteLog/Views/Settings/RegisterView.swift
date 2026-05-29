@@ -322,8 +322,8 @@ struct RegisterView: View {
                 await MainActor.run {
                     self.isLoading = false
                     
-                    if response.success, let userId = response.userId {
-                        self.settingsManager.login(userId: String(userId), phone: fullPhoneNumber)
+                    if response.success, let userInfo = response.userInfo {
+                        self.settingsManager.login(with: userInfo)
                         self.dismiss()
                     } else {
                         self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: response.message ?? NSLocalizedString("register.error", comment: ""))

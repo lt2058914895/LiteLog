@@ -49,6 +49,11 @@ struct LoginView: View {
                     .environmentObject(settingsManager)
             }
             .errorAlert(manager: errorAlertManager)
+            .onChange(of: settingsManager.isLoggedIn) { isLoggedIn in
+                if isLoggedIn {
+                    dismiss()
+                }
+            }
         }
     }
     
@@ -360,10 +365,10 @@ struct LoginView: View {
         
         Task {
             do {
-                let response: LoginResponse
+                let response: AuthResponse
                 
                 if loginType == .password {
-                    response = try await APIService.shared.loginWithPassword(phone: fullPhoneNumber, password: password)
+                    response = try await APIService.shared.login(phone: fullPhoneNumber, password: password)
                 } else {
                     response = try await APIService.shared.loginWithSMSCode(phone: fullPhoneNumber, code: smsCode)
                 }
@@ -371,9 +376,8 @@ struct LoginView: View {
                 await MainActor.run {
                     self.isLoading = false
                     
-                    if response.success, let userId = response.userId {
-                        self.settingsManager.login(userId: String(userId), phone: fullPhoneNumber)
-                        self.dismiss()
+                    if response.success, let userInfo = response.userInfo {
+                        self.settingsManager.login(with: userInfo)
                     } else {
                         self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: response.message ?? NSLocalizedString("login.error", comment: ""))
                     }

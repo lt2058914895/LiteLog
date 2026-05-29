@@ -1,13 +1,24 @@
 import SwiftUI
+import SwiftData
 
 struct UserInfoEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var settingsManager: SettingsManager
     
-    @State private var nickname = UserProfile.defaultProfile.nickname
+    @State private var nickname = ""
     @State private var avatarImage: UIImage?
     @State private var showImagePicker = false
     @State private var showLogoutAlert = false
+    
+    init() {
+        let container = LiteLogApp.sharedModelContainer
+        let context = container.mainContext
+        
+        let fetchDescriptor = FetchDescriptor<UserProfile>()
+        if let profile = try? context.fetch(fetchDescriptor).first, !profile.nickname.isEmpty {
+            _nickname = State(initialValue: profile.nickname)
+        }
+    }
     
     @StateObject private var errorAlertManager = ErrorAlertManager()
     
@@ -25,15 +36,8 @@ struct UserInfoEditorView: View {
                 }
                 .padding()
             }
-            .navigationTitle(NSLocalizedString("profile.edit.title", comment: ""))
+            .navigationTitle(NSLocalizedString("profile.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(NSLocalizedString("action.cancel", comment: "")) {
-                        dismiss()
-                    }
-                }
-            }
             .sheet(isPresented: $showImagePicker) {
                 imagePicker
             }
@@ -72,7 +76,7 @@ struct UserInfoEditorView: View {
                     
                     Image(systemName: "camera")
                         .resizable()
-                        .frame(width: 24, height: 24)
+                        .frame(width: 18, height: 18)
                         .foregroundColor(.white)
                         .padding(8)
                         .background(Color.primaryBlue)

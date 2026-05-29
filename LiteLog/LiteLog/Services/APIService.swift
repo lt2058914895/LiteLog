@@ -67,8 +67,8 @@ class APIService {
         }
     }
     
-    func loginWithPassword(phone: String, password: String) async throws -> LoginResponse {
-        let endpoint = baseURL.appending(path: "/auth/login/password")
+    func login(phone: String, password: String) async throws -> AuthResponse {
+        let endpoint = baseURL.appending(path: "/auth/login")
         
         let parameters: [String: Any] = [
             "phone": phone,
@@ -83,8 +83,8 @@ class APIService {
                     case .success(let data):
                         do {
                             let decoder = JSONDecoder()
-                            let loginResponse = try decoder.decode(LoginResponse.self, from: data)
-                            continuation.resume(returning: loginResponse)
+                            let authResponse = try decoder.decode(AuthResponse.self, from: data)
+                            continuation.resume(returning: authResponse)
                         } catch {
                             continuation.resume(throwing: APIError.decodingError)
                         }
@@ -95,7 +95,7 @@ class APIService {
         }
     }
     
-    func loginWithSMSCode(phone: String, code: String) async throws -> LoginResponse {
+    func loginWithSMSCode(phone: String, code: String) async throws -> AuthResponse {
         let endpoint = baseURL.appending(path: "/auth/login/sms")
         
         let parameters: [String: Any] = [
@@ -111,8 +111,8 @@ class APIService {
                     case .success(let data):
                         do {
                             let decoder = JSONDecoder()
-                            let loginResponse = try decoder.decode(LoginResponse.self, from: data)
-                            continuation.resume(returning: loginResponse)
+                            let authResponse = try decoder.decode(AuthResponse.self, from: data)
+                            continuation.resume(returning: authResponse)
                         } catch {
                             continuation.resume(throwing: APIError.decodingError)
                         }
@@ -123,7 +123,7 @@ class APIService {
         }
     }
     
-    func register(phone: String, code: String, password: String) async throws -> RegisterResponse {
+    func register(phone: String, code: String, password: String) async throws -> AuthResponse {
         let endpoint = baseURL.appending(path: "/auth/register")
         
         let parameters: [String: Any] = [
@@ -140,8 +140,36 @@ class APIService {
                     case .success(let data):
                         do {
                             let decoder = JSONDecoder()
-                            let registerResponse = try decoder.decode(RegisterResponse.self, from: data)
-                            continuation.resume(returning: registerResponse)
+                            let authResponse = try decoder.decode(AuthResponse.self, from: data)
+                            continuation.resume(returning: authResponse)
+                        } catch {
+                            continuation.resume(throwing: APIError.decodingError)
+                        }
+                    case .failure:
+                        continuation.resume(throwing: APIError.invalidResponse)
+                    }
+                }
+        }
+    }
+    
+    func logout(token: String?) async throws -> LogoutResponse {
+        let endpoint = baseURL.appending(path: "/auth/logout")
+        
+        var headers: HTTPHeaders = [:]
+        if let token = token {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            AF.request(endpoint, method: .get, headers: headers)
+                .validate(statusCode: 200..<300)
+                .responseData { response in
+                    switch response.result {
+                    case .success(let data):
+                        do {
+                            let decoder = JSONDecoder()
+                            let logoutResponse = try decoder.decode(LogoutResponse.self, from: data)
+                            continuation.resume(returning: logoutResponse)
                         } catch {
                             continuation.resume(throwing: APIError.decodingError)
                         }
@@ -167,19 +195,4 @@ enum APIError: Error, LocalizedError {
         case .serverError(let message): return message
         }
     }
-}
-
-@frozen
-public struct LoginResponse: Codable, Sendable {
-    public let success: Bool
-    public let token: String?
-    public let userId: Int?
-    public let message: String?
-}
-
-@frozen
-public struct RegisterResponse: Codable, Sendable {
-    public let success: Bool
-    public let userId: Int?
-    public let message: String?
 }

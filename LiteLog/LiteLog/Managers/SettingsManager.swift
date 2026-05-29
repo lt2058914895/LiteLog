@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import SwiftData
 
 final class SettingsManager: ObservableObject {
     static let shared = SettingsManager()
@@ -18,7 +19,9 @@ final class SettingsManager: ObservableObject {
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
         static let isLoggedIn = "isLoggedIn"
         static let userId = "userId"
-        static let userPhone = "userPhone"
+        static let token = "token"
+        static let tokenType = "tokenType"
+        static let tokenExpiration = "tokenExpiration"
     }
 
     @Published var weightUnit: WeightUnit {
@@ -59,7 +62,9 @@ final class SettingsManager: ObservableObject {
     
     @AppStorage(Keys.userId) var userId: String = ""
     
-    @AppStorage(Keys.userPhone) var userPhone: String = ""
+    var token: String? {
+        defaults.string(forKey: Keys.token)
+    }
 
     private init() {
         let savedUnit = defaults.string(forKey: Keys.weightUnit) ?? WeightUnit.kg.rawValue
@@ -88,33 +93,81 @@ final class SettingsManager: ObservableObject {
         notificationTime = Self.defaultNotificationTime()
     }
     
-    func login(userId: String, phone: String? = nil) {
+    func login(userId: String, nickname: String?, avatarUrl: String?) {
         self.userId = userId
-        if let phone = phone {
-            self.userPhone = phone
-        }
+        saveUserInfo(nickname: nickname, avatarUrl: avatarUrl)
         self.isLoggedIn = true
     }
     
+    func login(with userInfo: UserInfo) {
+        self.userId = userInfo.userId
+        saveUserInfo(nickname: userInfo.nickname, avatarUrl: userInfo.avatarUrl)
+        saveToken(userInfo.token, tokenType: userInfo.tokenType, expiresIn: userInfo.expiresIn)
+        self.isLoggedIn = true
+    }
+    
+    private func saveUserInfo(nickname: String?, avatarUrl: String?) {
+        let container = LiteLogApp.sharedModelContainer
+        let context = container.mainContext
+        
+        let fetchDescriptor = FetchDescriptor<UserProfile>()
+        if let existingProfile = try? context.fetch(fetchDescriptor).first {
+            if let nickname = nickname, !nickname.isEmpty {
+                existingProfile.nickname = nickname
+            }
+            if let avatarUrl = avatarUrl {
+                existingProfile.avatarUrl = avatarUrl
+            }
+            existingProfile.updatedAt = Date()
+        } else {
+            let newProfile = UserProfile(nickname: nickname ?? "")
+            newProfile.avatarUrl = avatarUrl ?? ""
+            context.insert(newProfile)
+        }
+        
+        try? context.save()
+    }
+    
+    private func saveToken(_ token: String, tokenType: String?, expiresIn: TimeInterval?) {
+        defaults.set(token, forKey: Keys.token)
+        if let tokenType = tokenType {
+            defaults.set(tokenType, forKey: Keys.tokenType)
+        }
+        if let expiresIn = expiresIn {
+            let expirationDate = Date().addingTimeInterval(expiresIn)
+            defaults.set(expirationDate, forKey: Keys.tokenExpiration)
+        }
+    }
+    
     func logout() {
+        Task {
+            await logoutAsync()
+        }
+    }
+    
+    func logoutAsync() async {
+        let currentToken = self.token
+        
         self.userId = ""
-        self.userPhone = ""
         self.isLoggedIn = false
+        defaults.removeObject(forKey: Keys.token)
+        defaults.removeObject(forKey: Keys.tokenType)
+        defaults.removeObject(forKey: Keys.tokenExpiration)
+        
+        if let token = currentToken {
+            try? await APIService.shared.logout(token: token)
+        }
     }
     
     var displayName: String {
-        let profile = UserProfile.defaultProfile
-        if !profile.nickname.isEmpty {
+        let container = LiteLogApp.sharedModelContainer
+        let context = container.mainContext
+        
+        let fetchDescriptor = FetchDescriptor<UserProfile>()
+        if let profile = try? context.fetch(fetchDescriptor).first, !profile.nickname.isEmpty {
             return profile.nickname
         }
-        return generateRandomNickname()
-    }
-    
-    private func generateRandomNickname() -> String {
-        let words = ["Ace", "Brave", "Champ", "Dash", "Echo", "Flash", "Glow", "Hero", "Iggy", "Jazz", "Kai", "Luna", "Max", "Nova", "Onyx", "Pulse", "Quest", "Rush", "Sky", "Tiger", "Ultra", "Vibe", "Wave", "Xen", "Yolo", "Zest"]
-        let word = words.randomElement() ?? "User"
-        let suffix = String(Int.random(in: 100...999))
-        return "\(word)\(suffix)"
+        return "User"
     }
 }
 

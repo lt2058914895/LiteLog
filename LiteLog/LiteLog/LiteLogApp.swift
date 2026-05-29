@@ -15,13 +15,13 @@ struct LiteLogApp: App {
     
     @State private var hasPopulatedMockData = false
 
-    var sharedModelContainer: ModelContainer = {
+    static var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             WeightRecord.self,
             UserProfile.self,
         ])
         let modelConfiguration = ModelConfiguration(
-            "LiteLog",
+            "LiteLog_v3",
             schema: schema,
             isStoredInMemoryOnly: false,
             cloudKitDatabase: .automatic
@@ -46,6 +46,6 @@ struct LiteLogApp: App {
             ContentView()
                 .environmentObject(settingsManager)
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(LiteLogApp.sharedModelContainer)
     }
 }
