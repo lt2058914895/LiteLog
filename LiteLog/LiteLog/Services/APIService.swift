@@ -5,9 +5,9 @@ class APIService {
     static let shared = APIService()
     
     #if DEBUG
-    private let baseURL = URL(string: "http://localhost:8080")!
+    private let baseURL = URL(string: "http://10.226.12.119:8080")!
     #else
-    private let baseURL = URL(string: "https://litelog.com")!
+    private let baseURL = URL(string: "https://litelog.com.cn")!
     #endif
     
     private init() {}
@@ -40,7 +40,7 @@ class APIService {
     }
     
     func sendSMSCode(phone: String, type: String = "login") async throws -> Bool {
-        let endpoint = baseURL.appending(path: "/login/sms/send")
+        let endpoint = baseURL.appending(path: "/auth/sms/send")
         
         let parameters: [String: Any] = [
             "phone": phone,
@@ -68,7 +68,7 @@ class APIService {
     }
     
     func loginWithPassword(phone: String, password: String) async throws -> LoginResponse {
-        let endpoint = baseURL.appending(path: "/login/password")
+        let endpoint = baseURL.appending(path: "/auth/login/password")
         
         let parameters: [String: Any] = [
             "phone": phone,
@@ -96,7 +96,7 @@ class APIService {
     }
     
     func loginWithSMSCode(phone: String, code: String) async throws -> LoginResponse {
-        let endpoint = baseURL.appending(path: "/login/sms")
+        let endpoint = baseURL.appending(path: "/auth/login/sms")
         
         let parameters: [String: Any] = [
             "phone": phone,
@@ -124,7 +124,7 @@ class APIService {
     }
     
     func register(phone: String, code: String, password: String) async throws -> LoginResponse {
-        let endpoint = baseURL.appending(path: "/register")
+        let endpoint = baseURL.appending(path: "/auth/register")
         
         let parameters: [String: Any] = [
             "phone": phone,
