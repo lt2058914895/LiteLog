@@ -123,7 +123,7 @@ class APIService {
         }
     }
     
-    func register(phone: String, code: String, password: String) async throws -> LoginResponse {
+    func register(phone: String, code: String, password: String) async throws -> RegisterResponse {
         let endpoint = baseURL.appending(path: "/auth/register")
         
         let parameters: [String: Any] = [
@@ -140,7 +140,7 @@ class APIService {
                     case .success(let data):
                         do {
                             let decoder = JSONDecoder()
-                            let registerResponse = try decoder.decode(LoginResponse.self, from: data)
+                            let registerResponse = try decoder.decode(RegisterResponse.self, from: data)
                             continuation.resume(returning: registerResponse)
                         } catch {
                             continuation.resume(throwing: APIError.decodingError)
@@ -173,6 +173,13 @@ enum APIError: Error, LocalizedError {
 public struct LoginResponse: Codable, Sendable {
     public let success: Bool
     public let token: String?
-    public let userId: String?
+    public let userId: Int?
+    public let message: String?
+}
+
+@frozen
+public struct RegisterResponse: Codable, Sendable {
+    public let success: Bool
+    public let userId: Int?
     public let message: String?
 }

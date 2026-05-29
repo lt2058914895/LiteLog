@@ -167,17 +167,27 @@ struct LoginView: View {
     }
     
     private func inputField(text: Binding<String>, keyboardType: UIKeyboardType, placeholder: String, width: CGFloat = .infinity) -> some View {
-        TextField(placeholder, text: text)
-            .keyboardType(keyboardType)
-            .font(.body)
-            .frame(height: 50)
-            .padding(.horizontal, 16)
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(.systemGray4), lineWidth: 1)
-            )
+        ZStack(alignment: .trailing) {
+            TextField(placeholder, text: text)
+                .keyboardType(keyboardType)
+                .font(.body)
+                .frame(height: 50)
+                .padding(.horizontal, 16)
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
+                )
+            
+            if !text.wrappedValue.isEmpty {
+                Button(action: { text.wrappedValue = "" }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(Color(.systemGray4))
+                        .padding(.trailing, 12)
+                }
+            }
+        }
     }
     
     private var countryCodePicker: some View {
@@ -212,16 +222,26 @@ struct LoginView: View {
                 .fontWeight(.medium)
                 .foregroundColor(Color(.secondaryLabel))
             
-            SecureField(placeholder, text: text)
-                .font(.body)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(.systemGray4), lineWidth: 1)
-                )
+            ZStack(alignment: .trailing) {
+                SecureField(placeholder, text: text)
+                    .font(.body)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color(.systemGray4), lineWidth: 1)
+                    )
+                
+                if !text.wrappedValue.isEmpty {
+                    Button(action: { text.wrappedValue = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(Color(.systemGray4))
+                            .padding(.trailing, 12)
+                    }
+                }
+            }
         }
     }
     
@@ -278,9 +298,9 @@ struct LoginView: View {
     private var canLogin: Bool {
         guard phoneNumber.count >= 7 && phoneNumber.count <= 15 else { return false }
         if loginType == .password {
-            return !password.isEmpty
+            return password.count >= 6
         } else {
-            return smsCode.count >= 4
+            return smsCode.count == 6
         }
     }
     
@@ -352,7 +372,7 @@ struct LoginView: View {
                     self.isLoading = false
                     
                     if response.success, let userId = response.userId {
-                        self.settingsManager.login(userId: userId)
+                        self.settingsManager.login(userId: String(userId))
                         self.dismiss()
                     } else {
                         self.errorAlertManager.show(title: NSLocalizedString("error.title", comment: ""), message: response.message ?? NSLocalizedString("login.error", comment: ""))
