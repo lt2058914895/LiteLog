@@ -7,16 +7,20 @@ struct UserInfoEditorView: View {
     
     @State private var nickname = ""
     @State private var avatarImage: UIImage?
+    @State private var avatarUrl: String = ""
     @State private var showImagePicker = false
     @State private var showLogoutAlert = false
+    @State private var isLoading = false
+    @State private var loadedAvatarImage: UIImage?
     
     init() {
         let container = LiteLogApp.sharedModelContainer
         let context = container.mainContext
         
         let fetchDescriptor = FetchDescriptor<UserProfile>()
-        if let profile = try? context.fetch(fetchDescriptor).first, !profile.nickname.isEmpty {
+        if let profile = try? context.fetch(fetchDescriptor).first {
             _nickname = State(initialValue: profile.nickname)
+            _avatarUrl = State(initialValue: profile.avatarUrl)
         }
     }
     
@@ -64,16 +68,19 @@ struct UserInfoEditorView: View {
                 showImagePicker = true
             }) {
                 ZStack(alignment: .bottomTrailing) {
+                    // 优先级：1. 用户新选择的头像 2. 从URL加载的头像 3. 默认头像
                     if let image = avatarImage {
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFill()
                             .frame(width: 120, height: 120)
                             .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.primaryBlue, lineWidth: 2)
-                            )
+                    } else if let image = loadedAvatarImage {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 120, height: 120)
+                            .clipShape(Circle())
                     } else {
                         Image(systemName: "person.circle.fill")
                             .resizable()
@@ -91,10 +98,23 @@ struct UserInfoEditorView: View {
                         .shadow(radius: 4)
                 }
             }
+            .onAppear {
+                loadAvatarFromUrl()
+            }
             
             Text(NSLocalizedString("profile.edit.avatar.hint", comment: ""))
                 .font(.subheadline)
                 .foregroundColor(.secondary)
+        }
+    }
+    
+    private func loadAvatarFromUrl() {
+        guard avatarImage == nil, !avatarUrl.isEmpty, loadedAvatarImage == nil else { return }
+        
+        Task {
+            if let url = URL(string: avatarUrl), let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
+                loadedAvatarImage = image
+            }
         }
     }
     
@@ -130,19 +150,26 @@ struct UserInfoEditorView: View {
     
     private var saveButton: some View {
         Button(action: {
-            saveProfile()
+            Task {
+                await saveProfile()
+            }
         }) {
-            Text(NSLocalizedString("action.save", comment: ""))
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
-                .padding(.vertical, 16)
-                .frame(maxWidth: .infinity)
-                .background(nickname.isEmpty ? Color.gray : Color.primaryBlue)
-                .cornerRadius(12)
-                .shadow(color: nickname.isEmpty ? .clear : Color.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 4)
+            if isLoading {
+                ProgressView()
+                    .foregroundColor(.white)
+            } else {
+                Text(NSLocalizedString("action.save", comment: ""))
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+            }
         }
-        .disabled(nickname.isEmpty)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity)
+        .background(nickname.isEmpty || isLoading ? Color.gray : Color.primaryBlue)
+        .cornerRadius(12)
+        .shadow(color: (nickname.isEmpty || isLoading) ? .clear : Color.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 4)
+        .disabled(nickname.isEmpty || isLoading)
     }
     
     private var logoutButton: some View {
@@ -159,9 +186,73 @@ struct UserInfoEditorView: View {
         ImagePicker(image: $avatarImage)
     }
     
-    private func saveProfile() {
-        // 保存用户信息逻辑
-        dismiss()
+    private func saveProfile() async {
+        guard !nickname.isEmpty else { return }
+        
+        isLoading = true
+        
+        do {
+            // 上传头像（如果有选择新头像）
+            let avatarUrl = await uploadAvatarIfNeeded()
+            
+            // 调用更新用户信息接口
+            let response = try await APIService.shared.updateProfile(nickname: nickname, avatarUrl: avatarUrl)
+            
+            if response.success {
+                updateLocalProfile(nickname: response.nickname ?? nickname, avatarUrl: response.avatarUrl)
+                dismiss()
+            } else {
+                errorAlertManager.showError(response.message ?? "更新失败")
+            }
+        } catch {
+            errorAlertManager.showError(error.localizedDescription)
+        }
+        
+        isLoading = false
+    }
+    
+    private func uploadAvatarIfNeeded() async -> String? {
+        guard let image = avatarImage else { return nil }
+        
+        do {
+            let response = try await APIService.shared.uploadAvatar(image: image)
+            if response.success, let avatarUrl = response.avatarUrl {
+                return avatarUrl
+            } else {
+                errorAlertManager.showError(response.message ?? "头像上传失败")
+                return nil
+            }
+        } catch {
+            errorAlertManager.showError(error.localizedDescription)
+            return nil
+        }
+    }
+    
+    private func updateLocalProfile(nickname: String, avatarUrl: String?) {
+        let container = LiteLogApp.sharedModelContainer
+        let context = container.mainContext
+        
+        let fetchDescriptor = FetchDescriptor<UserProfile>()
+        if let existingProfile = try? context.fetch(fetchDescriptor).first {
+            existingProfile.nickname = nickname
+            if let avatarUrl = avatarUrl {
+                existingProfile.avatarUrl = avatarUrl
+                self.avatarUrl = avatarUrl
+                self.loadedAvatarImage = nil
+                loadAvatarFromUrl()
+            }
+        } else {
+            let newProfile = UserProfile(nickname: nickname)
+            if let avatarUrl = avatarUrl {
+                newProfile.avatarUrl = avatarUrl
+                self.avatarUrl = avatarUrl
+                self.loadedAvatarImage = nil
+                loadAvatarFromUrl()
+            }
+            context.insert(newProfile)
+        }
+        
+        try? context.save()
     }
     
     private func logout() {

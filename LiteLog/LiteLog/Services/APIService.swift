@@ -5,7 +5,7 @@ class APIService {
     static let shared = APIService()
     
     #if DEBUG
-    private let baseURL = URL(string: "http://10.226.12.119:8080")!
+    private let baseURL = URL(string: "http://10.226.12.52:8080")!
     #else
     private let baseURL = URL(string: "https://litelog.com.cn")!
     #endif
@@ -177,6 +177,80 @@ class APIService {
                         continuation.resume(throwing: APIError.invalidResponse)
                     }
                 }
+        }
+    }
+    
+    func updateProfile(nickname: String, avatarUrl: String?) async throws -> UpdateProfileResponse {
+        let endpoint = baseURL.appending(path: "/user/profile")
+        
+        var parameters: [String: Any] = [
+            "nickname": nickname
+        ]
+        
+        if let avatarUrl = avatarUrl, !avatarUrl.isEmpty {
+            parameters["avatarUrl"] = avatarUrl
+        }
+        
+        let token = SettingsManager.shared.token
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            var headers: HTTPHeaders = [:]
+            if let token = token {
+                headers["Authorization"] = "Bearer \(token)"
+            }
+            
+            AF.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default, headers: headers)
+                .validate(statusCode: 200..<300)
+                .responseData { response in
+                    switch response.result {
+                    case .success(let data):
+                        do {
+                            let decoder = JSONDecoder()
+                            let profileResponse = try decoder.decode(UpdateProfileResponse.self, from: data)
+                            continuation.resume(returning: profileResponse)
+                        } catch {
+                            continuation.resume(throwing: APIError.decodingError)
+                        }
+                    case .failure:
+                        continuation.resume(throwing: APIError.invalidResponse)
+                    }
+                }
+        }
+    }
+    
+    func uploadAvatar(image: UIImage) async throws -> AvatarUploadResponse {
+        let endpoint = baseURL.appending(path: "/user/avatar/upload")
+        
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            throw APIError.serverError("图片转换失败")
+        }
+        
+        let token = SettingsManager.shared.token
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            var headers: HTTPHeaders = [:]
+            if let token = token {
+                headers["Authorization"] = "Bearer \(token)"
+            }
+            
+            AF.upload(multipartFormData: { multipartFormData in
+                multipartFormData.append(imageData, withName: "file", fileName: "avatar.jpg", mimeType: "image/jpeg")
+            }, to: endpoint, headers: headers)
+            .validate(statusCode: 200..<300)
+            .responseData { response in
+                switch response.result {
+                case .success(let data):
+                    do {
+                        let decoder = JSONDecoder()
+                        let uploadResponse = try decoder.decode(AvatarUploadResponse.self, from: data)
+                        continuation.resume(returning: uploadResponse)
+                    } catch {
+                        continuation.resume(throwing: APIError.decodingError)
+                    }
+                case .failure:
+                    continuation.resume(throwing: APIError.invalidResponse)
+                }
+            }
         }
     }
 }

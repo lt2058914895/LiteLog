@@ -157,6 +157,9 @@
 "action.submitting" = "提交中...";
 "action.ok" = "好的";
 
+// 错误相关
+"error.title" = "错误";
+
 // 通知相关
 "notification.title" = "轻身记";
 "notification.body" = "该记录今天的体重了！";

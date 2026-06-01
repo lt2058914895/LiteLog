@@ -39,3 +39,18 @@ public struct LogoutResponse: Codable, Sendable {
     public let success: Bool
     public let message: String?
 }
+
+@frozen
+public struct UpdateProfileResponse: Codable, Sendable {
+    public let success: Bool
+    public let message: String?
+    public let nickname: String?
+    public let avatarUrl: String?
+}
+
+@frozen
+public struct AvatarUploadResponse: Codable, Sendable {
+    public let success: Bool
+    public let message: String?
+    public let avatarUrl: String?
+}

@@ -157,6 +157,9 @@
 "action.submitting" = "Submitting...";
 "action.ok" = "OK";
 
+// Error
+"error.title" = "Error";
+
 // Notifications
 "notification.title" = "LiteLog";
 "notification.body" = "Time to record today's weight!";

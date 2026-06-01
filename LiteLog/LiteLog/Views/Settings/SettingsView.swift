@@ -18,6 +18,7 @@ struct SettingsView: View {
     @State private var notificationTime = SettingsManager.defaultNotificationTime()
     @State private var showingFeedbackSheet = false
     @State private var showingLoginSheet = false
+    @State private var avatarImage: UIImage?
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -25,7 +26,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-//                userHeaderSection
+                userHeaderSection
                 
                 profileSection
 
@@ -82,10 +83,19 @@ struct SettingsView: View {
                     }
                 }) {
                     HStack(alignment: .center, spacing: 16) {
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .frame(width: 54, height: 54)
-                            .foregroundColor(settingsManager.isLoggedIn ? .primaryBlue : .gray)
+                        // 显示头像
+                        if let image = avatarImage {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 54, height: 54)
+                                .clipShape(Circle())
+                        } else {
+                            Image(systemName: "person.circle.fill")
+                                .resizable()
+                                .frame(width: 54, height: 54)
+                                .foregroundColor(settingsManager.isLoggedIn ? .primaryBlue : .gray)
+                        }
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text(settingsManager.isLoggedIn ? settingsManager.displayName : NSLocalizedString("settings.not.logged.in", comment: ""))
@@ -97,6 +107,30 @@ struct SettingsView: View {
                         Image(systemName: "chevron.right")
                             .foregroundColor(.secondaryText)
                     }
+                }
+            }
+            .onAppear {
+                loadAvatar()
+            }
+            .onChange(of: showingUserInfoEditor) { _, newValue in
+                if !newValue {
+                    // 用户信息编辑页面关闭后重新加载头像
+                    loadAvatar()
+                }
+            }
+        }
+        
+        private func loadAvatar() {
+            guard let profile = profile, !profile.avatarUrl.isEmpty else {
+                avatarImage = nil
+                return
+            }
+            
+            Task {
+                if let url = URL(string: profile.avatarUrl),
+                   let data = try? Data(contentsOf: url),
+                   let image = UIImage(data: data) {
+                    avatarImage = image
                 }
             }
         }

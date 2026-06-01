@@ -12,6 +12,12 @@ class ErrorAlertManager: ObservableObject {
         self.isPresented = true
     }
     
+    func showError(_ message: String) {
+        self.title = NSLocalizedString("error.title", comment: "")
+        self.message = message
+        self.isPresented = true
+    }
+    
     func dismiss() {
         self.isPresented = false
     }
