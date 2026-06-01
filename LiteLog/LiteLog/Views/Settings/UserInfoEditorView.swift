@@ -48,7 +48,14 @@ struct UserInfoEditorView: View {
                     logout()
                 }
             }
+            .onTapGesture {
+                hideKeyboard()
+            }
         }
+    }
+    
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
     private var avatarSection: some View {
