@@ -33,10 +33,21 @@ class APIService {
             
             AF.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: headers)
                 .validate(statusCode: 200..<300)
-                .response { response in
+                .responseData { response in
                     switch response.result {
-                    case .success:
-                        continuation.resume()
+                    case .success(let data):
+                        do {
+                            let decoder = JSONDecoder()
+                            let response = try decoder.decode(FeedbackSubmitResponse.self, from: data)
+                            
+                            if !response.success {
+                                continuation.resume(throwing: APIError.serverErrorWithCode(response.code, response.message ?? "unknown_error"))
+                            } else {
+                                continuation.resume()
+                            }
+                        } catch {
+                            continuation.resume(throwing: APIError.decodingError)
+                        }
                     case .failure(let error):
                         continuation.resume(throwing: error)
                     }
@@ -265,13 +276,37 @@ enum APIError: Error, LocalizedError {
     case networkError
     case decodingError
     case serverError(String)
+    case serverErrorWithCode(Int, String)
     
     var errorDescription: String? {
         switch self {
-        case .invalidResponse: return "无效的响应"
-        case .networkError: return "网络错误，请检查网络连接"
-        case .decodingError: return "数据解析错误"
+        case .invalidResponse: return NSLocalizedString("error.invalid_response", comment: "")
+        case .networkError: return NSLocalizedString("error.network_error", comment: "")
+        case .decodingError: return NSLocalizedString("error.decoding_error", comment: "")
         case .serverError(let message): return message
+        case .serverErrorWithCode(let code, let message):
+            return localizedErrorMessage(for: code, message: message)
+        }
+    }
+    
+    private func localizedErrorMessage(for code: Int, message: String) -> String {
+        switch code {
+        case 20000:
+            return NSLocalizedString("error.success", comment: "")
+        case 40000:
+            return NSLocalizedString("error.param_error", comment: "")
+        case 40001:
+            return NSLocalizedString("error.feedback_type_invalid", comment: "")
+        case 40002:
+            return NSLocalizedString("error.feedback_message_empty", comment: "")
+        case 40003:
+            return NSLocalizedString("error.feedback_message_too_long", comment: "")
+        case 40100:
+            return NSLocalizedString("error.unauthorized", comment: "")
+        case 50000:
+            return NSLocalizedString("error.server_failure", comment: "")
+        default:
+            return NSLocalizedString("error.unknown", comment: "")
         }
     }
 }

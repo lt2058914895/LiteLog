@@ -192,3 +192,16 @@
 "profile.edit.nickname.placeholder" = "Enter nickname";
 "profile.logout.confirm" = "Are you sure you want to logout?";
 "action.logout" = "Logout";
+
+// API Error Codes
+"error.invalid_response" = "Invalid response";
+"error.network_error" = "Network error, please check your network connection";
+"error.decoding_error" = "Data decoding error";
+"error.success" = "Operation successful";
+"error.param_error" = "Parameter error";
+"error.feedback_type_invalid" = "Invalid feedback type";
+"error.feedback_message_empty" = "Feedback content cannot be empty";
+"error.feedback_message_too_long" = "Feedback content is too long";
+"error.unauthorized" = "Not logged in or session expired";
+"error.server_failure" = "Server internal error";
+"error.unknown" = "Unknown error";

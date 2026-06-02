@@ -192,3 +192,16 @@
 "profile.edit.nickname.placeholder" = "请输入昵称";
 "profile.logout.confirm" = "确定要退出登录吗？";
 "action.logout" = "退出登录";
+
+// API错误码相关
+"error.invalid_response" = "无效的响应";
+"error.network_error" = "网络错误，请检查网络连接";
+"error.decoding_error" = "数据解析错误";
+"error.success" = "操作成功";
+"error.param_error" = "参数错误";
+"error.feedback_type_invalid" = "反馈类型无效";
+"error.feedback_message_empty" = "反馈内容不能为空";
+"error.feedback_message_too_long" = "反馈内容过长";
+"error.unauthorized" = "未登录或登录已过期";
+"error.server_failure" = "服务器内部错误";
+"error.unknown" = "未知错误";

@@ -54,3 +54,11 @@ public struct AvatarUploadResponse: Codable, Sendable {
     public let message: String?
     public let avatarUrl: String?
 }
+
+@frozen
+public struct FeedbackSubmitResponse: Codable, Sendable {
+    public let success: Bool
+    public let code: Int
+    public let message: String?
+    public let feedbackId: Int?
+}
