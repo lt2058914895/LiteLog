@@ -324,11 +324,9 @@ struct SettingsView: View {
     }
 
     private func deleteAllData() {
+        // 只删除体重记录，保留个人信息
         for record in records {
             modelContext.delete(record)
-        }
-        for profileItem in userProfile {
-            modelContext.delete(profileItem)
         }
 
         do {
