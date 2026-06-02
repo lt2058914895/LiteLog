@@ -37,7 +37,7 @@ struct SettingsView: View {
 
                 dataSection
 
-//                feedbackSection
+                feedbackSection
 
                 aboutSection
             }
@@ -54,7 +54,7 @@ struct SettingsView: View {
             .adaptiveSheet(item: $exportURL) { url in
                 ShareSheet(items: [url])
             }
-            .adaptiveSheet(isPresented: $showingFeedbackSheet) {
+            .fullScreenCover(isPresented: $showingFeedbackSheet) {
                 FeedbackView()
             }
             .adaptiveSheet(isPresented: $showingLoginSheet) {

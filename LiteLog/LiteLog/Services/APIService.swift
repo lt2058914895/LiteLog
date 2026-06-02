@@ -13,20 +13,25 @@ class APIService {
     private init() {}
     
     func submitFeedback(_ feedback: UserFeedback) async throws {
-        let endpoint = baseURL.appending(path: "/feedback")
+        let endpoint = baseURL.appending(path: "/feedback/submit")
         
         let parameters: [String: Any] = [
-            "id": feedback.id.uuidString,
             "type": feedback.type,
             "message": feedback.message,
             "email": feedback.email ?? "",
             "appVersion": feedback.appVersion,
-            "deviceInfo": feedback.deviceInfo,
-            "createdAt": ISO8601DateFormatter().string(from: feedback.createdAt)
+            "deviceInfo": feedback.deviceInfo
         ]
         
+        let token = SettingsManager.shared.token
+        
         return try await withCheckedThrowingContinuation { continuation in
-            AF.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
+            var headers: HTTPHeaders = [:]
+            if let token = token {
+                headers["Authorization"] = "Bearer \(token)"
+            }
+            
+            AF.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: headers)
                 .validate(statusCode: 200..<300)
                 .response { response in
                     switch response.result {

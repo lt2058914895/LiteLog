@@ -10,37 +10,62 @@ class FeedbackManager: ObservableObject {
     @Published private(set) var feedbacks: [UserFeedback] = []
     @Published private(set) var pendingFeedbacks: [UserFeedback] = []
     
+    private var sendingIds: Set<UUID> = []
+    private let queue = DispatchQueue(label: "com.litelog.feedbackQueue")
+    
     private init() {
         loadFeedbacks()
         loadPendingFeedbacks()
         Task { await syncPendingFeedbacks() }
     }
     
-    func submit(_ feedback: UserFeedback) {
+    func submit(_ feedback: UserFeedback) async throws {
         feedbacks.append(feedback)
         pendingFeedbacks.append(feedback)
         saveFeedbacks()
         savePendingFeedbacks()
         
-        Task { await sendFeedback(feedback) }
+        try await sendFeedback(feedback)
     }
     
-    private func sendFeedback(_ feedback: UserFeedback) async {
-        do {
-            try await APIService.shared.submitFeedback(feedback)
-            
-            if let index = pendingFeedbacks.firstIndex(where: { $0.id == feedback.id }) {
-                pendingFeedbacks.remove(at: index)
-                savePendingFeedbacks()
+    private func sendFeedback(_ feedback: UserFeedback) async throws {
+        let shouldSend = try await withCheckedThrowingContinuation { continuation in
+            queue.async {
+                if self.sendingIds.contains(feedback.id) {
+                    print("Feedback \(feedback.id) is already being sent, skipping")
+                    continuation.resume(returning: false)
+                    return
+                }
+                self.sendingIds.insert(feedback.id)
+                continuation.resume(returning: true)
             }
-        } catch {
-            print("Failed to send feedback: \(error.localizedDescription)")
+        }
+        
+        guard shouldSend else {
+            return
+        }
+        
+        defer {
+            queue.async {
+                self.sendingIds.remove(feedback.id)
+            }
+        }
+        
+        try await APIService.shared.submitFeedback(feedback)
+        
+        if let index = pendingFeedbacks.firstIndex(where: { $0.id == feedback.id }) {
+            pendingFeedbacks.remove(at: index)
+            savePendingFeedbacks()
         }
     }
     
     private func syncPendingFeedbacks() async {
         for feedback in pendingFeedbacks {
-            await sendFeedback(feedback)
+            do {
+                try await sendFeedback(feedback)
+            } catch {
+                print("Failed to sync pending feedback: \(error.localizedDescription)")
+            }
             try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
     }
