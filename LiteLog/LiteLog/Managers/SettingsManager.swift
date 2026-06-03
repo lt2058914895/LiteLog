@@ -145,21 +145,6 @@ final class SettingsManager: ObservableObject {
         if let token = currentToken {
             try? await APIService.shared.logout(token: token)
         }
-        
-        clearUserProfile()
-    }
-    
-    private func clearUserProfile() {
-        let container = LiteLogApp.sharedModelContainer
-        let context = container.mainContext
-        
-        let fetchDescriptor = FetchDescriptor<UserProfile>()
-        if let profiles = try? context.fetch(fetchDescriptor) {
-            for profile in profiles {
-                context.delete(profile)
-            }
-            try? context.save()
-        }
     }
     
     var displayName: String {
