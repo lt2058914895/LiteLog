@@ -84,7 +84,7 @@ class APIService {
     }
     
     func login(phone: String, password: String) async throws -> AuthResponse {
-        let endpoint = baseURL.appending(path: "/auth/login")
+        let endpoint = baseURL.appending(path: "/auth/login/password")
         
         let parameters: [String: Any] = [
             "phone": phone,
