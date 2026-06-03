@@ -22,6 +22,8 @@ final class SettingsManager: ObservableObject {
         static let token = "token"
         static let tokenType = "tokenType"
         static let tokenExpiration = "tokenExpiration"
+        static let nickname = "nickname"
+        static let avatarUrl = "avatarUrl"
     }
 
     @Published var weightUnit: WeightUnit {
@@ -62,6 +64,10 @@ final class SettingsManager: ObservableObject {
     
     @AppStorage(Keys.userId) var userId: String = ""
     
+    @AppStorage(Keys.nickname) var nickname: String = ""
+    
+    @AppStorage(Keys.avatarUrl) var avatarUrl: String = ""
+    
     var token: String? {
         defaults.string(forKey: Keys.token)
     }
@@ -95,37 +101,17 @@ final class SettingsManager: ObservableObject {
     
     func login(userId: String, nickname: String?, avatarUrl: String?) {
         self.userId = userId
-        saveUserInfo(nickname: nickname, avatarUrl: avatarUrl)
+        self.nickname = nickname ?? ""
+        self.avatarUrl = avatarUrl ?? ""
         self.isLoggedIn = true
     }
     
     func login(with userInfo: UserInfo) {
         self.userId = userInfo.userId
-        saveUserInfo(nickname: userInfo.nickname, avatarUrl: userInfo.avatarUrl)
+        self.nickname = userInfo.nickname ?? ""
+        self.avatarUrl = userInfo.avatarUrl ?? ""
         saveToken(userInfo.token, tokenType: userInfo.tokenType, expiresIn: userInfo.expiresIn)
         self.isLoggedIn = true
-    }
-    
-    private func saveUserInfo(nickname: String?, avatarUrl: String?) {
-        let container = LiteLogApp.sharedModelContainer
-        let context = container.mainContext
-        
-        let fetchDescriptor = FetchDescriptor<UserProfile>()
-        if let existingProfile = try? context.fetch(fetchDescriptor).first {
-            if let nickname = nickname, !nickname.isEmpty {
-                existingProfile.nickname = nickname
-            }
-            if let avatarUrl = avatarUrl {
-                existingProfile.avatarUrl = avatarUrl
-            }
-            existingProfile.updatedAt = Date()
-        } else {
-            let newProfile = UserProfile(nickname: nickname ?? "")
-            newProfile.avatarUrl = avatarUrl ?? ""
-            context.insert(newProfile)
-        }
-        
-        try? context.save()
     }
     
     private func saveToken(_ token: String, tokenType: String?, expiresIn: TimeInterval?) {
@@ -149,6 +135,8 @@ final class SettingsManager: ObservableObject {
         let currentToken = self.token
         
         self.userId = ""
+        self.nickname = ""
+        self.avatarUrl = ""
         self.isLoggedIn = false
         defaults.removeObject(forKey: Keys.token)
         defaults.removeObject(forKey: Keys.tokenType)
@@ -175,14 +163,10 @@ final class SettingsManager: ObservableObject {
     }
     
     var displayName: String {
-        let container = LiteLogApp.sharedModelContainer
-        let context = container.mainContext
-        
-        let fetchDescriptor = FetchDescriptor<UserProfile>()
-        if let profile = try? context.fetch(fetchDescriptor).first, !profile.nickname.isEmpty {
-            return profile.nickname
+        guard !nickname.isEmpty else {
+            return "User"
         }
-        return "User"
+        return nickname
     }
 }
 

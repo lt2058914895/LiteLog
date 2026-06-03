@@ -100,8 +100,8 @@ struct SettingsView: View {
         
         @ViewBuilder
         private var avatarImageView: some View {
-            if settingsManager.isLoggedIn, let profile = profile, !profile.avatarUrl.isEmpty {
-                AsyncImage(url: URL(string: profile.avatarUrl)) { phase in
+            if settingsManager.isLoggedIn, !settingsManager.avatarUrl.isEmpty {
+                AsyncImage(url: URL(string: settingsManager.avatarUrl)) { phase in
                     switch phase {
                     case .success(let image):
                         image
@@ -330,7 +330,7 @@ struct SettingsView: View {
         }
         
         // 删除个人资料数据
-        let profileFetch = UserProfile.fetchRequest()
+        let profileFetch = FetchDescriptor<UserProfile>()
         if let profiles = try? modelContext.fetch(profileFetch) {
             for profile in profiles {
                 modelContext.delete(profile)

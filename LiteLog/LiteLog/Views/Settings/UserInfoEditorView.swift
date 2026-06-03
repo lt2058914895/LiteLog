@@ -14,14 +14,8 @@ struct UserInfoEditorView: View {
     @State private var loadedAvatarImage: UIImage?
     
     init() {
-        let container = LiteLogApp.sharedModelContainer
-        let context = container.mainContext
-        
-        let fetchDescriptor = FetchDescriptor<UserProfile>()
-        if let profile = try? context.fetch(fetchDescriptor).first {
-            _nickname = State(initialValue: profile.nickname)
-            _avatarUrl = State(initialValue: profile.avatarUrl)
-        }
+        _nickname = State(initialValue: SettingsManager.shared.nickname)
+        _avatarUrl = State(initialValue: SettingsManager.shared.avatarUrl)
     }
     
     @StateObject private var errorAlertManager = ErrorAlertManager()
@@ -229,30 +223,13 @@ struct UserInfoEditorView: View {
     }
     
     private func updateLocalProfile(nickname: String, avatarUrl: String?) {
-        let container = LiteLogApp.sharedModelContainer
-        let context = container.mainContext
-        
-        let fetchDescriptor = FetchDescriptor<UserProfile>()
-        if let existingProfile = try? context.fetch(fetchDescriptor).first {
-            existingProfile.nickname = nickname
-            if let avatarUrl = avatarUrl {
-                existingProfile.avatarUrl = avatarUrl
-                self.avatarUrl = avatarUrl
-                self.loadedAvatarImage = nil
-                loadAvatarFromUrl()
-            }
-        } else {
-            let newProfile = UserProfile(nickname: nickname)
-            if let avatarUrl = avatarUrl {
-                newProfile.avatarUrl = avatarUrl
-                self.avatarUrl = avatarUrl
-                self.loadedAvatarImage = nil
-                loadAvatarFromUrl()
-            }
-            context.insert(newProfile)
+        settingsManager.nickname = nickname
+        if let avatarUrl = avatarUrl {
+            settingsManager.avatarUrl = avatarUrl
+            self.avatarUrl = avatarUrl
+            self.loadedAvatarImage = nil
+            loadAvatarFromUrl()
         }
-        
-        try? context.save()
     }
     
     private func logout() {
