@@ -112,15 +112,26 @@
 "login.get.code" = "获取验证码";
 "login.resend.code" = "重新获取";
 "action.login" = "登录";
-"login.forgot.password" = "忘记密码";
+"login.forgot.password" = "忘记密码?";
 "login.register" = "注册";
 "login.error" = "登录失败，请检查手机号和密码";
 "login.no.account" = "还没有账号？";
 "login.select.country" = "选择国家";
 "login.phone.placeholder" = "请输入手机号";
 "login.password.placeholder" = "请输入密码";
+"login.password.hint" = "密码长度至少6位";
 "login.sms.code.placeholder" = "请输入验证码";
 "login.sms.send.failed" = "验证码发送失败，请稍后重试";
+"login.reset.password" = "重置密码";
+"reset.password.title" = "重置密码";
+"reset.password.description" = "请输入手机号和验证码，设置新密码";
+"reset.password.new" = "新密码";
+"reset.password.confirm" = "确认密码";
+"reset.password.confirm.placeholder" = "请再次输入密码";
+"reset.password.action" = "重置密码";
+"reset.password.success" = "密码重置成功";
+"reset.password.failed" = "密码重置失败";
+"success.title" = "成功";
 
 // 注册相关
 "register.title" = "注册";

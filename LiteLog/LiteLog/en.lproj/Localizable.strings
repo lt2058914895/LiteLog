@@ -112,15 +112,26 @@
 "login.get.code" = "Get Code";
 "login.resend.code" = "Resend";
 "action.login" = "Login";
-"login.forgot.password" = "Forgot Password";
+"login.forgot.password" = "Forgot Password?";
 "login.register" = "Register";
 "login.error" = "Login failed, please check your phone number and password";
 "login.no.account" = "Don't have an account?";
 "login.select.country" = "Select Country";
 "login.phone.placeholder" = "Enter phone number";
 "login.password.placeholder" = "Enter password";
+"login.password.hint" = "Password must be at least 6 characters";
 "login.sms.code.placeholder" = "Enter verification code";
 "login.sms.send.failed" = "Failed to send verification code, please try again later";
+"login.reset.password" = "Reset Password";
+"reset.password.title" = "Reset Password";
+"reset.password.description" = "Please enter your phone number and verification code to set a new password";
+"reset.password.new" = "New Password";
+"reset.password.confirm" = "Confirm Password";
+"reset.password.confirm.placeholder" = "Enter password again";
+"reset.password.action" = "Reset Password";
+"reset.password.success" = "Password reset successful";
+"reset.password.failed" = "Password reset failed";
+"success.title" = "Success";
 
 // Register related
 "register.title" = "Register";

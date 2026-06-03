@@ -5,21 +5,36 @@ class ErrorAlertManager: ObservableObject {
     @Published var isPresented = false
     @Published var title = ""
     @Published var message = ""
+    private var completion: (() -> Void)?
     
     func show(title: String, message: String) {
         self.title = title
         self.message = message
+        self.completion = nil
+        self.isPresented = true
+    }
+    
+    func show(title: String, message: String, completion: @escaping () -> Void) {
+        self.title = title
+        self.message = message
+        self.completion = completion
         self.isPresented = true
     }
     
     func showError(_ message: String) {
         self.title = NSLocalizedString("error.title", comment: "")
         self.message = message
+        self.completion = nil
         self.isPresented = true
     }
     
     func dismiss() {
         self.isPresented = false
+        if let completion = self.completion {
+            DispatchQueue.main.async {
+                completion()
+            }
+        }
     }
 }
 

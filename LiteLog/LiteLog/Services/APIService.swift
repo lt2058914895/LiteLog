@@ -139,6 +139,35 @@ class APIService {
         }
     }
     
+    func resetPassword(phone: String, code: String, newPassword: String) async throws -> ResetPasswordResponse {
+        let endpoint = baseURL.appending(path: "/auth/password/reset")
+        
+        let parameters: [String: Any] = [
+            "phone": phone,
+            "code": code,
+            "newPassword": newPassword
+        ]
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            AF.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
+                .validate(statusCode: 200..<300)
+                .responseData { response in
+                    switch response.result {
+                    case .success(let data):
+                        do {
+                            let decoder = JSONDecoder()
+                            let resetResponse = try decoder.decode(ResetPasswordResponse.self, from: data)
+                            continuation.resume(returning: resetResponse)
+                        } catch {
+                            continuation.resume(throwing: APIError.decodingError)
+                        }
+                    case .failure:
+                        continuation.resume(throwing: APIError.invalidResponse)
+                    }
+                }
+        }
+    }
+    
     func register(phone: String, code: String, password: String) async throws -> AuthResponse {
         let endpoint = baseURL.appending(path: "/auth/register")
         

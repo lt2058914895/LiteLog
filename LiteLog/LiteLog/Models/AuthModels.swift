@@ -62,3 +62,9 @@ public struct FeedbackSubmitResponse: Codable, Sendable {
     public let message: String?
     public let feedbackId: Int?
 }
+
+@frozen
+public struct ResetPasswordResponse: Codable, Sendable {
+    public let success: Bool
+    public let message: String?
+}
