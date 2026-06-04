@@ -131,12 +131,7 @@ struct SettingsView: View {
         Section(NSLocalizedString("settings.profile", comment: "")) {
             if let profile = profile {
                 HStack {
-                    Label {
-                        Text(NSLocalizedString("settings.height", comment: ""))
-                    } icon: {
-                        Image(systemName: "ruler")
-                            .foregroundColor(.primaryBlue)
-                    }
+                    Text(NSLocalizedString("settings.height", comment: ""))
 
                     Spacer()
 
@@ -145,12 +140,7 @@ struct SettingsView: View {
                 }
 
                 HStack {
-                    Label {
-                        Text(NSLocalizedString("settings.gender", comment: ""))
-                    } icon: {
-                        Image(systemName: profile.gender == .male ? "person.fill" : "person.fill")
-                            .foregroundColor(.primaryBlue)
-                    }
+                    Text(NSLocalizedString("settings.gender", comment: ""))
 
                     Spacer()
 
@@ -159,12 +149,7 @@ struct SettingsView: View {
                 }
 
                 HStack {
-                    Label {
-                        Text(NSLocalizedString("settings.age", comment: ""))
-                    } icon: {
-                        Image(systemName: "calendar")
-                            .foregroundColor(.primaryBlue)
-                    }
+                    Text(NSLocalizedString("settings.age", comment: ""))
 
                     Spacer()
 
@@ -173,12 +158,7 @@ struct SettingsView: View {
                 }
 
                 HStack {
-                    Label {
-                        Text(NSLocalizedString("settings.goal.weight", comment: ""))
-                    } icon: {
-                        Image(systemName: "target")
-                            .foregroundColor(.primaryBlue)
-                    }
+                    Text(NSLocalizedString("settings.goal.weight", comment: ""))
 
                     Spacer()
 
@@ -283,11 +263,11 @@ struct SettingsView: View {
                 showingFeedbackSheet = true
             }) {
                 HStack {
-                    Image(systemName: "message.badge")
+                    Image(systemName: "message.badge.fill")
                         .foregroundColor(.primaryBlue)
                     Text(NSLocalizedString("settings.send.feedback", comment: ""))
                     Spacer()
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.right.fill")
                         .foregroundColor(.secondaryText)
                 }
             }
@@ -296,22 +276,22 @@ struct SettingsView: View {
                 showingFeedbackSheet = true
             }) {
                 HStack {
-                    Image(systemName: "envelope")
+                    Image(systemName: "envelope.fill")
                         .foregroundColor(.primaryBlue)
                     Text(NSLocalizedString("settings.contact", comment: ""))
                     Spacer()
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.right.fill")
                         .foregroundColor(.secondaryText)
                 }
             }
 
             Button(action: {
-                if let url = URL(string: "https://apps.apple.com/cn/app/轻身记/id1234567890") {
+                if let url = URL(string: "https://apps.apple.com/cn/app/6768547821") {
                     UIApplication.shared.open(url)
                 }
             }) {
                 HStack {
-                    Image(systemName: "star")
+                    Image(systemName: "star.fill")
                         .foregroundColor(.primaryBlue)
                     Text(NSLocalizedString("settings.rate", comment: ""))
                     Spacer()
@@ -326,13 +306,13 @@ struct SettingsView: View {
             }
 
             Button(action: {
-                if let url = URL(string: "https://apps.apple.com/cn/app/轻身记/id1234567890") {
+                if let url = URL(string: "https://apps.apple.com/cn/app/6768547821") {
                     let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
                     UIApplication.shared.windows.first?.rootViewController?.present(activityVC, animated: true)
                 }
             }) {
                 HStack {
-                    Image(systemName: "square.and.arrow.up")
+                    Image(systemName: "arrowshape.turn.up.right.fill")
                         .foregroundColor(.primaryBlue)
                     Text(NSLocalizedString("settings.share", comment: ""))
                 }
@@ -343,7 +323,7 @@ struct SettingsView: View {
     private var aboutSection: some View {
         Section {
             HStack {
-                Image(systemName: "info.circle")
+                Image(systemName: "info.circle.fill")
                     .foregroundColor(.primaryBlue)
                 Text(NSLocalizedString("settings.version", comment: ""))
                 Spacer()
