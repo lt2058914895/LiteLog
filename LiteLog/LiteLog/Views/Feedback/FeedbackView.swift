@@ -182,8 +182,10 @@ struct FeedbackView: View {
             .navigationTitle(NSLocalizedString("feedback.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .tabBar)
-            .sheet(isPresented: $showingSuccess) {
-                FeedbackSuccessView(dismiss: dismiss)
+            .sheet(isPresented: $showingSuccess, onDismiss: {
+                dismiss()
+            }) {
+                FeedbackSuccessView()
             }
             .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
                 Button(NSLocalizedString("action.ok", comment: "")) {}
@@ -224,7 +226,7 @@ struct FeedbackView: View {
 }
 
 struct FeedbackSuccessView: View {
-    var dismiss: DismissAction
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
