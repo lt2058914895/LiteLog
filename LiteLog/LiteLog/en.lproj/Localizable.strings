@@ -96,6 +96,8 @@
 "settings.delete.all" = "Delete All Data";
 "settings.delete.confirm" = "Are you sure you want to delete all data? This action cannot be undone.";
 "settings.contact" = "Contact Us";
+"settings.email" = "Email";
+"settings.wechat" = "WeChat";
 "settings.rate" = "Rate on App Store";
 "settings.share" = "Share with Friends";
 "settings.about" = "About";

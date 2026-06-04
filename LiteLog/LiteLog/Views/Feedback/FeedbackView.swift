@@ -124,11 +124,6 @@ struct FeedbackView: View {
             .navigationTitle(NSLocalizedString("feedback.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(NSLocalizedString("action.cancel", comment: "")) {
-                        dismiss()
-                    }
-                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(action: submitFeedback) {
                         if isSubmitting {
@@ -153,6 +148,7 @@ struct FeedbackView: View {
             } message: {
                 Text(errorMessage)
             }
+            .toolbar(.hidden, for: .tabBar)
         }
     }
     

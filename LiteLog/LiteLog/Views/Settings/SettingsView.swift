@@ -16,7 +16,6 @@ struct SettingsView: View {
     @State private var exportURL: URL?
     @State private var showingExportError = false
     @State private var notificationTime = SettingsManager.defaultNotificationTime()
-    @State private var showingFeedbackSheet = false
     @State private var showingLoginSheet = false
     
     private var profile: UserProfile? { userProfile.first }
@@ -51,9 +50,6 @@ struct SettingsView: View {
             }
             .adaptiveSheet(item: $exportURL) { url in
                 ShareSheet(items: [url])
-            }
-            .fullScreenCover(isPresented: $showingFeedbackSheet) {
-                FeedbackView()
             }
             .adaptiveSheet(isPresented: $showingLoginSheet) {
                 LoginView()
@@ -259,9 +255,7 @@ struct SettingsView: View {
 
     private var actionSection: some View {
         Section {
-            Button(action: {
-                showingFeedbackSheet = true
-            }) {
+            NavigationLink(destination: FeedbackView()) {
                 HStack {
                     Image(systemName: "message.badge.fill")
                         .foregroundColor(.primaryBlue)
@@ -272,9 +266,7 @@ struct SettingsView: View {
                 }
             }
 
-            Button(action: {
-                showingFeedbackSheet = true
-            }) {
+            NavigationLink(destination: ContactView()) {
                 HStack {
                     Image(systemName: "envelope.fill")
                         .foregroundColor(.primaryBlue)

@@ -96,6 +96,8 @@
 "settings.delete.all" = "删除全部数据";
 "settings.delete.confirm" = "确定要删除所有数据吗？此操作不可撤销。";
 "settings.contact" = "联系我们";
+"settings.email" = "邮箱";
+"settings.wechat" = "微信";
 "settings.rate" = "去 App Store 评分";
 "settings.share" = "推荐给好友";
 "settings.about" = "关于";
