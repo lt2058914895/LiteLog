@@ -156,6 +156,7 @@
 "feedback.type.praise" = "Praise";
 "feedback.type.other" = "Other";
 "feedback.content" = "Feedback Content";
+"feedback.content.placeholder" = "Please enter your feedback";
 "feedback.anonymous" = "Anonymous Feedback";
 "feedback.allow.contact" = "Allow us to contact you";
 "feedback.email" = "Email Address";

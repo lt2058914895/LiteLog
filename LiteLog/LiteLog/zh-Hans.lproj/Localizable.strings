@@ -156,6 +156,7 @@
 "feedback.type.praise" = "表扬鼓励";
 "feedback.type.other" = "其他";
 "feedback.content" = "反馈内容";
+"feedback.content.placeholder" = "请输入反馈内容";
 "feedback.anonymous" = "匿名反馈";
 "feedback.allow.contact" = "允许我们联系您";
 "feedback.email" = "电子邮箱";
