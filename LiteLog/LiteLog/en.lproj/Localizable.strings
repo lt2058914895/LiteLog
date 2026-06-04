@@ -95,6 +95,9 @@
 "settings.export.error" = "Export failed. Please ensure you have records before trying again.";
 "settings.delete.all" = "Delete All Data";
 "settings.delete.confirm" = "Are you sure you want to delete all data? This action cannot be undone.";
+"settings.contact" = "Contact Us";
+"settings.rate" = "Rate on App Store";
+"settings.share" = "Share with Friends";
 "settings.about" = "About";
 "settings.version" = "Version";
 "settings.feedback" = "Feedback";

@@ -31,13 +31,11 @@ struct SettingsView: View {
 
                 unitSection
 
-                syncSection
+                syncNotificationSection
 
-                notificationSection
-
+                actionSection
+                
                 dataSection
-
-                feedbackSection
 
                 aboutSection
             }
@@ -206,8 +204,8 @@ struct SettingsView: View {
         }
     }
 
-    private var syncSection: some View {
-        Section(NSLocalizedString("settings.icloud", comment: "")) {
+    private var syncNotificationSection: some View {
+        Section {
             Toggle(isOn: $settingsManager.iCloudSyncEnabled) {
                 Label {
                     VStack(alignment: .leading, spacing: 2) {
@@ -221,11 +219,7 @@ struct SettingsView: View {
                         .foregroundColor(.primaryBlue)
                 }
             }
-        }
-    }
 
-    private var notificationSection: some View {
-        Section(NSLocalizedString("settings.notification", comment: "")) {
             Toggle(isOn: $settingsManager.notificationsEnabled) {
                 Label {
                     VStack(alignment: .leading, spacing: 2) {
@@ -270,7 +264,7 @@ struct SettingsView: View {
     }
 
     private var dataSection: some View {
-        Section(NSLocalizedString("settings.export", comment: "")) {
+        Section {
             Button(action: exportData) {
                 Label(NSLocalizedString("settings.export.csv", comment: ""), systemImage: "square.and.arrow.up")
                     .foregroundColor(.primaryBlue)
@@ -283,28 +277,77 @@ struct SettingsView: View {
         }
     }
 
-    private var feedbackSection: some View {
-        Section(NSLocalizedString("settings.feedback", comment: "")) {
-            Button(action: { showingFeedbackSheet = true }) {
-                Label(NSLocalizedString("settings.send.feedback", comment: ""), systemImage: "message.badge")
-                    .foregroundColor(.primaryBlue)
+    private var actionSection: some View {
+        Section {
+            Button(action: {
+                showingFeedbackSheet = true
+            }) {
+                HStack {
+                    Image(systemName: "message.badge")
+                        .foregroundColor(.primaryBlue)
+                    Text(NSLocalizedString("settings.send.feedback", comment: ""))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondaryText)
+                }
+            }
+
+            Button(action: {
+                showingFeedbackSheet = true
+            }) {
+                HStack {
+                    Image(systemName: "envelope")
+                        .foregroundColor(.primaryBlue)
+                    Text(NSLocalizedString("settings.contact", comment: ""))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondaryText)
+                }
+            }
+
+            Button(action: {
+                if let url = URL(string: "https://apps.apple.com/cn/app/轻身记/id1234567890") {
+                    UIApplication.shared.open(url)
+                }
+            }) {
+                HStack {
+                    Image(systemName: "star")
+                        .foregroundColor(.primaryBlue)
+                    Text(NSLocalizedString("settings.rate", comment: ""))
+                    Spacer()
+                    HStack(spacing: 1) {
+                        ForEach(0..<5) { _ in
+                            Image(systemName: "star.fill")
+                                .foregroundColor(.yellow)
+                                .font(.caption)
+                        }
+                    }
+                }
+            }
+
+            Button(action: {
+                if let url = URL(string: "https://apps.apple.com/cn/app/轻身记/id1234567890") {
+                    let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+                    UIApplication.shared.windows.first?.rootViewController?.present(activityVC, animated: true)
+                }
+            }) {
+                HStack {
+                    Image(systemName: "square.and.arrow.up")
+                        .foregroundColor(.primaryBlue)
+                    Text(NSLocalizedString("settings.share", comment: ""))
+                }
             }
         }
     }
 
     private var aboutSection: some View {
-        Section(NSLocalizedString("settings.about", comment: "")) {
+        Section {
             HStack {
+                Image(systemName: "info.circle")
+                    .foregroundColor(.primaryBlue)
                 Text(NSLocalizedString("settings.version", comment: ""))
                 Spacer()
                 Text("1.0.0")
-                    .foregroundColor(.secondaryText)
-            }
-
-            HStack {
-                Text(NSLocalizedString("app.name", comment: ""))
-                Spacer()
-                Text("轻身记")
                     .foregroundColor(.secondaryText)
             }
         }
