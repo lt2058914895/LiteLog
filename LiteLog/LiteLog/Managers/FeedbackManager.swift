@@ -12,11 +12,15 @@ class FeedbackManager: ObservableObject {
     
     private var sendingIds: Set<UUID> = []
     private let queue = DispatchQueue(label: "com.litelog.feedbackQueue")
+    private var isInitialized = false
     
     private init() {
         loadFeedbacks()
         loadPendingFeedbacks()
-        Task { await syncPendingFeedbacks() }
+        Task {
+            await syncPendingFeedbacks()
+            isInitialized = true
+        }
     }
     
     func submit(_ feedback: UserFeedback) async throws {
@@ -25,7 +29,11 @@ class FeedbackManager: ObservableObject {
         saveFeedbacks()
         savePendingFeedbacks()
         
-        try await sendFeedback(feedback)
+        // 确保初始化同步完成后再发送新反馈，避免重复提交
+        if isInitialized {
+            try await sendFeedback(feedback)
+        }
+        // 如果初始化未完成，新反馈会被添加到 pendingFeedbacks，由 syncPendingFeedbacks 统一发送
     }
     
     private func sendFeedback(_ feedback: UserFeedback) async throws {
