@@ -393,12 +393,14 @@ struct QuickAddWeightView: View {
             deleteTodayRecords()
         }
 
-        let record = WeightRecord(date: Date(), weight: weightInKg)
+        let record = WeightRecord(date: Date(), weight: weightInKg, syncStatus: WeightRecordSyncStatus.pending)
 
         modelContext.insert(record)
         
         do {
             try modelContext.save()
+            // 触发同步到云数据库
+            DataSyncManager.shared.triggerWeightRecordSync(modelContext: modelContext)
         } catch {
             print("Failed to save weight: \(error)")
             return
@@ -410,8 +412,19 @@ struct QuickAddWeightView: View {
     private func deleteTodayRecords() {
         let today = Date().startOfDay
         let todayRecords = records.filter { Calendar.current.isDate($0.date, inSameDayAs: today) }
+        let recordIds = todayRecords.map { $0.id.uuidString }
         for record in todayRecords {
             modelContext.delete(record)
+        }
+        
+        do {
+            try modelContext.save()
+            // 同步删除到云数据库
+            Task {
+                await DataSyncManager.shared.syncDeletedRecords(recordIds: recordIds)
+            }
+        } catch {
+            print("Failed to delete today records: \(error)")
         }
     }
 }

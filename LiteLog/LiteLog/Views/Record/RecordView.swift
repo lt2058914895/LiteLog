@@ -174,8 +174,14 @@ struct RecordView: View {
     }
 
     private func deleteRecord(_ record: WeightRecord) {
+        let recordId = record.id.uuidString
         withAnimation {
             modelContext.delete(record)
+        }
+        
+        // 同步删除到云数据库
+        Task {
+            await DataSyncManager.shared.syncDeletedRecords(recordIds: [recordId])
         }
     }
 }
@@ -383,13 +389,16 @@ struct RecordFormView: View {
             weight: weightInKg,
             bodyFatPercentage: bodyFatPercentage,
             waistCircumference: waistCircumference,
-            note: note.isEmpty ? nil : note
+            note: note.isEmpty ? nil : note,
+            syncStatus: WeightRecordSyncStatus.pending
         )
 
         modelContext.insert(newRecord)
         
         do {
             try modelContext.save()
+            // 触发同步到云数据库
+            DataSyncManager.shared.triggerWeightRecordSync(modelContext: modelContext)
         } catch {
             errorMessage = NSLocalizedString("error.save.failed", comment: "")
             showingError = true
@@ -412,9 +421,12 @@ struct RecordFormView: View {
         record.waistCircumference = Double(waistString)
         record.note = note.isEmpty ? nil : note
         record.updatedAt = Date()
+        record.syncStatus = .pending  // 标记为待同步
         
         do {
             try modelContext.save()
+            // 触发同步到云数据库
+            DataSyncManager.shared.triggerWeightRecordSync(modelContext: modelContext)
         } catch {
             errorMessage = NSLocalizedString("error.save.failed", comment: "")
             showingError = true
@@ -426,10 +438,15 @@ struct RecordFormView: View {
 
     private func deleteRecord() {
         if let record = record {
+            let recordId = record.id.uuidString
             modelContext.delete(record)
             
             do {
                 try modelContext.save()
+                // 同步删除到云数据库
+                Task {
+                    await DataSyncManager.shared.syncDeletedRecords(recordIds: [recordId])
+                }
             } catch {
                 print("Failed to delete record: \(error)")
             }
@@ -439,12 +456,17 @@ struct RecordFormView: View {
 
     private func deleteRecordsForSelectedDate() {
         let dateRecords = records.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
+        let recordIds = dateRecords.map { $0.id.uuidString }
         for record in dateRecords {
             modelContext.delete(record)
         }
         
         do {
             try modelContext.save()
+            // 同步删除到云数据库
+            Task {
+                await DataSyncManager.shared.syncDeletedRecords(recordIds: recordIds)
+            }
         } catch {
             print("Failed to delete records for selected date: \(error)")
         }

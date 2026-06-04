@@ -1,6 +1,11 @@
 import Foundation
 import SwiftData
 
+enum UserProfileSyncStatus: Int, Codable {
+    case pending = 0
+    case synced = 1
+}
+
 @Model
 final class UserProfile {
     var id: UUID
@@ -8,8 +13,10 @@ final class UserProfile {
     var gender: Gender
     var age: Int
     var goalWeight: Double
+    var weightUnit: String
     var createdAt: Date
     var updatedAt: Date
+    var syncStatus: UserProfileSyncStatus
 
     enum Gender: Int, Codable, CaseIterable {
         case male = 0
@@ -29,16 +36,20 @@ final class UserProfile {
         gender: Gender = .male,
         age: Int = 30,
         goalWeight: Double = 65.0,
+        weightUnit: String = "kg",
         createdAt: Date = Date(),
-        updatedAt: Date = Date()
+        updatedAt: Date = Date(),
+        syncStatus: UserProfileSyncStatus = .pending
     ) {
         self.id = id
         self.height = height
         self.gender = gender
         self.age = age
         self.goalWeight = goalWeight
+        self.weightUnit = weightUnit
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.syncStatus = syncStatus
     }
 
     func calculateBMI(weight: Double) -> Double {

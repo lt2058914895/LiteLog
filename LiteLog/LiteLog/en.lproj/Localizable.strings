@@ -17,6 +17,7 @@
 "home.add.weight" = "Add Weight";
 "home.weight" = "Weight";
 "home.kg" = "kg";
+"home.lb" = "lb";
 "home.day" = "Day";
 "home.week" = "Week";
 "home.month" = "Month";

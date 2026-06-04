@@ -68,3 +68,29 @@ public struct ResetPasswordResponse: Codable, Sendable {
     public let success: Bool
     public let message: String?
 }
+
+@frozen
+public struct WeightRecordRequest: Codable, Sendable {
+    public let recordId: String
+    public let weight: Double
+    public let bodyFatPercentage: Double?
+    public let waistCircumference: Double?
+    public let note: String?
+    public let date: TimeInterval
+    public let createdAt: TimeInterval
+    public let updatedAt: TimeInterval
+    public let deleted: Bool?
+}
+
+@frozen
+public struct WeightRecordSyncRequest: Codable, Sendable {
+    public let records: [WeightRecordRequest]
+}
+
+@frozen
+public struct WeightRecordSyncResponse: Codable, Sendable {
+    public let success: Bool
+    public let message: String?
+    public let syncedCount: Int
+    public let syncedRecordIds: [String]?
+}

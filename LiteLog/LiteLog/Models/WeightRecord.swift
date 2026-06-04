@@ -1,6 +1,12 @@
 import Foundation
 import SwiftData
 
+enum WeightRecordSyncStatus: Int, Codable {
+    case pending
+    case synced
+    case failed
+}
+
 @Model
 final class WeightRecord {
     var id: UUID
@@ -11,13 +17,7 @@ final class WeightRecord {
     var note: String?
     var createdAt: Date
     var updatedAt: Date
-    var syncStatus: SyncStatus
-
-    enum SyncStatus: Int, Codable {
-        case pending
-        case synced
-        case failed
-    }
+    var syncStatus: WeightRecordSyncStatus
 
     init(
         id: UUID = UUID(),
@@ -28,7 +28,7 @@ final class WeightRecord {
         note: String? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
-        syncStatus: SyncStatus = .pending
+        syncStatus: WeightRecordSyncStatus = .pending
     ) {
         self.id = id
         self.date = date

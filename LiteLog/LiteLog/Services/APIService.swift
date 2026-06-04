@@ -263,6 +263,44 @@ class APIService {
         }
     }
     
+    func updateUserProfile(height: Double, gender: Int, age: Int, goalWeight: Double, weightUnit: String) async throws -> UpdateProfileResponse {
+        let endpoint = baseURL.appending(path: "/user/profile")
+        
+        var parameters: [String: Any] = [
+            "height": height,
+            "gender": gender,
+            "age": age,
+            "goalWeight": goalWeight,
+            "weightUnit": weightUnit
+        ]
+        
+        let token = SettingsManager.shared.token
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            var headers: HTTPHeaders = [:]
+            if let token = token {
+                headers["Authorization"] = "Bearer \(token)"
+            }
+            
+            AF.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default, headers: headers)
+                .validate(statusCode: 200..<300)
+                .responseData { response in
+                    switch response.result {
+                    case .success(let data):
+                        do {
+                            let decoder = JSONDecoder()
+                            let profileResponse = try decoder.decode(UpdateProfileResponse.self, from: data)
+                            continuation.resume(returning: profileResponse)
+                        } catch {
+                            continuation.resume(throwing: APIError.decodingError)
+                        }
+                    case .failure:
+                        continuation.resume(throwing: APIError.invalidResponse)
+                    }
+                }
+        }
+    }
+    
     func uploadAvatar(image: UIImage) async throws -> AvatarUploadResponse {
         let endpoint = baseURL.appending(path: "/user/avatar/upload")
         
@@ -296,6 +334,79 @@ class APIService {
                     continuation.resume(throwing: APIError.invalidResponse)
                 }
             }
+        }
+    }
+    
+    func deleteWeightRecords(recordIds: [String]) async throws -> WeightRecordSyncResponse {
+        let endpoint = baseURL.appending(path: "/weight/sync")
+        
+        let token = SettingsManager.shared.token
+        
+        // 创建标记为已删除的记录请求
+        let records = recordIds.map { recordId in
+            WeightRecordRequest(
+                recordId: recordId,
+                weight: 0.0,
+                bodyFatPercentage: nil,
+                waistCircumference: nil,
+                note: nil,
+                date: Date().timeIntervalSince1970,
+                createdAt: Date().timeIntervalSince1970,
+                updatedAt: Date().timeIntervalSince1970,
+                deleted: true
+            )
+        }
+        
+        return try await syncWeightRecords(records: records)
+    }
+    
+    func syncWeightRecords(records: [WeightRecordRequest]) async throws -> WeightRecordSyncResponse {
+        let endpoint = baseURL.appending(path: "/weight/sync")
+        
+        let token = SettingsManager.shared.token
+        
+        // 将记录转换为字典数组
+        let parameters: [String: Any] = [
+            "records": records.map { record in
+                var dict: [String: Any] = [
+                    "recordId": record.recordId,
+                    "weight": record.weight,
+                    "bodyFatPercentage": record.bodyFatPercentage as Any,
+                    "waistCircumference": record.waistCircumference as Any,
+                    "note": record.note as Any,
+                    "date": record.date,
+                    "createdAt": record.createdAt,
+                    "updatedAt": record.updatedAt
+                ]
+                if let deleted = record.deleted {
+                    dict["deleted"] = deleted
+                }
+                return dict
+            }
+        ]
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            var headers: HTTPHeaders = [:]
+            if let token = token {
+                headers["Authorization"] = "Bearer \(token)"
+            }
+            
+            AF.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: headers)
+                .validate(statusCode: 200..<300)
+                .responseData { response in
+                    switch response.result {
+                    case .success(let data):
+                        do {
+                            let decoder = JSONDecoder()
+                            let syncResponse = try decoder.decode(WeightRecordSyncResponse.self, from: data)
+                            continuation.resume(returning: syncResponse)
+                        } catch {
+                            continuation.resume(throwing: APIError.decodingError)
+                        }
+                    case .failure:
+                        continuation.resume(throwing: APIError.invalidResponse)
+                    }
+                }
         }
     }
 }

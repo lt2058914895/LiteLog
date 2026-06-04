@@ -28,8 +28,10 @@ class MockDataManager {
             gender: .male,
             age: 28,
             goalWeight: 70.0,
+            weightUnit: WeightUnit.kg.rawValue,
             createdAt: Date().addingTimeInterval(-30 * 24 * 60 * 60),
-            updatedAt: Date()
+            updatedAt: Date(),
+            syncStatus: UserProfileSyncStatus.synced
         )
         modelContext.insert(profile)
     }
@@ -70,7 +72,7 @@ class MockDataManager {
                 note: note,
                 createdAt: date,
                 updatedAt: date,
-                syncStatus: .synced
+                syncStatus: WeightRecordSyncStatus.synced
             )
             
             records.append(record)

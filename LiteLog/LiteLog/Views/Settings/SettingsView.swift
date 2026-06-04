@@ -325,6 +325,7 @@ struct SettingsView: View {
 
     private func deleteAllData() {
         // 删除体重记录
+        let recordIds = records.map { $0.id.uuidString }
         for record in records {
             modelContext.delete(record)
         }
@@ -339,6 +340,10 @@ struct SettingsView: View {
 
         do {
             try modelContext.save()
+            // 同步删除到云数据库
+            Task {
+                await DataSyncManager.shared.syncDeletedRecords(recordIds: recordIds)
+            }
         } catch {
             print("Failed to delete all data: \(error)")
         }
@@ -468,14 +473,25 @@ struct ProfileEditorView: View {
             existing.age = age
             existing.goalWeight = goalWeightInKg
             existing.updatedAt = Date()
+            existing.syncStatus = .pending
         } else {
             let newProfile = UserProfile(
                 height: heightInCm,
                 gender: gender,
                 age: age,
-                goalWeight: goalWeightInKg
+                goalWeight: goalWeightInKg,
+                weightUnit: SettingsManager.shared.weightUnit.rawValue,
+                syncStatus: UserProfileSyncStatus.pending
             )
             modelContext.insert(newProfile)
+        }
+        
+        do {
+            try modelContext.save()
+            // 触发同步到云数据库
+            DataSyncManager.shared.triggerProfileSync(modelContext: modelContext)
+        } catch {
+            print("保存个人资料失败: \(error)")
         }
 
         dismiss()

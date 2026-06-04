@@ -7,6 +7,12 @@ final class SettingsManager: ObservableObject {
     static let shared = SettingsManager()
 
     private let defaults = UserDefaults.standard
+    
+    weak var modelContext: ModelContext?
+    
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+    }
 
     private enum Keys {
         static let weightUnit = "weightUnit"
@@ -29,6 +35,39 @@ final class SettingsManager: ObservableObject {
     @Published var weightUnit: WeightUnit {
         didSet {
             defaults.set(weightUnit.rawValue, forKey: Keys.weightUnit)
+            updateWeightUnitInDatabase()
+        }
+    }
+    
+    private func updateWeightUnitInDatabase() {
+        guard let context = modelContext else { return }
+        
+        Task { @MainActor in
+            do {
+                let profiles = try context.fetch(FetchDescriptor<UserProfile>())
+                if let profile = profiles.first {
+                    // 只更新单位，目标体重保持不变（始终以 kg 存储）
+                    // 显示时会根据单位自动转换
+                    // 例如：70kg 在 kg 单位下显示 70kg，在 lb 单位下显示 154.32lb
+                    profile.weightUnit = weightUnit.rawValue
+                    profile.updatedAt = Date()
+                    profile.syncStatus = .pending
+                    try context.save()
+                    
+                    // 触发同步到云数据库
+                    await DataSyncManager.shared.triggerProfileSync(modelContext: context)
+                } else {
+                    // 如果没有个人资料，创建一个新的
+                    let newProfile = UserProfile(
+                        weightUnit: weightUnit.rawValue,
+                        syncStatus: .pending
+                    )
+                    context.insert(newProfile)
+                    try context.save()
+                }
+            } catch {
+                print("Failed to update weight unit in database: \(error)")
+            }
         }
     }
 
@@ -112,6 +151,12 @@ final class SettingsManager: ObservableObject {
         self.avatarUrl = userInfo.avatarUrl ?? ""
         saveToken(userInfo.token, tokenType: userInfo.tokenType, expiresIn: userInfo.expiresIn)
         self.isLoggedIn = true
+        
+        if let context = self.modelContext {
+            Task {
+                await DataSyncManager.shared.syncLocalDataToCloud(modelContext: context)
+            }
+        }
     }
     
     private func saveToken(_ token: String, tokenType: String?, expiresIn: TimeInterval?) {

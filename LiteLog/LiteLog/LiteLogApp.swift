@@ -20,12 +20,22 @@ struct LiteLogApp: App {
             WeightRecord.self,
             UserProfile.self,
         ])
+        
+        // DEBUG 模式下使用内存数据库，避免 schema 不兼容问题
+        #if DEBUG
         let modelConfiguration = ModelConfiguration(
-            "LiteLog_v3",
+            isStoredInMemoryOnly: true,
+            allowsSave: true,
+            cloudKitDatabase: .none
+        )
+        #else
+        let modelConfiguration = ModelConfiguration(
+            "LiteLog_v4",
             schema: schema,
             isStoredInMemoryOnly: false,
             cloudKitDatabase: .automatic
         )
+        #endif
 
         do {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
@@ -45,6 +55,15 @@ struct LiteLogApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(settingsManager)
+                .onAppear {
+                    let modelContext = LiteLogApp.sharedModelContainer.mainContext
+                    settingsManager.setModelContext(modelContext)
+                    
+                    // 冷启动时检查并同步未上传的数据到云数据库
+                    Task {
+                        await DataSyncManager.shared.syncLocalDataToCloud(modelContext: modelContext)
+                    }
+                }
         }
         .modelContainer(LiteLogApp.sharedModelContainer)
     }

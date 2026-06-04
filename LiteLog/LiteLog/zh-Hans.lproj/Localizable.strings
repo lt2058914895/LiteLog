@@ -17,6 +17,7 @@
 "home.add.weight" = "添加体重";
 "home.weight" = "体重";
 "home.kg" = "kg";
+"home.lb" = "lb";
 "home.day" = "日";
 "home.week" = "周";
 "home.month" = "月";
