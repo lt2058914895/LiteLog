@@ -109,6 +109,8 @@ final class SettingsManager: ObservableObject {
     
     @AppStorage(Keys.avatarUrl) var avatarUrl: String = ""
     
+    @Published var avatarCacheUpdated = false
+    
     var cachedAvatarImage: UIImage? {
         if let data = defaults.data(forKey: Keys.avatarData),
            let image = UIImage(data: data) {
@@ -123,6 +125,8 @@ final class SettingsManager: ObservableObject {
         if let data = scaledImage.pngData() {
             defaults.set(data, forKey: Keys.avatarData)
             defaults.set(avatarUrl.hashValue, forKey: Keys.avatarUrlHash)
+            // 触发视图更新
+            avatarCacheUpdated.toggle()
         }
     }
     
@@ -184,9 +188,24 @@ final class SettingsManager: ObservableObject {
         saveToken(userInfo.token, tokenType: userInfo.tokenType, expiresIn: userInfo.expiresIn)
         self.isLoggedIn = true
         
+        // 下载并缓存头像
+        downloadAndCacheAvatar()
+        
         if let context = self.modelContext {
             Task {
                 await DataSyncManager.shared.syncLocalDataToCloud(modelContext: context)
+            }
+        }
+    }
+    
+    private func downloadAndCacheAvatar() {
+        guard !avatarUrl.isEmpty else { return }
+        
+        Task {
+            if let url = URL(string: avatarUrl), 
+               let data = try? Data(contentsOf: url), 
+               let image = UIImage(data: data) {
+                updateCachedAvatar(with: image)
             }
         }
     }

@@ -301,6 +301,7 @@ struct HomeView: View {
                     .scaledToFill()
                     .frame(width: 36, height: 36)
                     .clipShape(Circle())
+                    .id(settingsManager.avatarCacheUpdated)
             } else {
                 Image(systemName: "person.circle.fill")
                     .resizable()
