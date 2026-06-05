@@ -348,6 +348,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiteLog/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "轻身记";
+				INFOPLIST_KEY_NSCameraUsageDescription = "需要访问相机以拍摄体重秤照片";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "用于上传照片场景";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -388,6 +389,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiteLog/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "轻身记";
+				INFOPLIST_KEY_NSCameraUsageDescription = "需要访问相机以拍摄体重秤照片";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "用于上传照片场景";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
