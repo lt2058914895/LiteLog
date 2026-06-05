@@ -195,6 +195,14 @@ struct UserInfoEditorView: View {
             // 上传头像（如果有选择新头像）
             let avatarUrl = await uploadAvatarIfNeeded()
             
+            // 如果用户选择了新头像但上传失败，中断保存流程
+            if avatarImage != nil && avatarUrl == nil {
+                // 头像上传失败，恢复显示原头像
+                self.avatarImage = nil
+                isLoading = false
+                return
+            }
+            
             // 调用更新用户信息接口
             let response = try await APIService.shared.updateProfile(nickname: nickname, avatarUrl: avatarUrl)
             
@@ -202,9 +210,13 @@ struct UserInfoEditorView: View {
                 updateLocalProfile(nickname: response.nickname ?? nickname, avatarUrl: response.avatarUrl)
                 dismiss()
             } else {
+                // 更新失败，恢复显示原头像
+                self.avatarImage = nil
                 errorAlertManager.showError(response.message ?? "更新失败")
             }
         } catch {
+            // 网络错误，恢复显示原头像
+            self.avatarImage = nil
             errorAlertManager.showError(error.localizedDescription)
         }
         

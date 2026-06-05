@@ -319,10 +319,8 @@ class APIService {
             AF.upload(multipartFormData: { multipartFormData in
                 multipartFormData.append(imageData, withName: "file", fileName: "avatar.jpg", mimeType: "image/jpeg")
             }, to: endpoint, headers: headers)
-            .validate(statusCode: 200..<300)
             .responseData { response in
-                switch response.result {
-                case .success(let data):
+                if let data = response.data {
                     do {
                         let decoder = JSONDecoder()
                         let uploadResponse = try decoder.decode(AvatarUploadResponse.self, from: data)
@@ -330,7 +328,7 @@ class APIService {
                     } catch {
                         continuation.resume(throwing: APIError.decodingError)
                     }
-                case .failure:
+                } else {
                     continuation.resume(throwing: APIError.invalidResponse)
                 }
             }
