@@ -11,7 +11,6 @@ struct UserInfoEditorView: View {
     @State private var showImagePicker = false
     @State private var showLogoutAlert = false
     @State private var isLoading = false
-    @State private var loadedAvatarImage: UIImage?
     
     init() {
         _nickname = State(initialValue: SettingsManager.shared.nickname)
@@ -62,18 +61,20 @@ struct UserInfoEditorView: View {
                 showImagePicker = true
             }) {
                 ZStack(alignment: .bottomTrailing) {
-                    // 优先级：1. 用户新选择的头像 2. 从URL加载的头像 3. 默认头像
+                    // 优先级：1. 用户新选择的头像 2. 缓存的头像 3. 默认头像
                     if let image = avatarImage {
                         Image(uiImage: image)
                             .resizable()
-                            .scaledToFill()
+                            .aspectRatio(contentMode: .fill)
                             .frame(width: 120, height: 120)
+                            .clipped()
                             .clipShape(Circle())
-                    } else if let image = loadedAvatarImage {
-                        Image(uiImage: image)
+                    } else if let cachedImage = settingsManager.cachedAvatarImage {
+                        Image(uiImage: cachedImage)
                             .resizable()
-                            .scaledToFill()
+                            .aspectRatio(contentMode: .fill)
                             .frame(width: 120, height: 120)
+                            .clipped()
                             .clipShape(Circle())
                     } else {
                         Image(systemName: "person.circle.fill")
@@ -93,7 +94,7 @@ struct UserInfoEditorView: View {
                 }
             }
             .onAppear {
-                loadAvatarFromUrl()
+                loadAndCacheAvatarIfNeeded()
             }
             
             Text(NSLocalizedString("profile.edit.avatar.hint", comment: ""))
@@ -102,12 +103,17 @@ struct UserInfoEditorView: View {
         }
     }
     
-    private func loadAvatarFromUrl() {
-        guard avatarImage == nil, !avatarUrl.isEmpty, loadedAvatarImage == nil else { return }
+    private func loadAndCacheAvatarIfNeeded() {
+        guard avatarImage == nil, !avatarUrl.isEmpty else { return }
+        
+        // 如果已有缓存且URL没变，不需要重新加载
+        if settingsManager.isAvatarCached {
+            return
+        }
         
         Task {
             if let url = URL(string: avatarUrl), let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
-                loadedAvatarImage = image
+                settingsManager.updateCachedAvatar(with: image)
             }
         }
     }
@@ -227,8 +233,13 @@ struct UserInfoEditorView: View {
         if let avatarUrl = avatarUrl {
             settingsManager.avatarUrl = avatarUrl
             self.avatarUrl = avatarUrl
-            self.loadedAvatarImage = nil
-            loadAvatarFromUrl()
+            // 如果用户选择了新头像，更新缓存
+            if let image = avatarImage {
+                settingsManager.updateCachedAvatar(with: image)
+            } else {
+                // 否则清除旧缓存，下次会重新加载
+                settingsManager.clearCachedAvatar()
+            }
         }
     }
     

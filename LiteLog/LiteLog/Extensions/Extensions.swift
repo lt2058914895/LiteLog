@@ -167,3 +167,75 @@ extension Double {
         formatted(decimals: 1)
     }
 }
+
+extension Image {
+    func asUIImage() -> UIImage? {
+        let controller = UIHostingController(rootView: self)
+        controller.view.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
+        let renderer = UIGraphicsImageRenderer(size: controller.view.bounds.size)
+        return renderer.image { _ in
+            controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
+        }
+    }
+}
+
+extension UIImage {
+    func scaledToSize(_ size: CGSize) -> UIImage {
+        // 先修复图片方向
+        let normalizedImage = self.normalizedImage()
+        
+        UIGraphicsBeginImageContextWithOptions(size, false, UIScreen.main.scale)
+        defer { UIGraphicsEndImageContext() }
+        
+        // 使用 max 比例确保图片填充整个区域，类似 scaledToFill
+        let aspectRatio = max(size.width / normalizedImage.size.width, size.height / normalizedImage.size.height)
+        let newSize = CGSize(width: normalizedImage.size.width * aspectRatio, height: normalizedImage.size.height * aspectRatio)
+        
+        // 居中裁剪
+        let origin = CGPoint(x: (size.width - newSize.width) / 2, y: (size.height - newSize.height) / 2)
+        normalizedImage.draw(in: CGRect(origin: origin, size: newSize))
+        
+        return UIGraphicsGetImageFromCurrentImageContext() ?? self
+    }
+    
+    private func normalizedImage() -> UIImage {
+        if self.imageOrientation == .up {
+            return self
+        }
+        
+        UIGraphicsBeginImageContextWithOptions(self.size, false, self.scale)
+        defer { UIGraphicsEndImageContext() }
+        
+        let context = UIGraphicsGetCurrentContext()!
+        context.translateBy(x: self.size.width / 2, y: self.size.height / 2)
+        
+        switch self.imageOrientation {
+        case .down:
+            context.rotate(by: .pi)
+        case .left:
+            context.rotate(by: -.pi / 2)
+        case .right:
+            context.rotate(by: .pi / 2)
+        case .upMirrored:
+            context.scaleBy(x: -1, y: 1)
+        case .downMirrored:
+            context.rotate(by: .pi)
+            context.scaleBy(x: -1, y: 1)
+        case .leftMirrored:
+            context.rotate(by: -.pi / 2)
+            context.scaleBy(x: -1, y: 1)
+        case .rightMirrored:
+            context.rotate(by: .pi / 2)
+            context.scaleBy(x: -1, y: 1)
+        case .up:
+            break
+        @unknown default:
+            break
+        }
+        
+        context.translateBy(x: -self.size.width / 2, y: -self.size.height / 2)
+        self.draw(in: CGRect(origin: .zero, size: self.size))
+        
+        return UIGraphicsGetImageFromCurrentImageContext() ?? self
+    }
+}

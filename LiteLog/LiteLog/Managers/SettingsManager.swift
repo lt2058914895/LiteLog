@@ -30,6 +30,8 @@ final class SettingsManager: ObservableObject {
         static let tokenExpiration = "tokenExpiration"
         static let nickname = "nickname"
         static let avatarUrl = "avatarUrl"
+        static let avatarData = "avatarData"
+        static let avatarUrlHash = "avatarUrlHash"
     }
 
     @Published var weightUnit: WeightUnit {
@@ -106,6 +108,36 @@ final class SettingsManager: ObservableObject {
     @AppStorage(Keys.nickname) var nickname: String = ""
     
     @AppStorage(Keys.avatarUrl) var avatarUrl: String = ""
+    
+    var cachedAvatarImage: UIImage? {
+        if let data = defaults.data(forKey: Keys.avatarData),
+           let image = UIImage(data: data) {
+            return image
+        }
+        return nil
+    }
+    
+    func updateCachedAvatar(with image: UIImage) {
+        // 将图片缩放到合适的尺寸，避免缓存过大和显示问题
+        let scaledImage = image.scaledToSize(CGSize(width: 120, height: 120))
+        if let data = scaledImage.pngData() {
+            defaults.set(data, forKey: Keys.avatarData)
+            defaults.set(avatarUrl.hashValue, forKey: Keys.avatarUrlHash)
+        }
+    }
+    
+    func clearCachedAvatar() {
+        defaults.removeObject(forKey: Keys.avatarData)
+        defaults.removeObject(forKey: Keys.avatarUrlHash)
+    }
+    
+    var isAvatarCached: Bool {
+        if let cachedHash = defaults.integer(forKey: Keys.avatarUrlHash) as? Int,
+           cachedHash == avatarUrl.hashValue {
+            return cachedAvatarImage != nil
+        }
+        return false
+    }
     
     var token: String? {
         defaults.string(forKey: Keys.token)
@@ -186,6 +218,7 @@ final class SettingsManager: ObservableObject {
         defaults.removeObject(forKey: Keys.token)
         defaults.removeObject(forKey: Keys.tokenType)
         defaults.removeObject(forKey: Keys.tokenExpiration)
+        clearCachedAvatar()
         
         if let token = currentToken {
             try? await APIService.shared.logout(token: token)

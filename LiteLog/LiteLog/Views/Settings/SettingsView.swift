@@ -95,24 +95,42 @@ struct SettingsView: View {
         @ViewBuilder
         private var avatarImageView: some View {
             if settingsManager.isLoggedIn, !settingsManager.avatarUrl.isEmpty {
-                AsyncImage(url: URL(string: settingsManager.avatarUrl)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 54, height: 54)
-                            .clipShape(Circle())
-                    case .failure, .empty:
+                // 优先使用缓存的头像，提升加载速度
+                if let cachedImage = settingsManager.cachedAvatarImage {
+                    Image(uiImage: cachedImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 54, height: 54)
+                        .clipShape(Circle())
+                } else {
+                    ZStack {
+                        // 默认头像作为占位符
                         Image(systemName: "person.circle.fill")
                             .resizable()
                             .frame(width: 54, height: 54)
                             .foregroundColor(.primaryBlue)
-                    @unknown default:
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .frame(width: 54, height: 54)
-                            .foregroundColor(.primaryBlue)
+                        
+                        // 异步加载并缓存
+                        AsyncImage(url: URL(string: settingsManager.avatarUrl)) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 54, height: 54)
+                                    .clipShape(Circle())
+                            case .failure, .empty:
+                                EmptyView()
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                        .onAppear {
+                            // 在后台异步加载并缓存头像
+                            Task {
+                                await loadAndCacheAvatar()
+                            }
+                        }
                     }
                 }
             } else {
@@ -120,6 +138,16 @@ struct SettingsView: View {
                     .resizable()
                     .frame(width: 54, height: 54)
                     .foregroundColor(.gray)
+            }
+        }
+        
+        private func loadAndCacheAvatar() async {
+            guard !settingsManager.avatarUrl.isEmpty, settingsManager.cachedAvatarImage == nil else { return }
+            
+            if let url = URL(string: settingsManager.avatarUrl), 
+               let data = try? Data(contentsOf: url), 
+               let image = UIImage(data: data) {
+                settingsManager.updateCachedAvatar(with: image)
             }
         }
         
