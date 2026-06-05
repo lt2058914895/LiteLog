@@ -102,7 +102,7 @@ struct SettingsView: View {
                         .resizable()
                         .scaledToFill()
                         .frame(width: 54, height: 54)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(Circle())
                 } else {
                     ZStack {
                         // 默认头像作为占位符
@@ -119,7 +119,7 @@ struct SettingsView: View {
                                     .resizable()
                                     .scaledToFill()
                                     .frame(width: 54, height: 54)
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .clipShape(Circle())
                             case .failure, .empty:
                                 EmptyView()
                             @unknown default:

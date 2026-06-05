@@ -37,8 +37,15 @@ struct RecordView: View {
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle(NSLocalizedString("tab.record", comment: ""))
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    HStack(spacing: 12) {
+                        avatarImageView
+                        Text(NSLocalizedString("tab.record", comment: ""))
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddSheet = true }) {
                         Image(systemName: "plus.circle.fill")
@@ -182,6 +189,29 @@ struct RecordView: View {
         // 同步删除到云数据库
         Task {
             await DataSyncManager.shared.syncDeletedRecords(recordIds: [recordId])
+        }
+    }
+    
+    @ViewBuilder
+    private var avatarImageView: some View {
+        if settingsManager.isLoggedIn, !settingsManager.avatarUrl.isEmpty {
+            if let cachedImage = settingsManager.cachedAvatarImage {
+                Image(uiImage: cachedImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 36, height: 36)
+                    .clipShape(Circle())
+            } else {
+                Image(systemName: "person.circle.fill")
+                    .resizable()
+                    .frame(width: 36, height: 36)
+                    .foregroundColor(.primaryBlue)
+            }
+        } else {
+            Image(systemName: "person.circle.fill")
+                .resizable()
+                .frame(width: 36, height: 36)
+                .foregroundColor(.gray)
         }
     }
 }

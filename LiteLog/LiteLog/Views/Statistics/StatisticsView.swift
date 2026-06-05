@@ -100,10 +100,43 @@ struct StatisticsView: View {
                 .padding()
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle(NSLocalizedString("stats.title", comment: ""))
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    HStack(spacing: 12) {
+                        avatarImageView
+                        Text(NSLocalizedString("stats.title", comment: ""))
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
-
+    
+    @ViewBuilder
+    private var avatarImageView: some View {
+        if settingsManager.isLoggedIn, !settingsManager.avatarUrl.isEmpty {
+            if let cachedImage = settingsManager.cachedAvatarImage {
+                Image(uiImage: cachedImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 36, height: 36)
+                    .clipShape(Circle())
+            } else {
+                Image(systemName: "person.circle.fill")
+                    .resizable()
+                    .frame(width: 36, height: 36)
+                    .foregroundColor(.primaryBlue)
+            }
+        } else {
+            Image(systemName: "person.circle.fill")
+                .resizable()
+                .frame(width: 36, height: 36)
+                .foregroundColor(.gray)
+        }
+    }
+    
     private var periodPicker: some View {
         Picker("Period", selection: $selectedPeriod) {
             ForEach(Period.allCases, id: \.self) { period in

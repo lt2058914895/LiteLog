@@ -94,7 +94,17 @@ struct HomeView: View {
                 .padding()
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle(NSLocalizedString("tab.home", comment: ""))
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    HStack(spacing: 12) {
+                        avatarImageView
+                        Text(NSLocalizedString("tab.home", comment: ""))
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
             .adaptiveSheet(isPresented: $showingAddSheet) {
                 QuickAddWeightView(isPresented: $showingAddSheet)
             }
@@ -279,6 +289,29 @@ struct HomeView: View {
                 .padding()
                 .cardStyle()
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var avatarImageView: some View {
+        if settingsManager.isLoggedIn, !settingsManager.avatarUrl.isEmpty {
+            if let cachedImage = settingsManager.cachedAvatarImage {
+                Image(uiImage: cachedImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 36, height: 36)
+                    .clipShape(Circle())
+            } else {
+                Image(systemName: "person.circle.fill")
+                    .resizable()
+                    .frame(width: 36, height: 36)
+                    .foregroundColor(.primaryBlue)
+            }
+        } else {
+            Image(systemName: "person.circle.fill")
+                .resizable()
+                .frame(width: 36, height: 36)
+                .foregroundColor(.gray)
         }
     }
 }

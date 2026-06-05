@@ -68,14 +68,14 @@ struct UserInfoEditorView: View {
                             .aspectRatio(contentMode: .fill)
                             .frame(width: 120, height: 120)
                             .clipped()
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .clipShape(Circle())
                     } else if let cachedImage = settingsManager.cachedAvatarImage {
                         Image(uiImage: cachedImage)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(width: 120, height: 120)
                             .clipped()
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .clipShape(Circle())
                     } else {
                         Image(systemName: "person.circle.fill")
                             .resizable()
