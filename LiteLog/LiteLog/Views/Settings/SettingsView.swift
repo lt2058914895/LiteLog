@@ -81,6 +81,7 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(settingsManager.isLoggedIn ? settingsManager.displayName : NSLocalizedString("settings.not.logged.in", comment: ""))
                                 .font(.title3)
+                                .foregroundColor(.primary)
                         }
                         
                         Spacer()
@@ -101,7 +102,7 @@ struct SettingsView: View {
                         .resizable()
                         .scaledToFill()
                         .frame(width: 54, height: 54)
-                        .clipShape(Circle())
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 } else {
                     ZStack {
                         // 默认头像作为占位符
@@ -118,7 +119,7 @@ struct SettingsView: View {
                                     .resizable()
                                     .scaledToFill()
                                     .frame(width: 54, height: 54)
-                                    .clipShape(Circle())
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
                             case .failure, .empty:
                                 EmptyView()
                             @unknown default:
@@ -270,13 +271,21 @@ struct SettingsView: View {
     private var dataSection: some View {
         Section {
             Button(action: exportData) {
-                Label(NSLocalizedString("settings.export.csv", comment: ""), systemImage: "square.and.arrow.up")
-                    .foregroundColor(.primaryBlue)
+                HStack {
+                    Image(systemName: "square.and.arrow.up.fill")
+                        .foregroundColor(.primaryBlue)
+                    Text(NSLocalizedString("settings.export.csv", comment: ""))
+                        .foregroundColor(.primary)
+                }
             }
 
             Button(role: .destructive, action: { showingDeleteAlert = true }) {
-                Label(NSLocalizedString("settings.delete.all", comment: ""), systemImage: "trash")
-                    .foregroundColor(.red)
+                HStack {
+                    Image(systemName: "trash.fill")
+                        .foregroundColor(.red)
+                    Text(NSLocalizedString("settings.delete.all", comment: ""))
+                        .foregroundColor(.primary)
+                }
             }
         }
     }
@@ -285,8 +294,8 @@ struct SettingsView: View {
         Section {
             NavigationLink(destination: FeedbackView()) {
                 HStack {
-                    Image(systemName: "message.badge.fill")
-                        .foregroundColor(.primaryBlue)
+                    Image(systemName: "message.badge.filled.fill")
+                        .foregroundColor(.green)
                     Text(NSLocalizedString("settings.send.feedback", comment: ""))
                     Spacer()
                     Image(systemName: "chevron.right.fill")
@@ -312,8 +321,9 @@ struct SettingsView: View {
             }) {
                 HStack {
                     Image(systemName: "star.fill")
-                        .foregroundColor(.primaryBlue)
+                        .foregroundColor(.orange)
                     Text(NSLocalizedString("settings.rate", comment: ""))
+                        .foregroundColor(.primary)
                     Spacer()
                     HStack(spacing: 1) {
                         ForEach(0..<5) { _ in
@@ -335,6 +345,7 @@ struct SettingsView: View {
                     Image(systemName: "arrowshape.turn.up.right.fill")
                         .foregroundColor(.primaryBlue)
                     Text(NSLocalizedString("settings.share", comment: ""))
+                        .foregroundColor(.primary)
                 }
             }
         }
@@ -344,7 +355,7 @@ struct SettingsView: View {
         Section {
             HStack {
                 Image(systemName: "info.circle.fill")
-                    .foregroundColor(.primaryBlue)
+                    .foregroundColor(.gray)
                 Text(NSLocalizedString("settings.version", comment: ""))
                 Spacer()
                 Text("1.0.0")
