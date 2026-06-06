@@ -114,7 +114,8 @@ final class DataSyncManager {
                 date: record.date.timeIntervalSince1970,
                 createdAt: record.createdAt.timeIntervalSince1970,
                 updatedAt: record.updatedAt.timeIntervalSince1970,
-                deleted: false
+                deleted: false,
+                imageUrl: record.imageUrl
             )
         }
         

@@ -15,6 +15,7 @@ final class WeightRecord {
     var bodyFatPercentage: Double?
     var waistCircumference: Double?
     var note: String?
+    var imageUrl: String?
     var createdAt: Date
     var updatedAt: Date
     var syncStatus: WeightRecordSyncStatus
@@ -26,6 +27,7 @@ final class WeightRecord {
         bodyFatPercentage: Double? = nil,
         waistCircumference: Double? = nil,
         note: String? = nil,
+        imageUrl: String? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         syncStatus: WeightRecordSyncStatus = .pending
@@ -36,6 +38,7 @@ final class WeightRecord {
         self.bodyFatPercentage = bodyFatPercentage
         self.waistCircumference = waistCircumference
         self.note = note
+        self.imageUrl = imageUrl
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.syncStatus = syncStatus

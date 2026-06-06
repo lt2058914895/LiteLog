@@ -236,6 +236,17 @@ struct RecordFormView: View {
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var showingDuplicateAlert = false
+    
+    // OCR相关状态
+    @State private var selectedImage: UIImage?
+    @State private var imageUrl: String?
+    @State private var isRecognizing = false
+    @State private var showingImagePicker = false
+    @State private var showingImageSourcePicker = false
+    @State private var showingLoginPrompt = false
+    @State private var showingOCRResult = false
+    @State private var ocrWeight: Double?
+    @State private var imageSourceType: UIImagePickerController.SourceType = .camera
 
     private var unit: WeightUnit { settingsManager.weightUnit }
 
@@ -270,12 +281,14 @@ struct RecordFormView: View {
             self._bodyFatString = State(initialValue: record.bodyFatPercentage.map { String(format: "%.1f", $0) } ?? "")
             self._waistString = State(initialValue: record.waistCircumference.map { String(format: "%.1f", $0) } ?? "")
             self._note = State(initialValue: record.note ?? "")
+            self._imageUrl = State(initialValue: record.imageUrl)
         } else {
             self._date = State(initialValue: Date())
             self._weightString = State(initialValue: "")
             self._bodyFatString = State(initialValue: "")
             self._waistString = State(initialValue: "")
             self._note = State(initialValue: "")
+            self._imageUrl = State(initialValue: nil)
         }
     }
 
@@ -293,6 +306,73 @@ struct RecordFormView: View {
                     .disabled(isEditMode)
                 }
 
+                if selectedImage != nil || imageUrl != nil {
+                    Section {
+                        HStack(alignment: .top, spacing: 12) {
+                            if let image = selectedImage {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 80, height: 80)
+                                    .cornerRadius(8)
+                            } else if let url = imageUrl, let imageUrl = URL(string: url) {
+                                AsyncImage(url: imageUrl) { phase in
+                                    if let image = phase.image {
+                                        image
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 80, height: 80)
+                                            .cornerRadius(8)
+                                    } else {
+                                        Image(systemName: "photo")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 80, height: 80)
+                                            .foregroundColor(.secondaryText)
+                                    }
+                                }
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(NSLocalizedString("ocr.photo.attached", comment: ""))
+                                    .font(.subheadline)
+                                Button(NSLocalizedString("ocr.change.photo", comment: "")) {
+                                    showingImageSourcePicker = true
+                                }
+                                .font(.caption)
+                                .foregroundColor(.primaryBlue)
+                            }
+                            
+                            Spacer()
+                            
+                            Button(role: .destructive) {
+                                selectedImage = nil
+                                imageUrl = nil
+                            } label: {
+                                Image(systemName: "x.circle.fill")
+                                    .foregroundColor(.red)
+                                    .frame(width: 24, height: 24)
+                            }
+                            .buttonStyle(.plain)
+                            .offset(x: 10, y: -5)
+                            .highPriorityGesture(TapGesture().onEnded {
+                                selectedImage = nil
+                                imageUrl = nil
+                            })
+                        }
+                        
+                        if isRecognizing {
+                            HStack {
+                                ProgressView()
+                                Text(NSLocalizedString("ocr.recognizing", comment: ""))
+                                    .font(.caption)
+                                    .foregroundColor(.secondaryText)
+                            }
+                            .padding(.vertical, 8)
+                        }
+                    }
+                }
+
                 Section(NSLocalizedString("record.weight", comment: "")) {
                     HStack {
                         TextField(NSLocalizedString("record.weight", comment: ""), text: $weightString)
@@ -300,6 +380,17 @@ struct RecordFormView: View {
 
                         Text(unit.shortName)
                             .foregroundColor(.secondaryText)
+                        
+                        Button(action: { showingImageSourcePicker = true }) {
+                            Image(systemName: "camera")
+                                .font(.system(size: 20))
+                                .foregroundColor(.primaryBlue)
+                        }
+                        .disabled(isRecognizing)
+                        .padding(8)
+                        .background(Color.primaryBlue.opacity(0.1))
+                        .cornerRadius(8)
+                        .accessibilityLabel(NSLocalizedString("ocr.accessibility.label", comment: ""))
                     }
                 }
 
@@ -376,6 +467,56 @@ struct RecordFormView: View {
             } message: {
                 Text(NSLocalizedString("record.duplicate.message", comment: ""))
             }
+            .alert(NSLocalizedString("ocr.login.required", comment: ""), isPresented: $showingLoginPrompt) {
+                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+                Button(NSLocalizedString("ocr.action.login", comment: "")) {
+                    NotificationCenter.default.post(name: .showProfileEditor, object: nil)
+                    dismiss()
+                }
+            } message: {
+                Text(NSLocalizedString("ocr.login.prompt", comment: ""))
+            }
+            .alert(NSLocalizedString("ocr.success", comment: ""), isPresented: $showingOCRResult) {
+                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+                Button(NSLocalizedString("action.confirm", comment: "")) {
+                    confirmOCRResult()
+                }
+            } message: {
+                if let weight = ocrWeight {
+                    Text(String(format: NSLocalizedString("ocr.weight.detected", comment: ""), String(format: "%.1f", unit.convertFromKg(weight))))
+                } else {
+                    Text(NSLocalizedString("ocr.no.weight.detected", comment: ""))
+                }
+            }
+            .confirmationDialog(NSLocalizedString("ocr.select.source", comment: ""), isPresented: $showingImageSourcePicker) {
+                Button(NSLocalizedString("ocr.take.photo", comment: "")) {
+                    if settingsManager.isLoggedIn {
+                        imageSourceType = .camera
+                        showingImagePicker = true
+                    } else {
+                        showingLoginPrompt = true
+                    }
+                }
+                Button(NSLocalizedString("ocr.upload.image", comment: "")) {
+                    if settingsManager.isLoggedIn {
+                        imageSourceType = .photoLibrary
+                        showingImagePicker = true
+                    } else {
+                        showingLoginPrompt = true
+                    }
+                }
+                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+            }
+            .fullScreenCover(isPresented: $showingImagePicker) {
+                ImagePicker(image: $selectedImage, isPresented: $showingImagePicker, sourceType: imageSourceType)
+                    .ignoresSafeArea(.all)
+                    .background(Color.black)
+            }
+            .onChange(of: selectedImage) { newValue in
+                if let image = newValue {
+                    processSelectedImage(image)
+                }
+            }
             .onAppear {
                 if isEditMode && weightString.isEmpty, let record = record {
                     weightString = String(format: "%.1f", unit.convertFromKg(record.weight))
@@ -421,6 +562,7 @@ struct RecordFormView: View {
             bodyFatPercentage: bodyFatPercentage,
             waistCircumference: waistCircumference,
             note: note.isEmpty ? nil : note,
+            imageUrl: imageUrl,
             syncStatus: WeightRecordSyncStatus.pending
         )
 
@@ -451,6 +593,9 @@ struct RecordFormView: View {
         record.bodyFatPercentage = Double(bodyFatString)
         record.waistCircumference = Double(waistString)
         record.note = note.isEmpty ? nil : note
+        if let url = imageUrl {
+            record.imageUrl = url
+        }
         record.updatedAt = Date()
         record.syncStatus = .pending  // 标记为待同步
         
@@ -501,5 +646,131 @@ struct RecordFormView: View {
         } catch {
             print("Failed to delete records for selected date: \(error)")
         }
+    }
+
+    // MARK: - OCR相关方法
+    
+    private func handleOCRButtonTap() {
+        if !settingsManager.isLoggedIn {
+            showingLoginPrompt = true
+            return
+        }
+        
+        showingImagePicker = true
+    }
+
+    private func processSelectedImage(_ image: UIImage) {
+        selectedImage = image
+        isRecognizing = true
+        
+        Task {
+            do {
+                let response = try await APIService.shared.recognizeWeightFromImage(image: image)
+                await MainActor.run {
+                    isRecognizing = false
+                    if let weight = response.weight {
+                        ocrWeight = weight
+                        imageUrl = response.imageUrl
+                        showingOCRResult = true
+                    } else {
+                        errorMessage = NSLocalizedString("ocr.no.weight.detected", comment: "")
+                        showingError = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isRecognizing = false
+                    if let apiError = error as? APIError {
+                        if apiError == .notLoggedIn {
+                            showingLoginPrompt = true
+                        } else {
+                            errorMessage = apiError.errorDescription ?? NSLocalizedString("ocr.failed", comment: "")
+                            showingError = true
+                        }
+                    } else {
+                        errorMessage = NSLocalizedString("ocr.error.network", comment: "")
+                        showingError = true
+                    }
+                }
+            }
+        }
+    }
+
+    private func confirmOCRResult() {
+        if let weight = ocrWeight {
+            weightString = String(format: "%.1f", unit.convertFromKg(weight))
+        }
+        showingOCRResult = false
+    }
+}
+
+// MARK: - RecordFormView 扩展
+
+extension RecordFormView {
+    func confirmSaveRecordWithImage() {
+        guard let weightValue = Double(weightString) else {
+            errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
+            showingError = true
+            return
+        }
+
+        let weightInKg = unit.convertToKg(weightValue)
+        
+        if !isEditMode && selectedDateHasRecord {
+            deleteRecordsForSelectedDate()
+        }
+        
+        let newRecord = WeightRecord(
+            date: date.startOfDay,
+            weight: weightInKg,
+            bodyFatPercentage: bodyFatPercentage,
+            waistCircumference: waistCircumference,
+            note: note.isEmpty ? nil : note,
+            imageUrl: imageUrl,
+            syncStatus: WeightRecordSyncStatus.pending
+        )
+
+        modelContext.insert(newRecord)
+        
+        do {
+            try modelContext.save()
+            DataSyncManager.shared.triggerWeightRecordSync(modelContext: modelContext)
+        } catch {
+            errorMessage = NSLocalizedString("error.save.failed", comment: "")
+            showingError = true
+            return
+        }
+
+        dismiss()
+    }
+
+    func updateRecordWithImage() {
+        guard let record = record, let weightValue = Double(weightString) else {
+            errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
+            showingError = true
+            return
+        }
+
+        record.date = date.startOfDay
+        record.weight = unit.convertToKg(weightValue)
+        record.bodyFatPercentage = Double(bodyFatString)
+        record.waistCircumference = Double(waistString)
+        record.note = note.isEmpty ? nil : note
+        if let url = imageUrl {
+            record.imageUrl = url
+        }
+        record.updatedAt = Date()
+        record.syncStatus = .pending
+        
+        do {
+            try modelContext.save()
+            DataSyncManager.shared.triggerWeightRecordSync(modelContext: modelContext)
+        } catch {
+            errorMessage = NSLocalizedString("error.save.failed", comment: "")
+            showingError = true
+            return
+        }
+
+        dismiss()
     }
 }

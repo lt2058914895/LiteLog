@@ -80,6 +80,7 @@ public struct WeightRecordRequest: Codable, Sendable {
     public let createdAt: TimeInterval
     public let updatedAt: TimeInterval
     public let deleted: Bool?
+    public let imageUrl: String?
 }
 
 @frozen
