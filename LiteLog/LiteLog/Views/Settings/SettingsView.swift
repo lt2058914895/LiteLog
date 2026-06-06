@@ -298,8 +298,6 @@ struct SettingsView: View {
                         .foregroundColor(.green)
                     Text(NSLocalizedString("settings.send.feedback", comment: ""))
                     Spacer()
-                    Image(systemName: "chevron.right.fill")
-                        .foregroundColor(.secondaryText)
                 }
             }
 
@@ -309,8 +307,6 @@ struct SettingsView: View {
                         .foregroundColor(.primaryBlue)
                     Text(NSLocalizedString("settings.contact", comment: ""))
                     Spacer()
-                    Image(systemName: "chevron.right.fill")
-                        .foregroundColor(.secondaryText)
                 }
             }
 
