@@ -500,16 +500,6 @@ struct QuickAddWeightView: View {
                         .buttonStyle(.plain)
                         .offset(x: 10, y: -5)
                     }
-                    
-                    if isRecognizing {
-                        HStack {
-                            ProgressView()
-                            Text(NSLocalizedString("ocr.recognizing", comment: ""))
-                                .font(.caption)
-                                .foregroundColor(.secondaryText)
-                        }
-                        .padding(.vertical, 4)
-                    }
                 }
                 .padding(16)
                 .background(Color(.secondarySystemGroupedBackground))

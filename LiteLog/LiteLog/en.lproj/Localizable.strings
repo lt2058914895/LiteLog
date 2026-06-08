@@ -45,7 +45,7 @@
 "record.waist.circumference" = "Waist Circumference";
 "record.waist.circumference.optional" = "Waist Circumference (Optional)";
 "record.note" = "Note";
-"record.note.placeholder" = "Add note...";
+"record.note.placeholder" = "Add note";
 "record.date" = "Date";
 "record.delete" = "Delete Record";
 "record.delete.confirm" = "Are you sure you want to delete this record?";

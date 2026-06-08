@@ -305,7 +305,8 @@ struct RecordFormView: View {
                     .datePickerStyle(.graphical)
                     .disabled(isEditMode)
                 }
-
+                
+                // 照片区域
                 if selectedImage != nil || imageUrl != nil {
                     Section {
                         HStack(alignment: .top, spacing: 12) {
@@ -360,17 +361,26 @@ struct RecordFormView: View {
                                 imageUrl = nil
                             })
                         }
-                        
-                        if isRecognizing {
-                            HStack {
-                                ProgressView()
-                                Text(NSLocalizedString("ocr.recognizing", comment: ""))
-                                    .font(.caption)
-                                    .foregroundColor(.secondaryText)
+                    }
+                } else {
+                    // 相机按钮
+                    Section {
+                        HStack {
+                            Spacer()
+                            Button(action: { showingImageSourcePicker = true }) {
+                                Image(systemName: "camera")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.primaryBlue)
                             }
-                            .padding(.vertical, 8)
+                            .disabled(isRecognizing)
+                            .padding(8)
+                            .background(Color.primaryBlue.opacity(0.1))
+                            .cornerRadius(8)
+                            .accessibilityLabel(NSLocalizedString("ocr.accessibility.label", comment: ""))
                         }
                     }
+                    .listRowBackground(Color.clear)
+                    .listSectionSpacing(0)
                 }
 
                 Section(NSLocalizedString("record.weight", comment: "")) {
@@ -380,17 +390,6 @@ struct RecordFormView: View {
 
                         Text(unit.shortName)
                             .foregroundColor(.secondaryText)
-                        
-                        Button(action: { showingImageSourcePicker = true }) {
-                            Image(systemName: "camera")
-                                .font(.system(size: 20))
-                                .foregroundColor(.primaryBlue)
-                        }
-                        .disabled(isRecognizing)
-                        .padding(8)
-                        .background(Color.primaryBlue.opacity(0.1))
-                        .cornerRadius(8)
-                        .accessibilityLabel(NSLocalizedString("ocr.accessibility.label", comment: ""))
                     }
                 }
 

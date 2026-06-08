@@ -45,7 +45,7 @@
 "record.waist.circumference" = "腰围";
 "record.waist.circumference.optional" = "腰围（可选）";
 "record.note" = "备注";
-"record.note.placeholder" = "添加备注...";
+"record.note.placeholder" = "添加备注";
 "record.date" = "日期";
 "record.delete" = "删除记录";
 "record.delete.confirm" = "确定要删除这条记录吗？";
@@ -228,7 +228,6 @@
 "ocr.title" = "拍照识别";
 "ocr.upload.image" = "从相册选择";
 "ocr.take.photo" = "拍照";
-"ocr.recognizing" = "识别中...";
 "ocr.success" = "识别成功";
 "ocr.failed" = "识别失败";
 "ocr.no.weight.detected" = "未识别到体重数据";
