@@ -352,7 +352,8 @@ class APIService {
                 createdAt: Date().timeIntervalSince1970,
                 updatedAt: Date().timeIntervalSince1970,
                 deleted: true,
-                imageUrl: nil
+                imageUrl: nil,
+                imageFileName: nil
             )
         }
         
@@ -412,64 +413,56 @@ class APIService {
         }
     }
     
-    func recognizeWeightFromImage(image: UIImage) async throws -> OCRResponse {
-        let endpoint = baseURL.appending(path: "/ocr/recognize")
-        
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            throw APIError.serverError(NSLocalizedString("ocr.error.invalid.image", comment: ""))
-        }
+    func syncWeightRecordsWithImages(records: [WeightRecordRequest], images: [(recordId: String, image: UIImage)]) async throws -> WeightRecordSyncResponse {
+        let endpoint = baseURL.appending(path: "/weight/sync-with-images")
         
         let token = SettingsManager.shared.token
         
-        if token == nil {
-            throw APIError.notLoggedIn
-        }
-        
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<WeightRecordSyncResponse, Error>) in
             var headers: HTTPHeaders = [:]
             if let token = token {
                 headers["Authorization"] = "Bearer \(token)"
             }
             
+            let encoder = JSONEncoder()
+            var recordsJson: String
+            do {
+                let recordsData = try encoder.encode(WeightRecordSyncRequest(records: records))
+                recordsJson = String(data: recordsData, encoding: .utf8) ?? "[]"
+            } catch {
+                continuation.resume(throwing: APIError.decodingError)
+                return
+            }
+            
             AF.upload(multipartFormData: { multipartFormData in
-                multipartFormData.append(imageData, withName: "file", fileName: "weight.jpg", mimeType: "image/jpeg")
+                if let jsonData = recordsJson.data(using: .utf8) {
+                    multipartFormData.append(jsonData, withName: "records")
+                }
+                
+                for (recordId, image) in images {
+                    if let imageData = image.jpegData(compressionQuality: 0.8) {
+                        let fileName = "\(recordId)_image.jpg"
+                        multipartFormData.append(imageData, withName: "files", fileName: fileName, mimeType: "image/jpeg")
+                    }
+                }
             }, to: endpoint, headers: headers)
+            .validate(statusCode: 200..<300)
             .responseData { response in
-                if let data = response.data {
+                switch response.result {
+                case .success(let data):
                     do {
                         let decoder = JSONDecoder()
-                        let ocrResponse = try decoder.decode(OCRResponse.self, from: data)
-                        
-                        if !ocrResponse.success {
-                            if let message = ocrResponse.message {
-                                if message.contains("未登录") || message.contains("请先登录") {
-                                    continuation.resume(throwing: APIError.notLoggedIn)
-                                } else {
-                                    continuation.resume(throwing: APIError.ocrFailed(message))
-                                }
-                            } else {
-                                continuation.resume(throwing: APIError.ocrFailed(NSLocalizedString("ocr.failed", comment: "")))
-                            }
-                        } else {
-                            continuation.resume(returning: ocrResponse)
-                        }
+                        let syncResponse = try decoder.decode(WeightRecordSyncResponse.self, from: data)
+                        continuation.resume(returning: syncResponse)
                     } catch {
                         continuation.resume(throwing: APIError.decodingError)
                     }
-                } else {
+                case .failure:
                     continuation.resume(throwing: APIError.invalidResponse)
                 }
             }
         }
     }
-}
-
-@frozen
-public struct OCRResponse: Codable, Sendable {
-    public let success: Bool
-    public let message: String?
-    public let weight: Double?
-    public let imageUrl: String?
 }
 
 enum APIError: Error, LocalizedError, Equatable {
@@ -479,7 +472,6 @@ enum APIError: Error, LocalizedError, Equatable {
     case serverError(String)
     case serverErrorWithCode(Int, String)
     case notLoggedIn
-    case ocrFailed(String)
     
     var errorDescription: String? {
         switch self {
@@ -489,8 +481,7 @@ enum APIError: Error, LocalizedError, Equatable {
         case .serverError(let message): return message
         case .serverErrorWithCode(let code, let message):
             return localizedErrorMessage(for: code, message: message)
-        case .notLoggedIn: return NSLocalizedString("ocr.login.required", comment: "")
-        case .ocrFailed(let message): return message
+        case .notLoggedIn: return NSLocalizedString("error.not_logged_in", comment: "")
         }
     }
     

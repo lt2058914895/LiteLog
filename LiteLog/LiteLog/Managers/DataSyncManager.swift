@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import SwiftData
 
 final class DataSyncManager {
@@ -104,35 +105,84 @@ final class DataSyncManager {
             return
         }
         
-        let requests = pendingRecords.map { record in
-            WeightRecordRequest(
-                recordId: record.id.uuidString,
-                weight: record.weight,
-                bodyFatPercentage: record.bodyFatPercentage,
-                waistCircumference: record.waistCircumference,
-                note: record.note,
-                date: record.date.timeIntervalSince1970,
-                createdAt: record.createdAt.timeIntervalSince1970,
-                updatedAt: record.updatedAt.timeIntervalSince1970,
-                deleted: false,
-                imageUrl: record.imageUrl
-            )
+        // 分离有图片和无图片的记录
+        let recordsWithImages = pendingRecords.filter { $0.selectedImage != nil }
+        let recordsWithoutImages = pendingRecords.filter { $0.selectedImage == nil }
+        
+        // 先同步无图片的记录
+        if !recordsWithoutImages.isEmpty {
+            let requests = recordsWithoutImages.map { record in
+                WeightRecordRequest(
+                    recordId: record.id.uuidString,
+                    weight: record.weight,
+                    bodyFatPercentage: record.bodyFatPercentage,
+                    waistCircumference: record.waistCircumference,
+                    note: record.note,
+                    date: record.date.timeIntervalSince1970,
+                    createdAt: record.createdAt.timeIntervalSince1970,
+                    updatedAt: record.updatedAt.timeIntervalSince1970,
+                    deleted: false,
+                    imageUrl: record.imageUrl,
+                    imageFileName: nil
+                )
+            }
+            
+            do {
+                let response = try await APIService.shared.syncWeightRecords(records: requests)
+                
+                if response.success {
+                    if let syncedIds = response.syncedRecordIds {
+                        for record in recordsWithoutImages where syncedIds.contains(record.id.uuidString) {
+                            record.syncStatus = .synced
+                        }
+                    }
+                    try modelContext.save()
+                    print("体重记录同步成功，同步了 \(response.syncedCount) 条")
+                }
+            } catch {
+                print("体重记录同步失败: \(error)")
+            }
         }
         
-        do {
-            let response = try await APIService.shared.syncWeightRecords(records: requests)
-            
-            if response.success {
-                if let syncedIds = response.syncedRecordIds {
-                    for record in pendingRecords where syncedIds.contains(record.id.uuidString) {
-                        record.syncStatus = .synced
-                    }
-                }
-                try modelContext.save()
-                print("体重记录同步成功，同步了 \(response.syncedCount) 条")
+        // 同步有图片的记录
+        if !recordsWithImages.isEmpty {
+            let requests = recordsWithImages.map { record in
+                WeightRecordRequest(
+                    recordId: record.id.uuidString,
+                    weight: record.weight,
+                    bodyFatPercentage: record.bodyFatPercentage,
+                    waistCircumference: record.waistCircumference,
+                    note: record.note,
+                    date: record.date.timeIntervalSince1970,
+                    createdAt: record.createdAt.timeIntervalSince1970,
+                    updatedAt: record.updatedAt.timeIntervalSince1970,
+                    deleted: false,
+                    imageUrl: nil,
+                    imageFileName: "\(record.id.uuidString)_image.jpg"
+                )
             }
-        } catch {
-            print("体重记录同步失败: \(error)")
+            
+            let images = recordsWithImages.compactMap { record -> (recordId: String, image: UIImage)? in
+                guard let image = record.selectedImage else { return nil }
+                return (record.id.uuidString, image)
+            }
+            
+            do {
+                let response = try await APIService.shared.syncWeightRecordsWithImages(records: requests, images: images)
+                
+                if response.success {
+                    if let syncedIds = response.syncedRecordIds {
+                        for record in recordsWithImages where syncedIds.contains(record.id.uuidString) {
+                            record.syncStatus = .synced
+                            record.selectedImage = nil  // 清除临时图片
+                        }
+                    }
+                    try modelContext.save()
+                    print("带图片的体重记录同步成功，同步了 \(response.syncedCount) 条")
+                }
+            } catch {
+                print("带图片的体重记录同步失败: \(error)")
+            }
         }
     }
 }

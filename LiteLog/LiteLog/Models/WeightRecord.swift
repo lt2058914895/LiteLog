@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import UIKit
 
 enum WeightRecordSyncStatus: Int, Codable {
     case pending
@@ -19,6 +20,9 @@ final class WeightRecord {
     var createdAt: Date
     var updatedAt: Date
     var syncStatus: WeightRecordSyncStatus
+    
+    @Transient
+    var selectedImage: UIImage?
 
     init(
         id: UUID = UUID(),
@@ -42,6 +46,7 @@ final class WeightRecord {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.syncStatus = syncStatus
+        self.selectedImage = nil
     }
 }
 

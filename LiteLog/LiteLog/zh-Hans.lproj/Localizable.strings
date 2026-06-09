@@ -221,22 +221,14 @@
 "error.feedback_message_empty" = "反馈内容不能为空";
 "error.feedback_message_too_long" = "反馈内容过长";
 "error.unauthorized" = "未登录或登录已过期";
+"error.not_logged_in" = "请先登录";
 "error.server_failure" = "服务器内部错误";
 "error.unknown" = "未知错误";
 
-// OCR相关
-"ocr.upload.image" = "从相册选择";
-"ocr.take.photo" = "拍照";
-"ocr.success" = "识别成功";
-"ocr.failed" = "识别失败";
-"ocr.no.weight.detected" = "未识别到体重数据";
-"ocr.login.required" = "请先登录以使用拍照识别功能";
-"ocr.login.prompt" = "拍照识别功能需要登录后才能使用，登录后可以将识别结果和图片保存到您的账户中。";
-"ocr.action.login" = "去登录";
-"ocr.weight.detected" = "识别到体重：%@";
-"ocr.error.network" = "网络错误，请检查网络连接后重试";
-"ocr.error.invalid.image" = "图片格式无效，请选择jpg或png格式的图片";
-"ocr.select.source" = "选择图片来源";
-"ocr.photo.attached" = "已添加照片";
-"ocr.change.photo" = "更换照片";
-"ocr.accessibility.label" = "拍照识别体重";
+// 照片相关
+"record.upload.image" = "从相册选择";
+"record.take.photo" = "拍照";
+"record.select.source" = "选择图片来源";
+"record.photo.attached" = "已添加照片";
+"record.change.photo" = "更换照片";
+"record.accessibility.camera" = "添加照片";

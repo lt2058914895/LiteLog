@@ -221,22 +221,14 @@
 "error.feedback_message_empty" = "Feedback content cannot be empty";
 "error.feedback_message_too_long" = "Feedback content is too long";
 "error.unauthorized" = "Not logged in or session expired";
+"error.not_logged_in" = "Please login first";
 "error.server_failure" = "Server internal error";
 "error.unknown" = "Unknown error";
 
-// OCR related
-"ocr.upload.image" = "Choose from Album";
-"ocr.take.photo" = "Take Photo";
-"ocr.success" = "Recognition Successful";
-"ocr.failed" = "Recognition Failed";
-"ocr.no.weight.detected" = "No Weight Data Detected";
-"ocr.login.required" = "Please login to use the photo recognition feature";
-"ocr.login.prompt" = "The photo recognition feature requires login. After login, you can save the recognition results and images to your account.";
-"ocr.action.login" = "Go to Login";
-"ocr.weight.detected" = "Weight Detected: %@";
-"ocr.error.network" = "Network Error, please check your network connection and try again";
-"ocr.error.invalid.image" = "Invalid image format, please select jpg or png format";
-"ocr.select.source" = "Select Image Source";
-"ocr.photo.attached" = "Photo Attached";
-"ocr.change.photo" = "Change Photo";
-"ocr.accessibility.label" = "Photo Recognition for Weight";
+// Photo related
+"record.upload.image" = "Choose from Album";
+"record.take.photo" = "Take Photo";
+"record.select.source" = "Select Image Source";
+"record.photo.attached" = "Photo Attached";
+"record.change.photo" = "Change Photo";
+"record.accessibility.camera" = "Add Photo";

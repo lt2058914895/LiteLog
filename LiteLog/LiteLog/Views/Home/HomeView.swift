@@ -329,18 +329,12 @@ struct QuickAddWeightView: View {
     @FocusState private var isKeyboardFocused: Bool
     @State private var showingDuplicateAlert = false
     
-    // OCR相关状态
+    // 图片相关状态
     @State private var selectedImage: UIImage?
     @State private var imageUrl: String?
-    @State private var isRecognizing = false
     @State private var showingImagePicker = false
     @State private var showingImageSourcePicker = false
-    @State private var showingLoginPrompt = false
-    @State private var showingOCRResult = false
-    @State private var ocrWeight: Double?
     @State private var imageSourceType: UIImagePickerController.SourceType = .camera
-    @State private var showingError = false
-    @State private var errorMessage = ""
 
     private var unit: WeightUnit { settingsManager.weightUnit }
 
@@ -388,48 +382,14 @@ struct QuickAddWeightView: View {
             } message: {
                 Text(NSLocalizedString("record.duplicate.message", comment: ""))
             }
-            .alert(NSLocalizedString("ocr.login.required", comment: ""), isPresented: $showingLoginPrompt) {
-                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-                Button(NSLocalizedString("ocr.action.login", comment: "")) {
-                    isPresented = false
-                    NotificationCenter.default.post(name: .showProfileEditor, object: nil)
+            .confirmationDialog(NSLocalizedString("record.select.source", comment: ""), isPresented: $showingImageSourcePicker) {
+                Button(NSLocalizedString("record.take.photo", comment: "")) {
+                    imageSourceType = .camera
+                    showingImagePicker = true
                 }
-            } message: {
-                Text(NSLocalizedString("ocr.login.prompt", comment: ""))
-            }
-            .alert(NSLocalizedString("ocr.success", comment: ""), isPresented: $showingOCRResult) {
-                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-                Button(NSLocalizedString("action.confirm", comment: "")) {
-                    confirmOCRResult()
-                }
-            } message: {
-                if let weight = ocrWeight {
-                    Text(String(format: NSLocalizedString("ocr.weight.detected", comment: ""), String(format: "%.1f", unit.convertFromKg(weight))))
-                } else {
-                    Text(NSLocalizedString("ocr.no.weight.detected", comment: ""))
-                }
-            }
-            .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
-                Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
-            } message: {
-                Text(errorMessage)
-            }
-            .confirmationDialog(NSLocalizedString("ocr.select.source", comment: ""), isPresented: $showingImageSourcePicker) {
-                Button(NSLocalizedString("ocr.take.photo", comment: "")) {
-                    if settingsManager.isLoggedIn {
-                        imageSourceType = .camera
-                        showingImagePicker = true
-                    } else {
-                        showingLoginPrompt = true
-                    }
-                }
-                Button(NSLocalizedString("ocr.upload.image", comment: "")) {
-                    if settingsManager.isLoggedIn {
-                        imageSourceType = .photoLibrary
-                        showingImagePicker = true
-                    } else {
-                        showingLoginPrompt = true
-                    }
+                Button(NSLocalizedString("record.upload.image", comment: "")) {
+                    imageSourceType = .photoLibrary
+                    showingImagePicker = true
                 }
                 Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
             }
@@ -437,11 +397,6 @@ struct QuickAddWeightView: View {
                 ImagePicker(image: $selectedImage, isPresented: $showingImagePicker, sourceType: imageSourceType)
                     .ignoresSafeArea(.all)
                     .background(Color.black)
-            }
-            .onChange(of: selectedImage) { newValue in
-                if let image = newValue {
-                    processSelectedImage(image)
-                }
             }
         }
     }
@@ -478,9 +433,9 @@ struct QuickAddWeightView: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(NSLocalizedString("ocr.photo.attached", comment: ""))
+                            Text(NSLocalizedString("record.photo.attached", comment: ""))
                                 .font(.subheadline)
-                            Button(NSLocalizedString("ocr.change.photo", comment: "")) {
+                            Button(NSLocalizedString("record.change.photo", comment: "")) {
                                 showingImageSourcePicker = true
                             }
                             .font(.caption)
@@ -513,11 +468,10 @@ struct QuickAddWeightView: View {
                             .font(.system(size: 20))
                             .foregroundColor(.primaryBlue)
                     }
-                    .disabled(isRecognizing)
                     .padding(10)
                     .background(Color.primaryBlue.opacity(0.1))
                     .cornerRadius(8)
-                    .accessibilityLabel(NSLocalizedString("ocr.accessibility.label", comment: ""))
+                    .accessibilityLabel(NSLocalizedString("record.accessibility.camera", comment: ""))
                 }
             }
             
@@ -576,6 +530,7 @@ struct QuickAddWeightView: View {
             imageUrl: imageUrl,
             syncStatus: WeightRecordSyncStatus.pending
         )
+        record.selectedImage = selectedImage
 
         modelContext.insert(record)
         
@@ -608,49 +563,5 @@ struct QuickAddWeightView: View {
         } catch {
             print("Failed to delete today records: \(error)")
         }
-    }
-    
-    private func processSelectedImage(_ image: UIImage) {
-        selectedImage = image
-        isRecognizing = true
-        
-        Task {
-            do {
-                let response = try await APIService.shared.recognizeWeightFromImage(image: image)
-                await MainActor.run {
-                    isRecognizing = false
-                    if let weight = response.weight {
-                        ocrWeight = weight
-                        imageUrl = response.imageUrl
-                        showingOCRResult = true
-                    } else {
-                        errorMessage = NSLocalizedString("ocr.no.weight.detected", comment: "")
-                        showingError = true
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    isRecognizing = false
-                    if let apiError = error as? APIError {
-                        if apiError == .notLoggedIn {
-                            showingLoginPrompt = true
-                        } else {
-                            errorMessage = apiError.errorDescription ?? NSLocalizedString("ocr.failed", comment: "")
-                            showingError = true
-                        }
-                    } else {
-                        errorMessage = NSLocalizedString("ocr.error.network", comment: "")
-                        showingError = true
-                    }
-                }
-            }
-        }
-    }
-
-    private func confirmOCRResult() {
-        if let weight = ocrWeight {
-            weightInput = String(format: "%.1f", unit.convertFromKg(weight))
-        }
-        showingOCRResult = false
     }
 }
