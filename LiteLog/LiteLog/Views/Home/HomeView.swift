@@ -11,7 +11,6 @@ struct HomeView: View {
     @State private var weightInput = ""
     @State private var showingAddSheet = false
 
-    @State private var trendType: WeightChartView.TrendType = .week
     @State private var isLoading = false
     @State private var showingError = false
     @State private var errorMessage = ""
@@ -49,30 +48,7 @@ struct HomeView: View {
         return min(current / 50.0 * 100, 100)
     }
 
-    private var chartStartDate: Date {
-        let calendar = Calendar.current
-        switch trendType {
-        case .week:
-            return (calendar.date(byAdding: .day, value: -7, to: Date()) ?? Date()).startOfDay
-        case .month:
-            return (calendar.date(byAdding: .month, value: -1, to: Date()) ?? Date()).startOfDay
-        case .quarter:
-            return (calendar.date(byAdding: .month, value: -3, to: Date()) ?? Date()).startOfDay
-        }
-    }
-
-    private var chartData: [WeightChartView.ChartDataPoint] {
-        let filtered = allRecords.filter { $0.date >= chartStartDate }
-        let calendar = Calendar.current
-
-        let grouped = Dictionary(grouping: filtered) { record in
-            calendar.startOfDay(for: record.date)
-        }
-
-        return grouped.compactMap { $0.value.max(by: { $0.date < $1.date }) }
-            .sorted { $0.date < $1.date }
-            .map { WeightChartView.ChartDataPoint(date: $0.date.startOfDay, weight: $0.weight) }
-    }
+    
 
     var body: some View {
         NavigationStack {
@@ -88,8 +64,6 @@ struct HomeView: View {
                         waistCard
                             .frame(maxWidth: .infinity)
                     }
-
-                    WeightChartView(data: chartData, unit: unit, trendType: $trendType, startDate: chartStartDate)
                 }
                 .padding()
             }
