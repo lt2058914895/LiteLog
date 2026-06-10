@@ -157,38 +157,66 @@ struct SettingsView: View {
             if let profile = profile {
                 HStack {
                     Text(NSLocalizedString("settings.height", comment: ""))
-
                     Spacer()
-
                     Text("\(settingsManager.heightUnit.convertFromCm(profile.height).formatted()) \(settingsManager.heightUnit.displayName)")
                         .foregroundColor(.secondaryText)
                 }
 
                 HStack {
                     Text(NSLocalizedString("settings.gender", comment: ""))
-
                     Spacer()
-
                     Text(profile.gender.displayName)
                         .foregroundColor(.secondaryText)
                 }
 
                 HStack {
                     Text(NSLocalizedString("settings.age", comment: ""))
-
                     Spacer()
-
                     Text("\(profile.age)")
                         .foregroundColor(.secondaryText)
                 }
 
                 HStack {
                     Text(NSLocalizedString("settings.goal.weight", comment: ""))
-
                     Spacer()
-
                     Text("\(unit.convertFromKg(profile.goalWeight).weightString) \(unit.shortName)")
                         .foregroundColor(.secondaryText)
+                }
+
+                if let goalBodyFat = profile.goalBodyFat {
+                    HStack {
+                        Text(NSLocalizedString("settings.goal.body.fat", comment: ""))
+                        Spacer()
+                        Text("\(goalBodyFat.formatted())%")
+                            .foregroundColor(.secondaryText)
+                    }
+                }
+
+                if let goalWaistCircumference = profile.goalWaistCircumference {
+                    HStack {
+                        Text(NSLocalizedString("settings.goal.waist", comment: ""))
+                        Spacer()
+                        Text("\(goalWaistCircumference.formatted()) \(NSLocalizedString("settings.cm", comment: ""))")
+                            .foregroundColor(.secondaryText)
+                    }
+                }
+
+                if let goalHipCircumference = profile.goalHipCircumference {
+                    HStack {
+                        Text(NSLocalizedString("settings.goal.hip", comment: ""))
+                        Spacer()
+                        Text("\(goalHipCircumference.formatted()) \(NSLocalizedString("settings.cm", comment: ""))")
+                            .foregroundColor(.secondaryText)
+                    }
+                }
+
+                if let goalChestCircumference = profile.goalChestCircumference {
+                    HStack {
+                        Text(NSLocalizedString("settings.goal.chest", comment: ""))
+                        Spacer()
+                        Text("\(goalChestCircumference.formatted()) \(NSLocalizedString("settings.cm", comment: ""))")
+                            .foregroundColor(.secondaryText)
+                    }
                 }
             }
 
@@ -411,6 +439,10 @@ struct ProfileEditorView: View {
     @State private var gender: UserProfile.Gender = .male
     @State private var age: Int = 30
     @State private var goalWeightString: String = ""
+    @State private var goalBodyFatString: String = ""
+    @State private var goalWaistCircumferenceString: String = ""
+    @State private var goalHipCircumferenceString: String = ""
+    @State private var goalChestCircumferenceString: String = ""
     @State private var showingValidationAlert = false
     @State private var validationErrorMessage = ""
 
@@ -452,6 +484,52 @@ struct ProfileEditorView: View {
                             .foregroundColor(.secondaryText)
                     }
                 }
+
+                Section(NSLocalizedString("settings.goal.body.fat", comment: "")) {
+                    HStack {
+                        TextField(NSLocalizedString("settings.goal.body.fat", comment: ""), text: $goalBodyFatString)
+                            .keyboardType(.decimalPad)
+
+                        Text("%")
+                            .foregroundColor(.secondaryText)
+                    }
+                }
+
+                Section(NSLocalizedString("settings.goal.measurements", comment: "")) {
+                    HStack {
+                        Text(NSLocalizedString("settings.goal.waist", comment: ""))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        TextField("", text: $goalWaistCircumferenceString)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                        Text(NSLocalizedString("settings.cm", comment: ""))
+                            .foregroundColor(.secondaryText)
+                    }
+
+                    HStack {
+                        Text(NSLocalizedString("settings.goal.hip", comment: ""))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        TextField("", text: $goalHipCircumferenceString)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                        Text(NSLocalizedString("settings.cm", comment: ""))
+                            .foregroundColor(.secondaryText)
+                    }
+
+                    HStack {
+                        Text(NSLocalizedString("settings.goal.chest", comment: ""))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        TextField("", text: $goalChestCircumferenceString)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+
+                        Text(NSLocalizedString("settings.cm", comment: ""))
+                            .foregroundColor(.secondaryText)
+                    }
+                }
             }
             .navigationTitle(NSLocalizedString("settings.profile", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
@@ -485,6 +563,10 @@ struct ProfileEditorView: View {
             gender = profile.gender
             age = profile.age
             goalWeightString = unit.convertFromKg(profile.goalWeight).formatted()
+            goalBodyFatString = profile.goalBodyFat?.formatted() ?? ""
+            goalWaistCircumferenceString = profile.goalWaistCircumference?.formatted() ?? ""
+            goalHipCircumferenceString = profile.goalHipCircumference?.formatted() ?? ""
+            goalChestCircumferenceString = profile.goalChestCircumference?.formatted() ?? ""
         }
     }
 
@@ -503,6 +585,30 @@ struct ProfileEditorView: View {
             errors.append(NSLocalizedString("settings.goal.weight.invalid", comment: ""))
         }
         
+        if !goalBodyFatString.isEmpty {
+            if let bodyFatValue = Double(goalBodyFatString), (bodyFatValue <= 0 || bodyFatValue >= 100) {
+                errors.append(NSLocalizedString("settings.goal.body.fat.invalid", comment: ""))
+            }
+        }
+        
+        if !goalWaistCircumferenceString.isEmpty {
+            if let waistValue = Double(goalWaistCircumferenceString), waistValue <= 0 {
+                errors.append(NSLocalizedString("settings.goal.waist.circumference.invalid", comment: ""))
+            }
+        }
+        
+        if !goalHipCircumferenceString.isEmpty {
+            if let hipValue = Double(goalHipCircumferenceString), hipValue <= 0 {
+                errors.append(NSLocalizedString("settings.goal.hip.circumference.invalid", comment: ""))
+            }
+        }
+        
+        if !goalChestCircumferenceString.isEmpty {
+            if let chestValue = Double(goalChestCircumferenceString), chestValue <= 0 {
+                errors.append(NSLocalizedString("settings.goal.chest.circumference.invalid", comment: ""))
+            }
+        }
+        
         if !errors.isEmpty {
             validationErrorMessage = errors.joined(separator: "\n")
             showingValidationAlert = true
@@ -516,12 +622,20 @@ struct ProfileEditorView: View {
 
         let heightInCm = heightUnit.convertToCm(heightValue)
         let goalWeightInKg = unit.convertToKg(goalWeightValue)
+        let goalBodyFat = Double(goalBodyFatString)
+        let goalWaistCircumference = Double(goalWaistCircumferenceString)
+        let goalHipCircumference = Double(goalHipCircumferenceString)
+        let goalChestCircumference = Double(goalChestCircumferenceString)
 
         if let existing = existingProfile {
             existing.height = heightInCm
             existing.gender = gender
             existing.age = age
             existing.goalWeight = goalWeightInKg
+            existing.goalBodyFat = goalBodyFat
+            existing.goalWaistCircumference = goalWaistCircumference
+            existing.goalHipCircumference = goalHipCircumference
+            existing.goalChestCircumference = goalChestCircumference
             existing.updatedAt = Date()
             existing.syncStatus = .pending
         } else {
@@ -530,6 +644,10 @@ struct ProfileEditorView: View {
                 gender: gender,
                 age: age,
                 goalWeight: goalWeightInKg,
+                goalBodyFat: goalBodyFat,
+                goalWaistCircumference: goalWaistCircumference,
+                goalHipCircumference: goalHipCircumference,
+                goalChestCircumference: goalChestCircumference,
                 weightUnit: SettingsManager.shared.weightUnit.rawValue,
                 syncStatus: UserProfileSyncStatus.pending
             )
