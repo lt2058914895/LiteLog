@@ -118,6 +118,7 @@ struct BMIInfoView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("bmi.info.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
         }
     }
     
