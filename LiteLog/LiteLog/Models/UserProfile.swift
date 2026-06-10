@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import SwiftData
 
 enum UserProfileSyncStatus: Int, Codable {
@@ -99,6 +100,15 @@ final class UserProfile {
 
         var displayName: String {
             NSLocalizedString(localizedKey, comment: "")
+        }
+
+        var color: Color {
+            switch self {
+            case .underweight: return .blue
+            case .normal: return .green
+            case .overweight: return .orange
+            case .obese: return .red
+            }
         }
     }
 }

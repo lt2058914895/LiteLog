@@ -236,17 +236,15 @@ struct HomeView: View {
         .buttonStyle(.plain)
     }
 
-    private var bmiProgressSection: some View {
-        VStack(spacing: 16) {
-            if let profile = profile {
-                if let latest = latestWeight {
-                    BMIProgressView(
-                        currentWeight: latest,
-                        goalWeight: profile.goalWeight,
-                        height: profile.height,
-                        unit: unit
-                    )
-                } else {
+    private var bmiCard: some View {
+        if let profile = profile {
+            if let latest = latestWeight {
+                return AnyView(BMIProgressView(
+                    currentWeight: latest,
+                    height: profile.height
+                ))
+            } else {
+                return AnyView(
                     VStack(spacing: 8) {
                         HStack {
                             Text(NSLocalizedString("home.bmi", comment: ""))
@@ -263,8 +261,10 @@ struct HomeView: View {
                     }
                     .padding()
                     .cardStyle()
-                }
-            } else {
+                )
+            }
+        } else {
+            return AnyView(
                 VStack(spacing: 8) {
                     HStack {
                         Text(NSLocalizedString("home.bmi", comment: ""))
@@ -290,9 +290,84 @@ struct HomeView: View {
                 }
                 .padding()
                 .cardStyle()
-            }
+            )
         }
     }
+    
+    private var goalCard: some View {
+        if let profile = profile {
+            return AnyView(
+                VStack(spacing: 12) {
+                    HStack {
+                        Image(systemName: "target")
+                            .foregroundColor(.primaryBlue)
+                        
+                        Text(NSLocalizedString("home.goal", comment: ""))
+                            .font(.subheadline)
+                            .foregroundColor(.secondaryText)
+                        
+                        Spacer()
+                    }
+                    
+                    VStack(spacing: 8) {
+                        if let latest = latestWeight {
+                            let weightDifference = profile.goalWeight - latest
+                            let difference = unit.convertFromKg(weightDifference)
+                            let differenceString = weightDifference > 0 ? "+\(difference.weightString)" : difference.weightString
+                            
+                            HStack(alignment: .lastTextBaseline) {
+                                VStack(alignment: .leading) {
+                                    Text("\(unit.convertFromKg(profile.goalWeight).weightString) \(unit.shortName)")
+                                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                                        .foregroundColor(.primaryText)
+                                    
+                                    Text("\(NSLocalizedString("home.goal.weight", comment: ""))")
+                                        .font(.caption)
+                                        .foregroundColor(.secondaryText)
+                                }
+                                
+                                Spacer()
+                                
+                                VStack(alignment: .trailing) {
+                                    Text(differenceString)
+                                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                                        .foregroundColor(weightDifference > 0 ? .orange : .green)
+                                    
+                                    Text(NSLocalizedString("home.to.goal", comment: ""))
+                                        .font(.caption)
+                                        .foregroundColor(.secondaryText)
+                                }
+                            }
+                        } else {
+                            VStack(spacing: 8) {
+                                Text("\(unit.convertFromKg(profile.goalWeight).weightString) \(unit.shortName)")
+                                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primaryText)
+                                
+                                Text(NSLocalizedString("home.goal.weight", comment: ""))
+                                    .font(.caption)
+                                    .foregroundColor(.secondaryText)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                    }
+                }
+                .padding()
+                .cardStyle()
+            )
+        } else {
+            return AnyView(EmptyView())
+        }
+    }
+    
+    private var bmiProgressSection: some View {
+        VStack(spacing: 16) {
+            bmiCard
+            goalCard
+        }
+    }
+    
+
     
     @ViewBuilder
     private var avatarImageView: some View {
