@@ -17,7 +17,6 @@
 "home.add.weight" = "添加体重";
 "home.weight" = "体重";
 "home.kg" = "kg";
-"home.lb" = "lb";
 "home.day" = "日";
 "home.week" = "周";
 "home.month" = "月";
@@ -150,7 +149,7 @@
 "login.register" = "注册";
 "login.error" = "登录失败，请检查手机号和密码";
 "login.no.account" = "还没有账号？";
-"login.select.country" = "选择国家";
+
 "login.phone.placeholder" = "请输入手机号";
 "login.password.placeholder" = "请输入密码";
 "login.password.hint" = "密码长度至少6位";
@@ -219,9 +218,7 @@
 
 // 单位相关
 "unit.kg" = "kg";
-"unit.lb" = "lb";
 "unit.cm" = "cm";
-"unit.inch" = "inch";
 
 // 日期格式
 "date.format.short" = "M/d";

@@ -28,8 +28,6 @@ struct SettingsView: View {
                 
                 profileSection
 
-                unitSection
-
                 syncNotificationSection
 
                 actionSection
@@ -227,15 +225,7 @@ struct SettingsView: View {
         }
     }
 
-    private var unitSection: some View {
-        Section(NSLocalizedString("settings.unit", comment: "")) {
-            Picker(NSLocalizedString("settings.unit", comment: ""), selection: $settingsManager.weightUnit) {
-                ForEach(WeightUnit.allCases, id: \.self) { unit in
-                    Text(unit.displayName).tag(unit)
-                }
-            }
-        }
-    }
+
 
     private var syncNotificationSection: some View {
         Section {

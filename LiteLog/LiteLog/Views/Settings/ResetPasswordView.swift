@@ -4,8 +4,6 @@ struct ResetPasswordView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var settingsManager: SettingsManager
     
-    @State private var selectedCountry = CountryCode.defaultCountry
-    @State private var showCountryPicker = false
     @State private var phoneNumber = ""
     @State private var smsCode = ""
     @State private var newPassword = ""
@@ -33,9 +31,6 @@ struct ResetPasswordView: View {
                 LinearGradient(gradient: Gradient(colors: [Color(.systemBackground), Color(.systemGray6).opacity(0.3)]), startPoint: .top, endPoint: .bottom)
                     .ignoresSafeArea()
             )
-            .sheet(isPresented: $showCountryPicker) {
-                countryPickerSheet
-            }
             .errorAlert(manager: errorAlertManager)
         }
     }
@@ -73,15 +68,11 @@ struct ResetPasswordView: View {
                     .fontWeight(.medium)
                     .foregroundColor(Color(.secondaryLabel))
                 
-                HStack(spacing: 12) {
-                    countryCodePicker
-                    
-                    inputField(
-                        text: $phoneNumber,
-                        keyboardType: .phonePad,
-                        placeholder: NSLocalizedString("login.phone.placeholder", comment: "")
-                    )
-                }
+                inputField(
+                    text: $phoneNumber,
+                    keyboardType: .phonePad,
+                    placeholder: NSLocalizedString("login.phone.placeholder", comment: "")
+                )
             }
             
             VStack(alignment: .leading, spacing: 8) {
@@ -154,31 +145,6 @@ struct ResetPasswordView: View {
         }
     }
     
-    private var countryCodePicker: some View {
-        Button(action: {
-            hideKeyboard()
-            showCountryPicker = true
-        }) {
-            HStack(spacing: 4) {
-                Text(selectedCountry.dialCode)
-                    .font(.body)
-                    .fontWeight(.medium)
-                
-                Image(systemName: "chevron.down")
-                    .font(.caption)
-                    .foregroundColor(Color(.systemGray4))
-            }
-            .frame(height: 50)
-            .padding(.horizontal, 12)
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(.systemGray4), lineWidth: 1)
-            )
-        }
-    }
-    
     private func secureInputField(title: String, text: Binding<String>, placeholder: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
@@ -248,7 +214,7 @@ struct ResetPasswordView: View {
         
         Task {
             do {
-                let fullPhoneNumber = "\(selectedCountry.dialCode)\(phoneNumber)"
+                let fullPhoneNumber = "+86\(phoneNumber)"
                 let success = try await APIService.shared.sendSMSCode(phone: fullPhoneNumber)
                 
                 if !success {
@@ -290,7 +256,7 @@ struct ResetPasswordView: View {
     
     private func resetPassword() {
         isLoading = true
-        let fullPhoneNumber = "\(selectedCountry.dialCode)\(phoneNumber)"
+        let fullPhoneNumber = "+86\(phoneNumber)"
         
         Task {
             do {
@@ -324,45 +290,6 @@ struct ResetPasswordView: View {
         }
     }
     
-    private var countryPickerSheet: some View {
-        NavigationStack {
-            List {
-                ForEach(CountryCode.commonCountries) { country in
-                    HStack {
-                        Text(country.name)
-                            .font(.body)
-                        
-                        Spacer()
-                        
-                        Text(country.dialCode)
-                            .font(.body)
-                            .foregroundColor(Color(.secondaryLabel))
-                        
-                        if selectedCountry.code == country.code {
-                            Image(systemName: "checkmark")
-                                .foregroundColor(.primaryBlue)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        selectedCountry = country
-                        showCountryPicker = false
-                    }
-                }
-            }
-            .listStyle(.plain)
-            .navigationTitle(NSLocalizedString("login.select.country", comment: ""))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(NSLocalizedString("action.cancel", comment: "")) {
-                        showCountryPicker = false
-                    }
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
-    }
 }
 
 struct ResetPasswordView_Previews: PreviewProvider {
