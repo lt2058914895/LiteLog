@@ -33,7 +33,10 @@
 "home.trend" = "趋势";
 "home.body.fat" = "体脂率";
 "home.update.body.fat" = "更新体脂率";
-"home.waist.circumference" = "腰围";
+"home.measurements" = "围度";
+"home.waist" = "腰围";
+"home.hip" = "臀围";
+"home.thigh" = "大腿围";
 
 // 记录页相关
 "record.calendar" = "日历";

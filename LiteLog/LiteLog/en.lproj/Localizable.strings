@@ -33,7 +33,10 @@
 "home.trend" = "Trend";
 "home.body.fat" = "Body Fat";
 "home.update.body.fat" = "Update Body Fat";
-"home.waist.circumference" = "Waist";
+"home.measurements" = "Measurements";
+"home.waist" = "Waist";
+"home.hip" = "Hip";
+"home.thigh" = "Thigh";
 
 // Record related
 "record.calendar" = "Calendar";

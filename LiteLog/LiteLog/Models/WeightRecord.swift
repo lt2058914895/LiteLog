@@ -15,6 +15,8 @@ final class WeightRecord {
     var weight: Double
     var bodyFatPercentage: Double?
     var waistCircumference: Double?
+    var hipCircumference: Double?
+    var thighCircumference: Double?
     var note: String?
     var imageUrl: String?
     var createdAt: Date
@@ -30,6 +32,8 @@ final class WeightRecord {
         weight: Double,
         bodyFatPercentage: Double? = nil,
         waistCircumference: Double? = nil,
+        hipCircumference: Double? = nil,
+        thighCircumference: Double? = nil,
         note: String? = nil,
         imageUrl: String? = nil,
         createdAt: Date = Date(),
@@ -41,6 +45,8 @@ final class WeightRecord {
         self.weight = weight
         self.bodyFatPercentage = bodyFatPercentage
         self.waistCircumference = waistCircumference
+        self.hipCircumference = hipCircumference
+        self.thighCircumference = thighCircumference
         self.note = note
         self.imageUrl = imageUrl
         self.createdAt = createdAt

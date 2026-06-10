@@ -43,6 +43,22 @@ struct HomeView: View {
         latestWaistRecord?.waistCircumference
     }
 
+    private var latestHipRecord: WeightRecord? {
+        allRecords.first { $0.hipCircumference != nil }
+    }
+
+    private var latestHip: Double? {
+        latestHipRecord?.hipCircumference
+    }
+
+    private var latestThighRecord: WeightRecord? {
+        allRecords.first { $0.thighCircumference != nil }
+    }
+
+    private var latestThigh: Double? {
+        latestThighRecord?.thighCircumference
+    }
+
     private var bodyFatProgress: Double {
         guard let current = latestBodyFat else { return 0 }
         return min(current / 50.0 * 100, 100)
@@ -61,7 +77,7 @@ struct HomeView: View {
                     HStack(spacing: 16) {
                         bodyFatCard
                             .frame(maxWidth: .infinity)
-                        waistCard
+                        measurementsCard
                             .frame(maxWidth: .infinity)
                     }
                 }
@@ -170,11 +186,11 @@ struct HomeView: View {
         .buttonStyle(.plain)
     }
 
-    private var waistCard: some View {
+    private var measurementsCard: some View {
         NavigationLink(destination: WaistCircumferenceView()) {
             VStack(spacing: 12) {
                 HStack(alignment: .top, spacing: 8) {
-                    Text(NSLocalizedString("home.waist.circumference", comment: ""))
+                    Text(NSLocalizedString("home.measurements", comment: ""))
                         .font(.subheadline)
                         .foregroundColor(.secondaryText)
 
@@ -184,21 +200,33 @@ struct HomeView: View {
                         .font(.headline)
                         .foregroundColor(.tertiaryText)
                 }
-                VStack(alignment: .leading, spacing: 4) {
-                    if let waist = latestWaist {
-                        HStack(alignment: .firstTextBaseline, spacing: 2) {
-                            Text(String(format: "%.1f", waist))
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                                .foregroundColor(.primaryText)
-
-                            Text("cm")
-                                .font(.title)
-                                .foregroundColor(.secondaryText)
-                        }
-                    } else {
-                        Text("-- cm")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                VStack(spacing: 8) {
+                    HStack {
+                        Text(NSLocalizedString("home.waist", comment: ""))
+                            .font(.caption)
                             .foregroundColor(.secondaryText)
+                        Spacer()
+                        Text(latestWaist != nil ? String(format: "%.1f cm", latestWaist!) : "--")
+                            .font(.body)
+                            .foregroundColor(.primaryText)
+                    }
+                    HStack {
+                        Text(NSLocalizedString("home.hip", comment: ""))
+                            .font(.caption)
+                            .foregroundColor(.secondaryText)
+                        Spacer()
+                        Text(latestHip != nil ? String(format: "%.1f cm", latestHip!) : "--")
+                            .font(.body)
+                            .foregroundColor(.primaryText)
+                    }
+                    HStack {
+                        Text(NSLocalizedString("home.thigh", comment: ""))
+                            .font(.caption)
+                            .foregroundColor(.secondaryText)
+                        Spacer()
+                        Text(latestThigh != nil ? String(format: "%.1f cm", latestThigh!) : "--")
+                            .font(.body)
+                            .foregroundColor(.primaryText)
                     }
                 }
             }

@@ -347,6 +347,8 @@ class APIService {
                 weight: 0.0,
                 bodyFatPercentage: nil,
                 waistCircumference: nil,
+                hipCircumference: nil,
+                thighCircumference: nil,
                 note: nil,
                 date: Date().timeIntervalSince1970,
                 createdAt: Date().timeIntervalSince1970,
