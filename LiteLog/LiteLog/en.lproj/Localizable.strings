@@ -37,6 +37,17 @@
 "home.waist" = "Waist";
 "home.hip" = "Hip";
 "home.thigh" = "Thigh";
+"record.measurement_period" = "Time Period";
+"period.morning_fasting" = "Morning Fasting";
+"period.after_exercise" = "After Exercise";
+"period.before_bed" = "Before Bed";
+"period.random" = "Random";
+"record.waist.circumference.optional" = "Waist (cm)";
+"record.hip.circumference.optional" = "Hip (cm)";
+"record.thigh.circumference.optional" = "Thigh (cm)";
+"record.waist.circumference" = "Waist";
+"record.hip.circumference" = "Hip";
+"record.thigh.circumference" = "Thigh";
 
 // Record related
 "record.calendar" = "Calendar";

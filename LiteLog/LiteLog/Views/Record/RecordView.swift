@@ -54,10 +54,10 @@ struct RecordView: View {
                     }
                 }
             }
-            .adaptiveSheet(isPresented: $showingAddSheet) {
+            .navigationDestination(isPresented: $showingAddSheet) {
                 RecordFormView(isPresented: $showingAddSheet)
             }
-            .adaptiveSheet(item: $selectedRecord) { record in
+            .navigationDestination(item: $selectedRecord) { record in
                 RecordFormView(record: record, isPresented: .constant(false))
             }
         }
@@ -231,11 +231,14 @@ struct RecordFormView: View {
     @State private var weightString: String
     @State private var bodyFatString: String
     @State private var waistString: String
+    @State private var hipString: String
+    @State private var thighString: String
     @State private var note: String
     @State private var showingDeleteAlert = false
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var showingDuplicateAlert = false
+    @State private var selectedTimePeriod: MeasurementTimePeriod = .random
     
     // 图片相关状态
     @State private var selectedImage: UIImage?
@@ -267,6 +270,16 @@ struct RecordFormView: View {
         return value
     }
 
+    private var hipCircumference: Double? {
+        guard !hipString.isEmpty, let value = Double(hipString) else { return nil }
+        return value
+    }
+
+    private var thighCircumference: Double? {
+        guard !thighString.isEmpty, let value = Double(thighString) else { return nil }
+        return value
+    }
+
     init(record: WeightRecord? = nil, isPresented: Binding<Bool>) {
         self.record = record
         self._isPresented = isPresented
@@ -276,20 +289,25 @@ struct RecordFormView: View {
             self._weightString = State(initialValue: "")
             self._bodyFatString = State(initialValue: record.bodyFatPercentage.map { String(format: "%.1f", $0) } ?? "")
             self._waistString = State(initialValue: record.waistCircumference.map { String(format: "%.1f", $0) } ?? "")
+            self._hipString = State(initialValue: record.hipCircumference.map { String(format: "%.1f", $0) } ?? "")
+            self._thighString = State(initialValue: record.thighCircumference.map { String(format: "%.1f", $0) } ?? "")
             self._note = State(initialValue: record.note ?? "")
             self._imageUrl = State(initialValue: record.imageUrl)
+            self._selectedTimePeriod = State(initialValue: record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random)
         } else {
             self._date = State(initialValue: Date())
             self._weightString = State(initialValue: "")
             self._bodyFatString = State(initialValue: "")
             self._waistString = State(initialValue: "")
+            self._hipString = State(initialValue: "")
+            self._thighString = State(initialValue: "")
             self._note = State(initialValue: "")
             self._imageUrl = State(initialValue: nil)
+            self._selectedTimePeriod = State(initialValue: .random)
         }
     }
 
     var body: some View {
-        NavigationStack {
             Form {
                 Section(NSLocalizedString("record.date", comment: "")) {
                     DatePicker(
@@ -300,6 +318,25 @@ struct RecordFormView: View {
                     )
                     .datePickerStyle(.graphical)
                     .disabled(isEditMode)
+                }
+                
+                Section(NSLocalizedString("record.measurement_period", comment: "")) {
+                    HStack(spacing: 8) {
+                        ForEach(MeasurementTimePeriod.allCases, id: \.self) { period in
+                            Button(action: {
+                                selectedTimePeriod = period
+                            }) {
+                                Text(period.displayName)
+                                    .font(.caption)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(selectedTimePeriod == period ? Color.primaryBlue : Color(.secondarySystemGroupedBackground))
+                                    .foregroundColor(selectedTimePeriod == period ? .white : .primaryText)
+                                    .cornerRadius(20)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
                 
                 // 照片区域
@@ -409,6 +446,26 @@ struct RecordFormView: View {
                     }
                 }
 
+                Section(NSLocalizedString("record.hip.circumference.optional", comment: "")) {
+                    HStack {
+                        TextField(NSLocalizedString("record.hip.circumference", comment: ""), text: $hipString)
+                            .keyboardType(.decimalPad)
+
+                        Text("cm")
+                            .foregroundColor(.secondaryText)
+                    }
+                }
+
+                Section(NSLocalizedString("record.thigh.circumference.optional", comment: "")) {
+                    HStack {
+                        TextField(NSLocalizedString("record.thigh.circumference", comment: ""), text: $thighString)
+                            .keyboardType(.decimalPad)
+
+                        Text("cm")
+                            .foregroundColor(.secondaryText)
+                    }
+                }
+
                 Section(NSLocalizedString("record.note", comment: "")) {
                     TextField(NSLocalizedString("record.note.placeholder", comment: ""), text: $note)
                 }
@@ -429,13 +486,8 @@ struct RecordFormView: View {
             }
             .navigationTitle(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(NSLocalizedString("action.cancel", comment: "")) {
-                        dismiss()
-                    }
-                }
-
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(NSLocalizedString("action.save", comment: "")) {
                         saveRecord()
@@ -484,7 +536,6 @@ struct RecordFormView: View {
                     weightString = String(format: "%.1f", unit.convertFromKg(record.weight))
                 }
             }
-        }
     }
 
     private func saveRecord() {
@@ -523,8 +574,11 @@ struct RecordFormView: View {
             weight: weightInKg,
             bodyFatPercentage: bodyFatPercentage,
             waistCircumference: waistCircumference,
+            hipCircumference: hipCircumference,
+            thighCircumference: thighCircumference,
             note: note.isEmpty ? nil : note,
             imageUrl: imageUrl,
+            measurementTimePeriod: selectedTimePeriod.rawValue,
             syncStatus: WeightRecordSyncStatus.pending
         )
         newRecord.selectedImage = selectedImage
@@ -555,6 +609,9 @@ struct RecordFormView: View {
         record.weight = unit.convertToKg(weightValue)
         record.bodyFatPercentage = Double(bodyFatString)
         record.waistCircumference = Double(waistString)
+        record.hipCircumference = Double(hipString)
+        record.thighCircumference = Double(thighString)
+        record.measurementTimePeriod = selectedTimePeriod.rawValue
         record.note = note.isEmpty ? nil : note
         record.imageUrl = imageUrl
         record.selectedImage = selectedImage

@@ -330,6 +330,7 @@ struct QuickAddWeightView: View {
     @State private var weightInput = ""
     @FocusState private var isKeyboardFocused: Bool
     @State private var showingDuplicateAlert = false
+    @State private var selectedTimePeriod: MeasurementTimePeriod = .random
     
     // 图片相关状态
     @State private var selectedImage: UIImage?
@@ -405,6 +406,29 @@ struct QuickAddWeightView: View {
 
     private var displayView: some View {
         VStack(spacing: 16) {
+            // 测量时段选择
+            VStack(spacing: 8) {
+                Text(NSLocalizedString("record.measurement_period", comment: ""))
+                    .font(.subheadline)
+                    .foregroundColor(.secondaryText)
+                HStack(spacing: 8) {
+                    ForEach(MeasurementTimePeriod.allCases, id: \.self) { period in
+                        Button(action: {
+                            selectedTimePeriod = period
+                        }) {
+                            Text(period.displayName)
+                                .font(.caption)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(selectedTimePeriod == period ? Color.primaryBlue : Color(.secondarySystemGroupedBackground))
+                                .foregroundColor(selectedTimePeriod == period ? .white : .primaryText)
+                                .cornerRadius(20)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            
             // OCR 照片区域或相机按钮
             if selectedImage != nil || imageUrl != nil {
                 // 有照片时显示照片区域
@@ -530,6 +554,7 @@ struct QuickAddWeightView: View {
             date: Date(),
             weight: weightInKg,
             imageUrl: imageUrl,
+            measurementTimePeriod: selectedTimePeriod.rawValue,
             syncStatus: WeightRecordSyncStatus.pending
         )
         record.selectedImage = selectedImage

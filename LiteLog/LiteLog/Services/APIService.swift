@@ -355,7 +355,8 @@ class APIService {
                 updatedAt: Date().timeIntervalSince1970,
                 deleted: true,
                 imageUrl: nil,
-                imageFileName: nil
+                imageFileName: nil,
+                measurementTimePeriod: nil
             )
         }
         

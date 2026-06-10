@@ -29,6 +29,14 @@ struct RecordRowView: View {
                 waistView(waist)
             }
 
+            if let hip = record.hipCircumference {
+                hipView(hip)
+            }
+
+            if let thigh = record.thighCircumference {
+                thighView(thigh)
+            }
+
             Image(systemName: "chevron.right")
                 .font(.caption)
                 .foregroundColor(.tertiaryText)
@@ -96,6 +104,30 @@ struct RecordRowView: View {
                 .foregroundColor(.primaryText)
 
             Text(NSLocalizedString("record.waist.circumference", comment: ""))
+                .font(.caption2)
+                .foregroundColor(.secondaryText)
+        }
+    }
+
+    private func hipView(_ hip: Double) -> some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text("\(hip.weightString)cm")
+                .font(.subheadline)
+                .foregroundColor(.primaryText)
+
+            Text(NSLocalizedString("record.hip.circumference", comment: ""))
+                .font(.caption2)
+                .foregroundColor(.secondaryText)
+        }
+    }
+
+    private func thighView(_ thigh: Double) -> some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text("\(thigh.weightString)cm")
+                .font(.subheadline)
+                .foregroundColor(.primaryText)
+
+            Text(NSLocalizedString("record.thigh.circumference", comment: ""))
                 .font(.caption2)
                 .foregroundColor(.secondaryText)
         }

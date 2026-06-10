@@ -8,6 +8,26 @@ enum WeightRecordSyncStatus: Int, Codable {
     case failed
 }
 
+enum MeasurementTimePeriod: String, Codable, CaseIterable {
+    case morningFasting = "morning_fasting"
+    case afterExercise = "after_exercise"
+    case beforeBed = "before_bed"
+    case random = "random"
+    
+    var displayName: String {
+        switch self {
+        case .morningFasting:
+            return NSLocalizedString("period.morning_fasting", comment: "")
+        case .afterExercise:
+            return NSLocalizedString("period.after_exercise", comment: "")
+        case .beforeBed:
+            return NSLocalizedString("period.before_bed", comment: "")
+        case .random:
+            return NSLocalizedString("period.random", comment: "")
+        }
+    }
+}
+
 @Model
 final class WeightRecord {
     var id: UUID
@@ -19,6 +39,7 @@ final class WeightRecord {
     var thighCircumference: Double?
     var note: String?
     var imageUrl: String?
+    var measurementTimePeriod: String?
     var createdAt: Date
     var updatedAt: Date
     var syncStatus: WeightRecordSyncStatus
@@ -36,6 +57,7 @@ final class WeightRecord {
         thighCircumference: Double? = nil,
         note: String? = nil,
         imageUrl: String? = nil,
+        measurementTimePeriod: String? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         syncStatus: WeightRecordSyncStatus = .pending
@@ -49,6 +71,7 @@ final class WeightRecord {
         self.thighCircumference = thighCircumference
         self.note = note
         self.imageUrl = imageUrl
+        self.measurementTimePeriod = measurementTimePeriod
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.syncStatus = syncStatus

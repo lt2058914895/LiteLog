@@ -125,7 +125,8 @@ final class DataSyncManager {
                     updatedAt: record.updatedAt.timeIntervalSince1970,
                     deleted: false,
                     imageUrl: record.imageUrl,
-                    imageFileName: nil
+                    imageFileName: nil,
+                    measurementTimePeriod: record.measurementTimePeriod
                 )
             }
             
@@ -162,7 +163,8 @@ final class DataSyncManager {
                     updatedAt: record.updatedAt.timeIntervalSince1970,
                     deleted: false,
                     imageUrl: nil,
-                    imageFileName: "\(record.id.uuidString)_image.jpg"
+                    imageFileName: "\(record.id.uuidString)_image.jpg",
+                    measurementTimePeriod: record.measurementTimePeriod
                 )
             }
             
