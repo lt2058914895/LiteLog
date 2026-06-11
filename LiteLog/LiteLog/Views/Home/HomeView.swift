@@ -177,19 +177,21 @@ struct HomeView: View {
                     
                     // 进度提示
                     if latestWeight != nil {
-                        let isLosingWeight = currentWeight > goalWeight  // 当前体重大于目标体重，需要减重
-                        let isGainingWeight = currentWeight < goalWeight  // 当前体重小于目标体重，需要增重
                         let absDifference = abs(difference)
+                        // 将差值四舍五入到一位小数后判断，避免显示"还需减重0.0kg"的情况
+                        let roundedDifference = round(absDifference * 10) / 10
                         
-                        if isLosingWeight || isGainingWeight {
+                        if roundedDifference > 0 {
+                            let isLosingWeight = currentWeight > goalWeight  // 当前体重大于目标体重，需要减重
                             HStack(spacing: 4) {
                                 Image(systemName: isLosingWeight ? "arrow.down" : "arrow.up")
                                     .font(.caption)
                                     .foregroundColor(isLosingWeight ? .orange : .green)
                                 
                                 Text(String(format: NSLocalizedString("home.goal.progress", comment: ""), 
-                                           unit.convertFromKg(absDifference).weightString, 
-                                           isLosingWeight ? NSLocalizedString("home.goal.to.lose", comment: "") : NSLocalizedString("home.goal.to.gain", comment: "")))
+                                           isLosingWeight ? NSLocalizedString("home.goal.to.lose", comment: "") : NSLocalizedString("home.goal.to.gain", comment: ""),
+                                           unit.convertFromKg(roundedDifference).weightString,
+                                           unit.shortName))
                                     .font(.caption)
                                     .foregroundColor(isLosingWeight ? .orange : .green)
                             }
@@ -259,23 +261,31 @@ struct HomeView: View {
                         HStack(alignment: .lastTextBaseline, spacing: 8) {
                             // 进度提示（只有当两者都有值时才显示）
                             if let goal = goalBodyFat, latestBodyFat != nil {
-                                let isReducing = currentBodyFat > goal  // 当前体脂率大于目标体脂率，需要降低
-                                let isIncreasing = currentBodyFat < goal  // 当前体脂率小于目标体脂率，需要提高
                                 let difference = abs(goal - currentBodyFat)
+                                // 将差值四舍五入到一位小数后判断，避免显示"还需降低0.0%"的情况
+                                let roundedDifference = round(difference * 10) / 10
                                 
-                                if isReducing || isIncreasing {
-                                    HStack(spacing: 2) {
+                                if roundedDifference > 0 {
+                                    let isReducing = currentBodyFat > goal  // 当前体脂率大于目标体脂率，需要降低
+                                    HStack(spacing: 4) {
                                         Image(systemName: isReducing ? "arrow.down" : "arrow.up")
                                             .font(.caption)
                                             .foregroundColor(isReducing ? .orange : .green)
                                         
-                                        Text(String(format: "%.1f%%", difference))
+                                        Text(String(format: NSLocalizedString("home.goal.progress", comment: ""), 
+                                                   isReducing ? NSLocalizedString("home.goal.to.reduce", comment: "") : NSLocalizedString("home.goal.to.increase", comment: ""),
+                                                   String(format: "%.1f", roundedDifference),
+                                                   "%"))
                                             .font(.caption)
                                             .foregroundColor(isReducing ? .orange : .green)
                                     }
                                 } else {
-                                    HStack(spacing: 2) {
+                                    HStack(spacing: 4) {
                                         Image(systemName: "checkmark")
+                                            .font(.caption)
+                                            .foregroundColor(.green)
+                                        
+                                        Text(NSLocalizedString("home.goal.achieved", comment: ""))
                                             .font(.caption)
                                             .foregroundColor(.green)
                                     }
