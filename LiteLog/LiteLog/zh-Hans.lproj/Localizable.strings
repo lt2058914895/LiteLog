@@ -15,6 +15,7 @@
 // 首页相关
 "home.today" = "今日";
 "home.add.weight" = "添加体重";
+"home.enter.weight" = "请输入体重";
 "home.weight" = "体重";
 "home.kg" = "kg";
 "home.day" = "日";
@@ -73,6 +74,11 @@
 "home.progress" = "进度";
 "home.goal" = "目标";
 "home.goal.weight" = "目标体重";
+"home.goal.body.fat" = "目标体脂率";
+"home.goal.measurements" = "目标围度";
+"home.goal.target" = "目标";
+"home.goal.current" = "当前";
+"home.chest" = "胸围";
 "home.to.goal" = "距目标";
 "home.trend" = "趋势";
 "home.body.fat" = "体脂率";
@@ -97,6 +103,12 @@
 "record.calendar" = "日历";
 "record.add" = "添加记录";
 "record.edit" = "编辑记录";
+"record.measurement.period" = "测量时段";
+"record.measurements" = "围度";
+"record.enter.body.fat" = "请输入体脂率";
+"record.enter.waist" = "请输入腰围";
+"record.enter.hip" = "请输入臀围";
+"record.enter.chest" = "请输入胸围";
 "record.weight" = "体重";
 "record.body.fat" = "体脂率";
 "record.body.fat.optional" = "体脂率（可选）";

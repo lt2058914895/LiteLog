@@ -199,13 +199,18 @@ final class SettingsManager: ObservableObject {
     }
     
     private func downloadAndCacheAvatar() {
-        guard !avatarUrl.isEmpty else { return }
+        guard !avatarUrl.isEmpty, let url = URL(string: avatarUrl) else { return }
         
         Task {
-            if let url = URL(string: avatarUrl), 
-               let data = try? Data(contentsOf: url), 
-               let image = UIImage(data: data) {
-                updateCachedAvatar(with: image)
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                if let image = UIImage(data: data) {
+                    await MainActor.run {
+                        updateCachedAvatar(with: image)
+                    }
+                }
+            } catch {
+                print("Failed to download avatar: \(error)")
             }
         }
     }

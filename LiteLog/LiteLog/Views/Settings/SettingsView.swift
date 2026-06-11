@@ -143,10 +143,17 @@ struct SettingsView: View {
         private func loadAndCacheAvatar() async {
             guard !settingsManager.avatarUrl.isEmpty, settingsManager.cachedAvatarImage == nil else { return }
             
-            if let url = URL(string: settingsManager.avatarUrl), 
-               let data = try? Data(contentsOf: url), 
-               let image = UIImage(data: data) {
-                settingsManager.updateCachedAvatar(with: image)
+            guard let url = URL(string: settingsManager.avatarUrl) else { return }
+            
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                if let image = UIImage(data: data) {
+                    await MainActor.run {
+                        settingsManager.updateCachedAvatar(with: image)
+                    }
+                }
+            } catch {
+                print("Failed to load avatar: \(error)")
             }
         }
         
