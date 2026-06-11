@@ -78,6 +78,13 @@
 "home.goal.measurements" = "目标围度";
 "home.goal.target" = "目标";
 "home.goal.current" = "当前";
+"home.goal.current.body.fat" = "当前体脂率";
+"home.goal.progress" = "还需%@ %@";
+"home.goal.to.lose" = "减重";
+"home.goal.to.gain" = "增重";
+"home.goal.no.profile" = "请先设置个人资料";
+"home.goal.achieved" = "已达成目标";
+"home.goal.no.data" = "暂无数据";
 "home.chest" = "胸围";
 "home.to.goal" = "距目标";
 "home.trend" = "趋势";

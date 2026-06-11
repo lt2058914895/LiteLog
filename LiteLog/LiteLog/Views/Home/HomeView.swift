@@ -74,12 +74,9 @@ struct HomeView: View {
 
                     bmiProgressSection
 
-                    HStack(spacing: 16) {
-                        goalWeightCard
-                            .frame(maxWidth: .infinity)
-                        goalBodyFatCard
-                            .frame(maxWidth: .infinity)
-                    }
+                    goalWeightCard
+                    
+                    goalBodyFatCard
                     
                     goalMeasurementsCard
                 }
@@ -161,51 +158,58 @@ struct HomeView: View {
                 Spacer()
             }
             
-            VStack(alignment: .leading, spacing: 8) {
-                if let profile = profile {
-                    let currentWeight = latestWeight ?? 0
-                    let goalWeight = profile.goalWeight
-                    let difference = goalWeight - currentWeight
-                    let differenceString = difference > 0 ? "+\(unit.convertFromKg(difference).weightString)" : unit.convertFromKg(difference).weightString
+            if let profile = profile {
+                let currentWeight = latestWeight ?? 0
+                let goalWeight = profile.goalWeight
+                let difference = goalWeight - currentWeight
+                
+                // 目标体重和进度一行显示
+                HStack(alignment: .lastTextBaseline, spacing: 12) {
+                    Text(NSLocalizedString("home.goal.target", comment: ""))
+                        .font(.body)
+                        .foregroundColor(.secondaryText)
                     
-                    HStack(alignment: .lastTextBaseline) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("\(unit.convertFromKg(goalWeight).weightString) \(unit.shortName)")
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(.primaryText)
-                            
-                            Text(NSLocalizedString("home.goal.target", comment: ""))
-                                .font(.caption2)
-                                .foregroundColor(.secondaryText)
-                        }
+                    Text("\(unit.convertFromKg(goalWeight).weightString) \(unit.shortName)")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(.primaryBlue)
+                    
+                    Spacer()
+                    
+                    // 进度提示
+                    if latestWeight != nil {
+                        let isLosingWeight = currentWeight > goalWeight  // 当前体重大于目标体重，需要减重
+                        let isGainingWeight = currentWeight < goalWeight  // 当前体重小于目标体重，需要增重
+                        let absDifference = abs(difference)
                         
-                        Spacer()
-                        
-                        VStack(alignment: .trailing, spacing: 4) {
-                            if latestWeight != nil {
-                                Text(differenceString)
-                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    .foregroundColor(difference > 0 ? .orange : .green)
+                        if isLosingWeight || isGainingWeight {
+                            HStack(spacing: 4) {
+                                Image(systemName: isLosingWeight ? "arrow.down" : "arrow.up")
+                                    .font(.caption)
+                                    .foregroundColor(isLosingWeight ? .orange : .green)
                                 
-                                Text(NSLocalizedString("home.goal.current", comment: ""))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondaryText)
-                            } else {
-                                Text("--")
-                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    .foregroundColor(.secondaryText)
+                                Text(String(format: NSLocalizedString("home.goal.progress", comment: ""), 
+                                           unit.convertFromKg(absDifference).weightString, 
+                                           isLosingWeight ? NSLocalizedString("home.goal.to.lose", comment: "") : NSLocalizedString("home.goal.to.gain", comment: "")))
+                                    .font(.caption)
+                                    .foregroundColor(isLosingWeight ? .orange : .green)
+                            }
+                        } else {
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark")
+                                    .font(.caption)
+                                    .foregroundColor(.green)
                                 
-                                Text(NSLocalizedString("home.goal.current", comment: ""))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondaryText)
+                                Text(NSLocalizedString("home.goal.achieved", comment: ""))
+                                    .font(.caption)
+                                    .foregroundColor(.green)
                             }
                         }
                     }
-                } else {
-                    Text("-- \(unit.shortName)")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(.secondaryText)
                 }
+            } else {
+                Text(NSLocalizedString("home.goal.no.profile", comment: ""))
+                    .font(.subheadline)
+                    .foregroundColor(.secondaryText)
             }
         }
         .padding()
@@ -225,56 +229,65 @@ struct HomeView: View {
                 Spacer()
             }
             
-            VStack(alignment: .leading, spacing: 8) {
-                if let profile = profile, let goalBodyFat = profile.goalBodyFat {
-                    let currentBodyFat = latestBodyFat ?? 0
-                    let difference = goalBodyFat - currentBodyFat
-                    let differenceString = difference > 0 ? "+\(String(format: "%.1f", difference))%" : String(format: "%.1f%%", difference)
-                    
-                    HStack(alignment: .lastTextBaseline) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                                Text(String(format: "%.1f", goalBodyFat))
-                                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                                    .foregroundColor(.primaryText)
-                                
-                                Text("%")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondaryText)
-                            }
-                            
-                            Text(NSLocalizedString("home.goal.target", comment: ""))
-                                .font(.caption2)
-                                .foregroundColor(.secondaryText)
-                        }
-                        
+            // 只有目标体脂率和当前体脂率都为空时才展示暂无数据
+            if let profile = profile, (profile.goalBodyFat != nil || latestBodyFat != nil) {
+                let goalBodyFat = profile.goalBodyFat
+                let currentBodyFat = latestBodyFat ?? 0
+                
+                VStack(spacing: 8) {
+                    // 目标一行
+                    HStack(alignment: .lastTextBaseline, spacing: 12) {
+                        Text(NSLocalizedString("home.goal.target", comment: ""))
+                            .font(.body)
+                            .foregroundColor(.secondaryText)
+                        Text(goalBodyFat != nil ? String(format: "%.1f%%", goalBodyFat!) : "--")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(goalBodyFat != nil ? .primaryBlue : .secondaryText)
                         Spacer()
-                        
-                        VStack(alignment: .trailing, spacing: 4) {
-                            if latestBodyFat != nil {
-                                Text(differenceString)
-                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    .foregroundColor(difference > 0 ? .orange : .green)
+                    }
+                    
+                    // 当前一行（包含进度提示）
+                    HStack(alignment: .lastTextBaseline, spacing: 12) {
+                        Text(NSLocalizedString("home.goal.current", comment: ""))
+                            .font(.body)
+                            .foregroundColor(.secondaryText)
+                        Text(latestBodyFat != nil ? String(format: "%.1f%%", currentBodyFat) : "--")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .fontWeight(.medium)
+                            .foregroundColor(.primaryText)
+                        Spacer()
+                        HStack(alignment: .lastTextBaseline, spacing: 8) {
+                            // 进度提示（只有当两者都有值时才显示）
+                            if let goal = goalBodyFat, latestBodyFat != nil {
+                                let isReducing = currentBodyFat > goal  // 当前体脂率大于目标体脂率，需要降低
+                                let isIncreasing = currentBodyFat < goal  // 当前体脂率小于目标体脂率，需要提高
+                                let difference = abs(goal - currentBodyFat)
                                 
-                                Text(NSLocalizedString("home.goal.current", comment: ""))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondaryText)
-                            } else {
-                                Text("--")
-                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    .foregroundColor(.secondaryText)
-                                
-                                Text(NSLocalizedString("home.goal.current", comment: ""))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondaryText)
+                                if isReducing || isIncreasing {
+                                    HStack(spacing: 2) {
+                                        Image(systemName: isReducing ? "arrow.down" : "arrow.up")
+                                            .font(.caption)
+                                            .foregroundColor(isReducing ? .orange : .green)
+                                        
+                                        Text(String(format: "%.1f%%", difference))
+                                            .font(.caption)
+                                            .foregroundColor(isReducing ? .orange : .green)
+                                    }
+                                } else {
+                                    HStack(spacing: 2) {
+                                        Image(systemName: "checkmark")
+                                            .font(.caption)
+                                            .foregroundColor(.green)
+                                    }
+                                }
                             }
                         }
                     }
-                } else {
-                    Text("-- %")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(.secondaryText)
                 }
+            } else {
+                Text(NSLocalizedString("home.goal.no.data", comment: ""))
+                    .font(.subheadline)
+                    .foregroundColor(.secondaryText)
             }
         }
         .padding()
