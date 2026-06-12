@@ -18,6 +18,7 @@ final class UserProfile {
     var goalWaistCircumference: Double?
     var goalHipCircumference: Double?
     var goalChestCircumference: Double?
+    var goalThighCircumference: Double?
     var weightUnit: String
     var createdAt: Date
     var updatedAt: Date
@@ -45,6 +46,7 @@ final class UserProfile {
         goalWaistCircumference: Double? = nil,
         goalHipCircumference: Double? = nil,
         goalChestCircumference: Double? = nil,
+        goalThighCircumference: Double? = nil,
         weightUnit: String = "kg",
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
@@ -59,6 +61,7 @@ final class UserProfile {
         self.goalWaistCircumference = goalWaistCircumference
         self.goalHipCircumference = goalHipCircumference
         self.goalChestCircumference = goalChestCircumference
+        self.goalThighCircumference = goalThighCircumference
         self.weightUnit = weightUnit
         self.createdAt = createdAt
         self.updatedAt = updatedAt

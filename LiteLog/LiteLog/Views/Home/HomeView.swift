@@ -59,6 +59,14 @@ struct HomeView: View {
         latestChestRecord?.chestCircumference
     }
 
+    private var latestThighRecord: WeightRecord? {
+        allRecords.first { $0.thighCircumference != nil }
+    }
+
+    private var latestThigh: Double? {
+        latestThighRecord?.thighCircumference
+    }
+
     private var bodyFatProgress: Double {
         guard let current = latestBodyFat else { return 0 }
         return min(current / 50.0 * 100, 100)
@@ -352,6 +360,11 @@ struct HomeView: View {
                     measurementRow(title: NSLocalizedString("home.chest", comment: ""),
                                    goal: profile.goalChestCircumference,
                                    current: latestChest)
+                    
+                    // 大腿围
+                    measurementRow(title: NSLocalizedString("home.thigh", comment: ""),
+                                   goal: profile.goalThighCircumference,
+                                   current: latestThigh)
                 }
             } else {
                 Text("--")
@@ -468,6 +481,8 @@ struct HomeView: View {
             return "goal.hip"
         case "胸围":
             return "goal.chest"
+        case "大腿围":
+            return "goal.thigh"
         default:
             return "ruler"
         }
