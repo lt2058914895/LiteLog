@@ -367,8 +367,9 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 8) {
             // 第一行：图标 + 标题
             HStack(spacing: 8) {
-                Image(systemName: iconForMeasurement(title))
-                    .font(.system(size: 18))
+                Image(iconForMeasurement(title))
+                    .resizable()
+                    .frame(width: 24, height: 24)
                     .foregroundColor(.primaryBlue)
                 
                 Text("目标\(title)")
@@ -462,11 +463,11 @@ struct HomeView: View {
     private func iconForMeasurement(_ title: String) -> String {
         switch title {
         case "腰围":
-            return "figure.walk"
+            return "goal.waist"
         case "臀围":
-            return "figure.stand"
+            return "goal.hip"
         case "胸围":
-            return "heart.fill"
+            return "goal.chest"
         default:
             return "ruler"
         }
