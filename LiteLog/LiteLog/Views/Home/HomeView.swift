@@ -244,27 +244,51 @@ struct HomeView: View {
                 
                 VStack(spacing: 8) {
                     // 目标一行
-                    HStack(alignment: .lastTextBaseline, spacing: 12) {
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
                         Text(NSLocalizedString("home.goal.target", comment: ""))
                             .font(.body)
                             .foregroundColor(.secondaryText)
-                        Text(goalBodyFat != nil ? String(format: "%.1f%%", goalBodyFat!) : "--")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(goalBodyFat != nil ? .primaryText : .secondaryText)
+                        
+                        if let goal = goalBodyFat {
+                            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                Text(String(format: "%.1f", goal))
+                                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primaryText)
+                                Text("%")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primaryText)
+                            }
+                        } else {
+                            Text("--")
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundColor(.secondaryText)
+                        }
                         Spacer()
                     }
                     
                     // 当前一行（包含进度提示）
-                    HStack(alignment: .lastTextBaseline, spacing: 12) {
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
                         Text(NSLocalizedString("home.goal.current", comment: ""))
                             .font(.body)
                             .foregroundColor(.secondaryText)
-                        Text(latestBodyFat != nil ? String(format: "%.1f%%", currentBodyFat) : "--")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .fontWeight(.medium)
-                            .foregroundColor(.primaryText)
+                        
+                        if latestBodyFat != nil {
+                            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                Text(String(format: "%.1f", currentBodyFat))
+                                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primaryBlue)
+                                Text("%")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primaryBlue)
+                            }
+                        } else {
+                            Text("--")
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundColor(.secondaryText)
+                        }
+                        
                         Spacer()
-                        HStack(alignment: .lastTextBaseline, spacing: 8) {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
                             // 进度提示（只有当两者都有值时才显示）
                             if let goal = goalBodyFat, latestBodyFat != nil {
                                 let difference = abs(goal - currentBodyFat)
@@ -359,12 +383,17 @@ struct HomeView: View {
                     .foregroundColor(.secondaryText)
                 
                 if let goal = goal {
-                    Text(String(format: "%.1fcm", goal))
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(.primaryText)
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text(String(format: "%.1f", goal))
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(.primaryText)
+                        Text("cm")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(.primaryText)
+                    }
                 } else {
                     Text("--")
-                        .font(.body)
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(.secondaryText)
                 }
             }
@@ -376,9 +405,14 @@ struct HomeView: View {
                     .foregroundColor(.secondaryText)
                 
                 if let current = current {
-                    Text(String(format: "%.1fcm", current))
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(.primaryText)
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text(String(format: "%.1f", current))
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(.primaryBlue)
+                        Text("cm")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(.primaryBlue)
+                    }
                     
                     Spacer()
 
@@ -416,7 +450,7 @@ struct HomeView: View {
                     }
                 } else {
                     Text("--")
-                        .font(.body)
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(.secondaryText)
                     Spacer()
                 }
