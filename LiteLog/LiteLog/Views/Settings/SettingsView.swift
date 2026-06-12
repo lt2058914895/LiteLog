@@ -40,8 +40,9 @@ struct SettingsView: View {
             .onReceive(NotificationCenter.default.publisher(for: .showProfileEditor)) { _ in
                 showingProfileEditor = true
             }
-            .adaptiveSheet(isPresented: $showingProfileEditor) {
+            .navigationDestination(isPresented: $showingProfileEditor) {
                 ProfileEditorView()
+                    .navigationBarTitleDisplayMode(.inline)
             }
             .adaptiveSheet(isPresented: $showingUserInfoEditor) {
                 UserInfoEditorView()
@@ -440,6 +441,7 @@ struct ProfileEditorView: View {
     @State private var goalWaistCircumferenceString: String = ""
     @State private var goalHipCircumferenceString: String = ""
     @State private var goalChestCircumferenceString: String = ""
+    @State private var goalThighCircumferenceString: String = ""
     @State private var showingValidationAlert = false
     @State private var validationErrorMessage = ""
 
@@ -448,103 +450,107 @@ struct ProfileEditorView: View {
     private var heightUnit: HeightUnit { settingsManager.heightUnit }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section(NSLocalizedString("settings.height", comment: "")) {
-                    HStack {
-                        NumericTextField(NSLocalizedString("settings.height", comment: ""), text: $heightString)
-
-                        Text(heightUnit.displayName)
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-
-                Section(NSLocalizedString("settings.gender", comment: "")) {
-                    Picker(NSLocalizedString("settings.gender", comment: ""), selection: $gender) {
-                        Text(NSLocalizedString("settings.male", comment: "")).tag(UserProfile.Gender.male)
-                        Text(NSLocalizedString("settings.female", comment: "")).tag(UserProfile.Gender.female)
-                    }
-                    .pickerStyle(.segmented)
-                }
-
-                Section(NSLocalizedString("settings.age", comment: "")) {
-                    Stepper("\(age)", value: $age, in: 1...120)
-                }
-
-                Section(NSLocalizedString("settings.goal.weight", comment: "")) {
-                    HStack {
-                        NumericTextField(NSLocalizedString("settings.goal.weight", comment: ""), text: $goalWeightString)
-
-                        Text(unit.shortName)
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-
-                Section(NSLocalizedString("settings.goal.body.fat", comment: "")) {
-                    HStack {
-                        NumericTextField(NSLocalizedString("settings.goal.body.fat", comment: ""), text: $goalBodyFatString)
-
-                        Text("%")
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-
-                Section(NSLocalizedString("settings.goal.measurements", comment: "")) {
-                    HStack {
-                        Text(NSLocalizedString("settings.goal.waist", comment: ""))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        NumericTextField("", text: $goalWaistCircumferenceString)
-                            .multilineTextAlignment(.trailing)
-                        Text(NSLocalizedString("settings.cm", comment: ""))
-                            .foregroundColor(.secondaryText)
-                    }
-
-                    HStack {
-                        Text(NSLocalizedString("settings.goal.hip", comment: ""))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        NumericTextField("", text: $goalHipCircumferenceString)
-                            .multilineTextAlignment(.trailing)
-                        Text(NSLocalizedString("settings.cm", comment: ""))
-                            .foregroundColor(.secondaryText)
-                    }
-
-                    HStack {
-                        Text(NSLocalizedString("settings.goal.chest", comment: ""))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        NumericTextField("", text: $goalChestCircumferenceString)
-                            .multilineTextAlignment(.trailing)
-
-                        Text(NSLocalizedString("settings.cm", comment: ""))
-                            .foregroundColor(.secondaryText)
-                    }
+        Form {
+            Section(NSLocalizedString("settings.height", comment: "")) {
+                HStack {
+                    NumericTextField(NSLocalizedString("settings.height", comment: ""), text: $heightString)
+                    
+                    Text(heightUnit.displayName)
+                        .foregroundColor(.secondaryText)
                 }
             }
-            .navigationTitle(NSLocalizedString("settings.profile", comment: ""))
-            .navigationBarTitleDisplayMode(.inline)
-            .alert(NSLocalizedString("settings.error", comment: ""), isPresented: $showingValidationAlert) {
-                Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
-            } message: {
-                Text(validationErrorMessage)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(NSLocalizedString("action.cancel", comment: "")) {
-                        dismiss()
-                    }
+            
+            Section(NSLocalizedString("settings.gender", comment: "")) {
+                Picker(NSLocalizedString("settings.gender", comment: ""), selection: $gender) {
+                    Text(NSLocalizedString("settings.male", comment: "")).tag(UserProfile.Gender.male)
+                    Text(NSLocalizedString("settings.female", comment: "")).tag(UserProfile.Gender.female)
                 }
-
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(NSLocalizedString("action.save", comment: "")) {
-                        saveProfile()
-                    }
+                .pickerStyle(.segmented)
+            }
+            
+            Section(NSLocalizedString("settings.age", comment: "")) {
+                Stepper("\(age)", value: $age, in: 1...120)
+            }
+            
+            Section(NSLocalizedString("settings.goal.weight", comment: "")) {
+                HStack {
+                    NumericTextField(NSLocalizedString("settings.goal.weight", comment: ""), text: $goalWeightString)
+                    
+                    Text(unit.shortName)
+                        .foregroundColor(.secondaryText)
                 }
             }
-            .onAppear {
-                loadExistingProfile()
+            
+            Section(NSLocalizedString("settings.goal.body.fat", comment: "")) {
+                HStack {
+                    NumericTextField(NSLocalizedString("settings.goal.body.fat", comment: ""), text: $goalBodyFatString)
+                    
+                    Text("%")
+                        .foregroundColor(.secondaryText)
+                }
             }
+            
+            Section(NSLocalizedString("settings.goal.measurements", comment: "")) {
+                HStack {
+                    Text(NSLocalizedString("settings.goal.waist", comment: ""))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    NumericTextField("", text: $goalWaistCircumferenceString)
+                        .multilineTextAlignment(.trailing)
+                    Text(NSLocalizedString("settings.cm", comment: ""))
+                        .foregroundColor(.secondaryText)
+                }
+                
+                HStack {
+                    Text(NSLocalizedString("settings.goal.hip", comment: ""))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    NumericTextField("", text: $goalHipCircumferenceString)
+                        .multilineTextAlignment(.trailing)
+                    Text(NSLocalizedString("settings.cm", comment: ""))
+                        .foregroundColor(.secondaryText)
+                }
+                
+                HStack {
+                    Text(NSLocalizedString("settings.goal.chest", comment: ""))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    NumericTextField("", text: $goalChestCircumferenceString)
+                        .multilineTextAlignment(.trailing)
+                    
+                    Text(NSLocalizedString("settings.cm", comment: ""))
+                        .foregroundColor(.secondaryText)
+                }
+                
+                HStack {
+                    Text(NSLocalizedString("settings.goal.thigh", comment: ""))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    NumericTextField("", text: $goalThighCircumferenceString)
+                        .multilineTextAlignment(.trailing)
+                    
+                    Text(NSLocalizedString("settings.cm", comment: ""))
+                        .foregroundColor(.secondaryText)
+                }
+            }
+        }
+        .navigationTitle(NSLocalizedString("settings.profile", comment: ""))
+        .navigationBarTitleDisplayMode(.inline)
+        .alert(NSLocalizedString("settings.error", comment: ""), isPresented: $showingValidationAlert) {
+            Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
+        } message: {
+            Text(validationErrorMessage)
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(NSLocalizedString("action.save", comment: "")) {
+                    saveProfile()
+                }
+            }
+        }
+        .toolbar(.hidden, for: .tabBar)
+        .onAppear {
+            loadExistingProfile()
         }
     }
 
@@ -558,6 +564,7 @@ struct ProfileEditorView: View {
             goalWaistCircumferenceString = profile.goalWaistCircumference?.smartFormatted ?? ""
             goalHipCircumferenceString = profile.goalHipCircumference?.smartFormatted ?? ""
             goalChestCircumferenceString = profile.goalChestCircumference?.smartFormatted ?? ""
+            goalThighCircumferenceString = profile.goalThighCircumference?.smartFormatted ?? ""
         }
     }
 
@@ -600,6 +607,12 @@ struct ProfileEditorView: View {
             }
         }
         
+        if !goalThighCircumferenceString.isEmpty {
+            if let thighValue = Double(goalThighCircumferenceString), thighValue <= 0 {
+                errors.append(NSLocalizedString("settings.goal.thigh.circumference.invalid", comment: ""))
+            }
+        }
+        
         if !errors.isEmpty {
             validationErrorMessage = errors.joined(separator: "\n")
             showingValidationAlert = true
@@ -617,6 +630,7 @@ struct ProfileEditorView: View {
         let goalWaistCircumference = Double(goalWaistCircumferenceString)
         let goalHipCircumference = Double(goalHipCircumferenceString)
         let goalChestCircumference = Double(goalChestCircumferenceString)
+        let goalThighCircumference = Double(goalThighCircumferenceString)
 
         if let existing = existingProfile {
             existing.height = heightInCm
@@ -627,6 +641,7 @@ struct ProfileEditorView: View {
             existing.goalWaistCircumference = goalWaistCircumference
             existing.goalHipCircumference = goalHipCircumference
             existing.goalChestCircumference = goalChestCircumference
+            existing.goalThighCircumference = goalThighCircumference
             existing.updatedAt = Date()
             existing.syncStatus = .pending
         } else {
@@ -639,6 +654,7 @@ struct ProfileEditorView: View {
                 goalWaistCircumference: goalWaistCircumference,
                 goalHipCircumference: goalHipCircumference,
                 goalChestCircumference: goalChestCircumference,
+                goalThighCircumference: goalThighCircumference,
                 weightUnit: SettingsManager.shared.weightUnit.rawValue,
                 syncStatus: UserProfileSyncStatus.pending
             )
