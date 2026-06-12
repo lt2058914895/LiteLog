@@ -117,11 +117,11 @@ struct HomeView: View {
                         HStack(alignment: .firstTextBaseline, spacing: 4) {
                             Text(unit.convertFromKg(latest).weightString)
                                 .font(.system(size: 48, weight: .bold, design: .rounded))
-                                .foregroundColor(.primaryText)
+                                .foregroundColor(.primaryBlue)
 
                             Text(unit.shortName)
-                                .font(.title2)
-                                .foregroundColor(.secondaryText)
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundColor(.primaryBlue)
                         }
                     } else {
                         Text("-- \(unit.shortName)")
@@ -169,9 +169,15 @@ struct HomeView: View {
                         .font(.body)
                         .foregroundColor(.secondaryText)
                     
-                    Text("\(unit.convertFromKg(goalWeight).weightString) \(unit.shortName)")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(.primaryBlue)
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text(unit.convertFromKg(goalWeight).weightString)
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(.primaryText)
+
+                        Text(unit.shortName)
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(.primaryText)
+                    }
                     
                     Spacer()
                     
@@ -244,7 +250,7 @@ struct HomeView: View {
                             .foregroundColor(.secondaryText)
                         Text(goalBodyFat != nil ? String(format: "%.1f%%", goalBodyFat!) : "--")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(goalBodyFat != nil ? .primaryBlue : .secondaryText)
+                            .foregroundColor(goalBodyFat != nil ? .primaryText : .secondaryText)
                         Spacer()
                     }
                     
@@ -306,99 +312,22 @@ struct HomeView: View {
 
     private var goalMeasurementsCard: some View {
         VStack(spacing: 12) {
-            HStack(alignment: .top, spacing: 8) {
-                Image(systemName: "ruler")
-                    .foregroundColor(.primaryBlue)
-                
-                Text(NSLocalizedString("home.goal.measurements", comment: ""))
-                    .font(.subheadline)
-                    .foregroundColor(.secondaryText)
-                
-                Spacer()
-            }
-            
             if let profile = profile {
-                VStack(spacing: 8) {
+                VStack(spacing: 20) {
                     // 腰围
-                    HStack {
-                        Text(NSLocalizedString("home.waist", comment: ""))
-                            .font(.caption)
-                            .foregroundColor(.secondaryText)
-                        
-                        Spacer()
-                        
-                        if let goal = profile.goalWaistCircumference {
-                            Text(String(format: "%.1f cm", goal))
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.primaryText)
-                            
-                            if let current = latestWaist {
-                                let diff = goal - current
-                                Text(String(format: "%+.1f", diff))
-                                    .font(.caption)
-                                    .foregroundColor(diff > 0 ? .orange : .green)
-                            }
-                        } else {
-                            Text("--")
-                                .font(.caption)
-                                .foregroundColor(.secondaryText)
-                        }
-                    }
+                    measurementRow(title: NSLocalizedString("home.waist", comment: ""),
+                                   goal: profile.goalWaistCircumference,
+                                   current: latestWaist)
                     
                     // 臀围
-                    HStack {
-                        Text(NSLocalizedString("home.hip", comment: ""))
-                            .font(.caption)
-                            .foregroundColor(.secondaryText)
-                        
-                        Spacer()
-                        
-                        if let goal = profile.goalHipCircumference {
-                            Text(String(format: "%.1f cm", goal))
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.primaryText)
-                            
-                            if let current = latestHip {
-                                let diff = goal - current
-                                Text(String(format: "%+.1f", diff))
-                                    .font(.caption)
-                                    .foregroundColor(diff > 0 ? .orange : .green)
-                            }
-                        } else {
-                            Text("--")
-                                .font(.caption)
-                                .foregroundColor(.secondaryText)
-                        }
-                    }
+                    measurementRow(title: NSLocalizedString("home.hip", comment: ""),
+                                   goal: profile.goalHipCircumference,
+                                   current: latestHip)
                     
                     // 胸围
-                    HStack {
-                        Text(NSLocalizedString("home.chest", comment: ""))
-                            .font(.caption)
-                            .foregroundColor(.secondaryText)
-                        
-                        Spacer()
-                        
-                        if let goal = profile.goalChestCircumference {
-                            Text(String(format: "%.1f cm", goal))
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.primaryText)
-                            
-                            if let current = latestChest {
-                                let diff = goal - current
-                                Text(String(format: "%+.1f", diff))
-                                    .font(.caption)
-                                    .foregroundColor(diff > 0 ? .orange : .green)
-                            }
-                        } else {
-                            Text("--")
-                                .font(.caption)
-                                .foregroundColor(.secondaryText)
-                        }
-                    }
+                    measurementRow(title: NSLocalizedString("home.chest", comment: ""),
+                                   goal: profile.goalChestCircumference,
+                                   current: latestChest)
                 }
             } else {
                 Text("--")
@@ -408,6 +337,104 @@ struct HomeView: View {
         }
         .padding()
         .cardStyle()
+    }
+    
+    private func measurementRow(title: String, goal: Double?, current: Double?) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // 第一行：图标 + 标题
+            HStack(spacing: 8) {
+                Image(systemName: iconForMeasurement(title))
+                    .font(.system(size: 18))
+                    .foregroundColor(.primaryBlue)
+                
+                Text("目标\(title)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondaryText)
+            }
+            
+            // 第二行：目标
+            HStack(spacing: 8) {
+                Text("目标:")
+                    .font(.body)
+                    .foregroundColor(.secondaryText)
+                
+                if let goal = goal {
+                    Text(String(format: "%.1fcm", goal))
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(.primaryText)
+                } else {
+                    Text("--")
+                        .font(.body)
+                        .foregroundColor(.secondaryText)
+                }
+            }
+            
+            // 第三行：当前 + 进度提示
+            HStack(spacing: 8) {
+                Text("当前:")
+                    .font(.body)
+                    .foregroundColor(.secondaryText)
+                
+                if let current = current {
+                    Text(String(format: "%.1fcm", current))
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(.primaryText)
+                    
+                    Spacer()
+
+                    // 进度提示 - 只有当目标和当前都有值时才显示
+                    if let goal = goal {
+                        let difference = abs(goal - current)
+                        let roundedDifference = round(difference * 10) / 10
+                        
+                        if roundedDifference > 0 {
+                            let isDecreasing = current > goal  // 当前大于目标，需要减小围度
+                            HStack(spacing: 4) {
+                                Image(systemName: isDecreasing ? "arrow.down" : "arrow.up")
+                                    .font(.caption)
+                                    .foregroundColor(isDecreasing ? .orange : .green)
+                                
+                                // 围度使用"减小/增加"更合适
+                                Text(String(format: NSLocalizedString("home.goal.progress", comment: ""), 
+                                           isDecreasing ? NSLocalizedString("home.goal.to.decrease", comment: "") : NSLocalizedString("home.goal.to.add", comment: ""),
+                                           String(format: "%.1f", roundedDifference),
+                                           "cm"))
+                                    .font(.caption)
+                                    .foregroundColor(isDecreasing ? .orange : .green)
+                            }
+                        } else {
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark")
+                                    .font(.caption)
+                                    .foregroundColor(.green)
+                                
+                                Text(NSLocalizedString("home.goal.achieved", comment: ""))
+                                    .font(.caption)
+                                    .foregroundColor(.green)
+                            }
+                        }
+                    }
+                } else {
+                    Text("--")
+                        .font(.body)
+                        .foregroundColor(.secondaryText)
+                    Spacer()
+                }
+            }
+        }
+    }
+    
+    private func iconForMeasurement(_ title: String) -> String {
+        switch title {
+        case "腰围":
+            return "figure.walk"
+        case "臀围":
+            return "figure.stand"
+        case "胸围":
+            return "heart.fill"
+        default:
+            return "ruler"
+        }
     }
 
     private var bmiCard: some View {

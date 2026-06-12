@@ -84,6 +84,10 @@
 "home.goal.to.gain" = "增重";
 "home.goal.to.reduce" = "降低";
 "home.goal.to.increase" = "提高";
+"home.goal.to.decrease" = "减小";
+"home.goal.to.add" = "增加";
+"home.goal.target.current" = "(目标%.1fcm/当前%.1fcm)";
+"home.goal.target.empty" = "(目标--cm/当前--cm)";
 "home.goal.no.profile" = "请先设置个人资料";
 "home.goal.achieved" = "已达成目标";
 "home.goal.no.data" = "暂无数据";
