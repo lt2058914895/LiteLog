@@ -136,7 +136,7 @@ struct BMIInfoView: View {
                     
                     if let bmi = currentBMI {
                         HStack(alignment: .firstTextBaseline) {
-                            Text(String(format: "%.1f", bmi))
+                            Text(bmi.smartFormatted)
                                 .font(.system(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(.primaryText)
                             
@@ -166,7 +166,7 @@ struct BMIInfoView: View {
                     
                     if let bodyFat = currentBodyFat {
                         HStack(alignment: .firstTextBaseline) {
-                            Text(String(format: "%.1f", bodyFat))
+                            Text(bodyFat.smartFormatted)
                                 .font(.system(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(.primaryText)
                             

@@ -74,7 +74,7 @@ struct RecordRowView: View {
 
     private var weightView: some View {
         HStack(alignment: .firstTextBaseline, spacing: 4) {
-            Text(unit.convertFromKg(record.weight).weightString)
+            Text(unit.convertFromKg(record.weight).smartFormatted)
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundColor(.primaryText)
@@ -87,7 +87,7 @@ struct RecordRowView: View {
 
     private func bodyFatView(_ bodyFat: Double) -> some View {
         VStack(alignment: .trailing, spacing: 2) {
-            Text("\(bodyFat.weightString)%")
+            Text("\(bodyFat.smartFormatted)%")
                 .font(.subheadline)
                 .foregroundColor(.primaryText)
 
@@ -99,7 +99,7 @@ struct RecordRowView: View {
 
     private func waistView(_ waist: Double) -> some View {
         VStack(alignment: .trailing, spacing: 2) {
-            Text("\(waist.weightString)cm")
+            Text("\(waist.smartFormatted)cm")
                 .font(.subheadline)
                 .foregroundColor(.primaryText)
 
@@ -111,7 +111,7 @@ struct RecordRowView: View {
 
     private func hipView(_ hip: Double) -> some View {
         VStack(alignment: .trailing, spacing: 2) {
-            Text("\(hip.weightString)cm")
+            Text("\(hip.smartFormatted)cm")
                 .font(.subheadline)
                 .foregroundColor(.primaryText)
 
@@ -123,7 +123,7 @@ struct RecordRowView: View {
 
     private func thighView(_ thigh: Double) -> some View {
         VStack(alignment: .trailing, spacing: 2) {
-            Text("\(thigh.weightString)cm")
+            Text("\(thigh.smartFormatted)cm")
                 .font(.subheadline)
                 .foregroundColor(.primaryText)
 

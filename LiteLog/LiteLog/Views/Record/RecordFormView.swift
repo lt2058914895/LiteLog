@@ -71,10 +71,10 @@ struct RecordFormView: View {
         if let record = record {
             self._date = State(initialValue: record.date)
             self._weightString = State(initialValue: "")
-            self._bodyFatString = State(initialValue: record.bodyFatPercentage.map { String(format: "%.1f", $0) } ?? "")
-            self._waistString = State(initialValue: record.waistCircumference.map { String(format: "%.1f", $0) } ?? "")
-            self._hipString = State(initialValue: record.hipCircumference.map { String(format: "%.1f", $0) } ?? "")
-            self._thighString = State(initialValue: record.thighCircumference.map { String(format: "%.1f", $0) } ?? "")
+            self._bodyFatString = State(initialValue: record.bodyFatPercentage?.smartFormatted ?? "")
+            self._waistString = State(initialValue: record.waistCircumference?.smartFormatted ?? "")
+            self._hipString = State(initialValue: record.hipCircumference?.smartFormatted ?? "")
+            self._thighString = State(initialValue: record.thighCircumference?.smartFormatted ?? "")
             self._note = State(initialValue: record.note ?? "")
             self._imageUrl = State(initialValue: record.imageUrl)
             self._selectedTimePeriod = State(initialValue: record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random)
@@ -202,8 +202,7 @@ struct RecordFormView: View {
 
                 Section(NSLocalizedString("record.weight", comment: "")) {
                     HStack {
-                        TextField(NSLocalizedString("record.weight", comment: ""), text: $weightString)
-                            .keyboardType(.decimalPad)
+                        NumericTextField(NSLocalizedString("record.weight", comment: ""), text: $weightString)
 
                         Text(unit.shortName)
                             .foregroundColor(.secondaryText)
@@ -212,8 +211,7 @@ struct RecordFormView: View {
 
                 Section(NSLocalizedString("record.body.fat.optional", comment: "")) {
                     HStack {
-                        TextField(NSLocalizedString("record.body.fat", comment: ""), text: $bodyFatString)
-                            .keyboardType(.decimalPad)
+                        NumericTextField(NSLocalizedString("record.body.fat", comment: ""), text: $bodyFatString)
 
                         Text("%")
                             .foregroundColor(.secondaryText)
@@ -222,8 +220,7 @@ struct RecordFormView: View {
 
                 Section(NSLocalizedString("record.waist.circumference.optional", comment: "")) {
                     HStack {
-                        TextField(NSLocalizedString("record.waist.circumference", comment: ""), text: $waistString)
-                            .keyboardType(.decimalPad)
+                        NumericTextField(NSLocalizedString("record.waist.circumference", comment: ""), text: $waistString)
 
                         Text("cm")
                             .foregroundColor(.secondaryText)
@@ -232,8 +229,7 @@ struct RecordFormView: View {
 
                 Section(NSLocalizedString("record.hip.circumference.optional", comment: "")) {
                     HStack {
-                        TextField(NSLocalizedString("record.hip.circumference", comment: ""), text: $hipString)
-                            .keyboardType(.decimalPad)
+                        NumericTextField(NSLocalizedString("record.hip.circumference", comment: ""), text: $hipString)
 
                         Text("cm")
                             .foregroundColor(.secondaryText)
@@ -242,8 +238,7 @@ struct RecordFormView: View {
 
                 Section(NSLocalizedString("record.thigh.circumference.optional", comment: "")) {
                     HStack {
-                        TextField(NSLocalizedString("record.thigh.circumference", comment: ""), text: $thighString)
-                            .keyboardType(.decimalPad)
+                        NumericTextField(NSLocalizedString("record.thigh.circumference", comment: ""), text: $thighString)
 
                         Text("cm")
                             .foregroundColor(.secondaryText)
@@ -317,7 +312,7 @@ struct RecordFormView: View {
             
             .onAppear {
                 if isEditMode && weightString.isEmpty, let record = record {
-                    weightString = String(format: "%.1f", unit.convertFromKg(record.weight))
+                    weightString = unit.convertFromKg(record.weight).smartFormatted
                 }
             }
     }

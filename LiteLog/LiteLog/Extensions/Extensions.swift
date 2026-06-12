@@ -166,6 +166,22 @@ extension Double {
     var bmiString: String {
         formatted(decimals: 1)
     }
+    
+    /// 智能数值格式化：根据实际小数位数显示
+    /// - 如果是整数，不显示小数位
+    /// - 如果有1位小数，显示1位
+    /// - 如果有2位小数，显示2位
+    var smartFormatted: String {
+        let rounded = (self * 100).rounded() / 100
+        
+        if rounded == rounded.rounded() {
+            return String(format: "%.0f", rounded)
+        } else if (rounded * 10).rounded() / 10 == rounded {
+            return String(format: "%.1f", rounded)
+        } else {
+            return String(format: "%.2f", rounded)
+        }
+    }
 }
 
 extension Image {

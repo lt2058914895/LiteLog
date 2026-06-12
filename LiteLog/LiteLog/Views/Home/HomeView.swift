@@ -115,7 +115,7 @@ struct HomeView: View {
 
                     if let latest = latestWeight {
                         HStack(alignment: .firstTextBaseline, spacing: 4) {
-                            Text(unit.convertFromKg(latest).weightString)
+                            Text(unit.convertFromKg(latest).smartFormatted)
                                 .font(.system(size: 48, weight: .bold, design: .rounded))
                                 .foregroundColor(.primaryBlue)
 
@@ -170,7 +170,7 @@ struct HomeView: View {
                         .foregroundColor(.secondaryText)
                     
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text(unit.convertFromKg(goalWeight).weightString)
+                        Text(unit.convertFromKg(goalWeight).smartFormatted)
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                             .foregroundColor(.primaryText)
 
@@ -184,8 +184,8 @@ struct HomeView: View {
                     // 进度提示
                     if latestWeight != nil {
                         let absDifference = abs(difference)
-                        // 将差值四舍五入到一位小数后判断，避免显示"还需减重0.0kg"的情况
-                        let roundedDifference = round(absDifference * 10) / 10
+                        // 将差值四舍五入到两位小数后判断，避免显示"还需减重0.0kg"的情况
+                        let roundedDifference = round(absDifference * 100) / 100
                         
                         if roundedDifference > 0 {
                             let isLosingWeight = currentWeight > goalWeight  // 当前体重大于目标体重，需要减重
@@ -196,7 +196,7 @@ struct HomeView: View {
                                 
                                 Text(String(format: NSLocalizedString("home.goal.progress", comment: ""), 
                                            isLosingWeight ? NSLocalizedString("home.goal.to.lose", comment: "") : NSLocalizedString("home.goal.to.gain", comment: ""),
-                                           unit.convertFromKg(roundedDifference).weightString,
+                                           unit.convertFromKg(roundedDifference).smartFormatted,
                                            unit.shortName))
                                     .font(.caption)
                                     .foregroundColor(isLosingWeight ? .orange : .green)
@@ -251,7 +251,7 @@ struct HomeView: View {
                         
                         if let goal = goalBodyFat {
                             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                                Text(String(format: "%.1f", goal))
+                                Text(goal.smartFormatted)
                                     .font(.system(size: 20, weight: .bold, design: .rounded))
                                     .foregroundColor(.primaryText)
                                 Text("%")
@@ -274,7 +274,7 @@ struct HomeView: View {
                         
                         if latestBodyFat != nil {
                             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                                Text(String(format: "%.1f", currentBodyFat))
+                                Text(currentBodyFat.smartFormatted)
                                     .font(.system(size: 20, weight: .bold, design: .rounded))
                                     .foregroundColor(.primaryBlue)
                                 Text("%")
@@ -292,8 +292,8 @@ struct HomeView: View {
                             // 进度提示（只有当两者都有值时才显示）
                             if let goal = goalBodyFat, latestBodyFat != nil {
                                 let difference = abs(goal - currentBodyFat)
-                                // 将差值四舍五入到一位小数后判断，避免显示"还需降低0.0%"的情况
-                                let roundedDifference = round(difference * 10) / 10
+                                // 将差值四舍五入到两位小数后判断，避免显示"还需降低0.0%"的情况
+                                let roundedDifference = round(difference * 100) / 100
                                 
                                 if roundedDifference > 0 {
                                     let isReducing = currentBodyFat > goal  // 当前体脂率大于目标体脂率，需要降低
@@ -304,7 +304,7 @@ struct HomeView: View {
                                         
                                         Text(String(format: NSLocalizedString("home.goal.progress", comment: ""), 
                                                    isReducing ? NSLocalizedString("home.goal.to.reduce", comment: "") : NSLocalizedString("home.goal.to.increase", comment: ""),
-                                                   String(format: "%.1f", roundedDifference),
+                                                   roundedDifference.smartFormatted,
                                                    "%"))
                                             .font(.caption)
                                             .foregroundColor(isReducing ? .orange : .green)
@@ -384,7 +384,7 @@ struct HomeView: View {
                 
                 if let goal = goal {
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text(String(format: "%.1f", goal))
+                        Text(goal.smartFormatted)
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                             .foregroundColor(.primaryText)
                         Text("cm")
@@ -406,7 +406,7 @@ struct HomeView: View {
                 
                 if let current = current {
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text(String(format: "%.1f", current))
+                        Text(current.smartFormatted)
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                             .foregroundColor(.primaryBlue)
                         Text("cm")
@@ -419,7 +419,8 @@ struct HomeView: View {
                     // 进度提示 - 只有当目标和当前都有值时才显示
                     if let goal = goal {
                         let difference = abs(goal - current)
-                        let roundedDifference = round(difference * 10) / 10
+                        // 将差值四舍五入到两位小数后判断
+                        let roundedDifference = round(difference * 100) / 100
                         
                         if roundedDifference > 0 {
                             let isDecreasing = current > goal  // 当前大于目标，需要减小围度
@@ -431,7 +432,7 @@ struct HomeView: View {
                                 // 围度使用"减小/增加"更合适
                                 Text(String(format: NSLocalizedString("home.goal.progress", comment: ""), 
                                            isDecreasing ? NSLocalizedString("home.goal.to.decrease", comment: "") : NSLocalizedString("home.goal.to.add", comment: ""),
-                                           String(format: "%.1f", roundedDifference),
+                                           roundedDifference.smartFormatted,
                                            "cm"))
                                     .font(.caption)
                                     .foregroundColor(isDecreasing ? .orange : .green)

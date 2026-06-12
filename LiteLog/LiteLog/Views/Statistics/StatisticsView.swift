@@ -152,14 +152,14 @@ struct StatisticsView: View {
         HStack(spacing: 12) {
             SummaryCard(
                 title: NSLocalizedString("stats.average", comment: ""),
-                value: unit.convertFromKg(averageWeight).weightString,
+                value: unit.convertFromKg(averageWeight).smartFormatted,
                 unit: unit.shortName,
                 icon: "scalemass"
             )
 
             SummaryCard(
                 title: NSLocalizedString("stats.change", comment: ""),
-                value: (weightChange >= 0 ? "+" : "") + unit.convertFromKg(weightChange).weightString,
+                value: (weightChange >= 0 ? "+" : "") + unit.convertFromKg(weightChange).smartFormatted,
                 unit: unit.shortName,
                 icon: weightChange >= 0 ? "arrow.up.right" : "arrow.down.right",
                 color: weightChange >= 0 ? .red : .green
@@ -399,7 +399,7 @@ struct StatisticsView: View {
 
                     Spacer()
 
-                    Text("\(unit.convertFromKg(weightChangeRate).weightString) \(NSLocalizedString("stats.per.week", comment: ""))")
+                    Text("\(unit.convertFromKg(weightChangeRate).smartFormatted) \(NSLocalizedString("stats.per.week", comment: ""))")
                         .fontWeight(.medium)
                         .foregroundColor(.primaryText)
                 }
@@ -412,7 +412,7 @@ struct StatisticsView: View {
 
                     Spacer()
 
-                    Text("\(unit.convertFromKg(minWeight).weightString) \(unit.shortName)")
+                    Text("\(unit.convertFromKg(minWeight).smartFormatted) \(unit.shortName)")
                         .fontWeight(.medium)
                         .foregroundColor(.primaryText)
                 }
@@ -425,7 +425,7 @@ struct StatisticsView: View {
 
                     Spacer()
 
-                    Text("\(unit.convertFromKg(maxWeight).weightString) \(unit.shortName)")
+                    Text("\(unit.convertFromKg(maxWeight).smartFormatted) \(unit.shortName)")
                         .fontWeight(.medium)
                         .foregroundColor(.primaryText)
                 }
@@ -439,7 +439,7 @@ struct StatisticsView: View {
                     Spacer()
 
                     if let profile = profile {
-                        Text("\(unit.convertFromKg(profile.goalWeight).weightString) \(unit.shortName)")
+                        Text("\(unit.convertFromKg(profile.goalWeight).smartFormatted) \(unit.shortName)")
                             .fontWeight(.medium)
                             .foregroundColor(.primaryText)
                     }

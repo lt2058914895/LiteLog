@@ -163,7 +163,7 @@ struct SettingsView: View {
                 HStack {
                     Text(NSLocalizedString("settings.height", comment: ""))
                     Spacer()
-                    Text("\(settingsManager.heightUnit.convertFromCm(profile.height).formatted()) \(settingsManager.heightUnit.displayName)")
+                    Text("\(settingsManager.heightUnit.convertFromCm(profile.height).smartFormatted) \(settingsManager.heightUnit.displayName)")
                         .foregroundColor(.secondaryText)
                 }
 
@@ -184,7 +184,7 @@ struct SettingsView: View {
                 HStack {
                     Text(NSLocalizedString("settings.goal.weight", comment: ""))
                     Spacer()
-                    Text("\(unit.convertFromKg(profile.goalWeight).weightString) \(unit.shortName)")
+                    Text("\(unit.convertFromKg(profile.goalWeight).smartFormatted) \(unit.shortName)")
                         .foregroundColor(.secondaryText)
                 }
 
@@ -192,7 +192,7 @@ struct SettingsView: View {
                     HStack {
                         Text(NSLocalizedString("settings.goal.body.fat", comment: ""))
                         Spacer()
-                        Text("\(goalBodyFat.formatted())%")
+                        Text("\(goalBodyFat.smartFormatted)%")
                             .foregroundColor(.secondaryText)
                     }
                 }
@@ -201,7 +201,7 @@ struct SettingsView: View {
                     HStack {
                         Text(NSLocalizedString("settings.goal.waist", comment: ""))
                         Spacer()
-                        Text("\(goalWaistCircumference.formatted()) \(NSLocalizedString("settings.cm", comment: ""))")
+                        Text("\(goalWaistCircumference.smartFormatted) \(NSLocalizedString("settings.cm", comment: ""))")
                             .foregroundColor(.secondaryText)
                     }
                 }
@@ -210,7 +210,7 @@ struct SettingsView: View {
                     HStack {
                         Text(NSLocalizedString("settings.goal.hip", comment: ""))
                         Spacer()
-                        Text("\(goalHipCircumference.formatted()) \(NSLocalizedString("settings.cm", comment: ""))")
+                        Text("\(goalHipCircumference.smartFormatted) \(NSLocalizedString("settings.cm", comment: ""))")
                             .foregroundColor(.secondaryText)
                     }
                 }
@@ -219,7 +219,7 @@ struct SettingsView: View {
                     HStack {
                         Text(NSLocalizedString("settings.goal.chest", comment: ""))
                         Spacer()
-                        Text("\(goalChestCircumference.formatted()) \(NSLocalizedString("settings.cm", comment: ""))")
+                        Text("\(goalChestCircumference.smartFormatted) \(NSLocalizedString("settings.cm", comment: ""))")
                             .foregroundColor(.secondaryText)
                     }
                 }
@@ -452,8 +452,7 @@ struct ProfileEditorView: View {
             Form {
                 Section(NSLocalizedString("settings.height", comment: "")) {
                     HStack {
-                        TextField(NSLocalizedString("settings.height", comment: ""), text: $heightString)
-                            .keyboardType(.decimalPad)
+                        NumericTextField(NSLocalizedString("settings.height", comment: ""), text: $heightString)
 
                         Text(heightUnit.displayName)
                             .foregroundColor(.secondaryText)
@@ -474,8 +473,7 @@ struct ProfileEditorView: View {
 
                 Section(NSLocalizedString("settings.goal.weight", comment: "")) {
                     HStack {
-                        TextField(NSLocalizedString("settings.goal.weight", comment: ""), text: $goalWeightString)
-                            .keyboardType(.decimalPad)
+                        NumericTextField(NSLocalizedString("settings.goal.weight", comment: ""), text: $goalWeightString)
 
                         Text(unit.shortName)
                             .foregroundColor(.secondaryText)
@@ -484,8 +482,7 @@ struct ProfileEditorView: View {
 
                 Section(NSLocalizedString("settings.goal.body.fat", comment: "")) {
                     HStack {
-                        TextField(NSLocalizedString("settings.goal.body.fat", comment: ""), text: $goalBodyFatString)
-                            .keyboardType(.decimalPad)
+                        NumericTextField(NSLocalizedString("settings.goal.body.fat", comment: ""), text: $goalBodyFatString)
 
                         Text("%")
                             .foregroundColor(.secondaryText)
@@ -497,8 +494,7 @@ struct ProfileEditorView: View {
                         Text(NSLocalizedString("settings.goal.waist", comment: ""))
                             .foregroundColor(.secondary)
                         Spacer()
-                        TextField("", text: $goalWaistCircumferenceString)
-                            .keyboardType(.decimalPad)
+                        NumericTextField("", text: $goalWaistCircumferenceString)
                             .multilineTextAlignment(.trailing)
                         Text(NSLocalizedString("settings.cm", comment: ""))
                             .foregroundColor(.secondaryText)
@@ -508,8 +504,7 @@ struct ProfileEditorView: View {
                         Text(NSLocalizedString("settings.goal.hip", comment: ""))
                             .foregroundColor(.secondary)
                         Spacer()
-                        TextField("", text: $goalHipCircumferenceString)
-                            .keyboardType(.decimalPad)
+                        NumericTextField("", text: $goalHipCircumferenceString)
                             .multilineTextAlignment(.trailing)
                         Text(NSLocalizedString("settings.cm", comment: ""))
                             .foregroundColor(.secondaryText)
@@ -519,8 +514,7 @@ struct ProfileEditorView: View {
                         Text(NSLocalizedString("settings.goal.chest", comment: ""))
                             .foregroundColor(.secondary)
                         Spacer()
-                        TextField("", text: $goalChestCircumferenceString)
-                            .keyboardType(.decimalPad)
+                        NumericTextField("", text: $goalChestCircumferenceString)
                             .multilineTextAlignment(.trailing)
 
                         Text(NSLocalizedString("settings.cm", comment: ""))
@@ -556,14 +550,14 @@ struct ProfileEditorView: View {
 
     private func loadExistingProfile() {
         if let profile = existingProfile {
-            heightString = heightUnit.convertFromCm(profile.height).formatted()
+            heightString = heightUnit.convertFromCm(profile.height).smartFormatted
             gender = profile.gender
             age = profile.age
-            goalWeightString = unit.convertFromKg(profile.goalWeight).formatted()
-            goalBodyFatString = profile.goalBodyFat?.formatted() ?? ""
-            goalWaistCircumferenceString = profile.goalWaistCircumference?.formatted() ?? ""
-            goalHipCircumferenceString = profile.goalHipCircumference?.formatted() ?? ""
-            goalChestCircumferenceString = profile.goalChestCircumference?.formatted() ?? ""
+            goalWeightString = unit.convertFromKg(profile.goalWeight).smartFormatted
+            goalBodyFatString = profile.goalBodyFat?.smartFormatted ?? ""
+            goalWaistCircumferenceString = profile.goalWaistCircumference?.smartFormatted ?? ""
+            goalHipCircumferenceString = profile.goalHipCircumference?.smartFormatted ?? ""
+            goalChestCircumferenceString = profile.goalChestCircumference?.smartFormatted ?? ""
         }
     }
 

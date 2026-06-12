@@ -47,7 +47,7 @@ struct BMIProgressView: View {
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(currentBMI.bmiString)
+                Text(currentBMI.smartFormatted)
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundColor(.primaryText)
 
