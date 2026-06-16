@@ -453,7 +453,7 @@ struct ProfileEditorView: View {
         Form {
             Section(NSLocalizedString("settings.height", comment: "")) {
                 HStack {
-                    NumericTextField(NSLocalizedString("settings.height", comment: ""), text: $heightString)
+                    NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $heightString)
                     
                     Text(heightUnit.displayName)
                         .foregroundColor(.secondaryText)
@@ -474,7 +474,7 @@ struct ProfileEditorView: View {
             
             Section(NSLocalizedString("settings.goal.weight", comment: "")) {
                 HStack {
-                    NumericTextField(NSLocalizedString("settings.goal.weight", comment: ""), text: $goalWeightString)
+                    NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalWeightString)
                     
                     Text(unit.shortName)
                         .foregroundColor(.secondaryText)
@@ -483,7 +483,7 @@ struct ProfileEditorView: View {
             
             Section(NSLocalizedString("settings.goal.body.fat", comment: "")) {
                 HStack {
-                    NumericTextField(NSLocalizedString("settings.goal.body.fat", comment: ""), text: $goalBodyFatString)
+                    NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalBodyFatString)
                     
                     Text("%")
                         .foregroundColor(.secondaryText)
@@ -495,7 +495,7 @@ struct ProfileEditorView: View {
                     Text(NSLocalizedString("settings.goal.waist", comment: ""))
                         .foregroundColor(.secondary)
                     Spacer()
-                    NumericTextField("", text: $goalWaistCircumferenceString)
+                    NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalWaistCircumferenceString)
                         .multilineTextAlignment(.trailing)
                     Text(NSLocalizedString("settings.cm", comment: ""))
                         .foregroundColor(.secondaryText)
@@ -505,7 +505,7 @@ struct ProfileEditorView: View {
                     Text(NSLocalizedString("settings.goal.hip", comment: ""))
                         .foregroundColor(.secondary)
                     Spacer()
-                    NumericTextField("", text: $goalHipCircumferenceString)
+                    NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalHipCircumferenceString)
                         .multilineTextAlignment(.trailing)
                     Text(NSLocalizedString("settings.cm", comment: ""))
                         .foregroundColor(.secondaryText)
@@ -515,7 +515,7 @@ struct ProfileEditorView: View {
                     Text(NSLocalizedString("settings.goal.chest", comment: ""))
                         .foregroundColor(.secondary)
                     Spacer()
-                    NumericTextField("", text: $goalChestCircumferenceString)
+                    NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalChestCircumferenceString)
                         .multilineTextAlignment(.trailing)
                     
                     Text(NSLocalizedString("settings.cm", comment: ""))
@@ -526,7 +526,7 @@ struct ProfileEditorView: View {
                     Text(NSLocalizedString("settings.goal.thigh", comment: ""))
                         .foregroundColor(.secondary)
                     Spacer()
-                    NumericTextField("", text: $goalThighCircumferenceString)
+                    NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalThighCircumferenceString)
                         .multilineTextAlignment(.trailing)
                     
                     Text(NSLocalizedString("settings.cm", comment: ""))
