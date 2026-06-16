@@ -16,6 +16,7 @@ struct RecordFormView: View {
     @State private var bodyFatString: String
     @State private var waistString: String
     @State private var hipString: String
+    @State private var chestString: String
     @State private var thighString: String
     @State private var note: String
     @State private var showingDeleteAlert = false
@@ -59,6 +60,11 @@ struct RecordFormView: View {
         return value
     }
 
+    private var chestCircumference: Double? {
+        guard !chestString.isEmpty, let value = Double(chestString) else { return nil }
+        return value
+    }
+
     private var thighCircumference: Double? {
         guard !thighString.isEmpty, let value = Double(thighString) else { return nil }
         return value
@@ -74,6 +80,7 @@ struct RecordFormView: View {
             self._bodyFatString = State(initialValue: record.bodyFatPercentage?.smartFormatted ?? "")
             self._waistString = State(initialValue: record.waistCircumference?.smartFormatted ?? "")
             self._hipString = State(initialValue: record.hipCircumference?.smartFormatted ?? "")
+            self._chestString = State(initialValue: record.chestCircumference?.smartFormatted ?? "")
             self._thighString = State(initialValue: record.thighCircumference?.smartFormatted ?? "")
             self._note = State(initialValue: record.note ?? "")
             self._imageUrl = State(initialValue: record.imageUrl)
@@ -84,6 +91,7 @@ struct RecordFormView: View {
             self._bodyFatString = State(initialValue: "")
             self._waistString = State(initialValue: "")
             self._hipString = State(initialValue: "")
+            self._chestString = State(initialValue: "")
             self._thighString = State(initialValue: "")
             self._note = State(initialValue: "")
             self._imageUrl = State(initialValue: nil)
@@ -236,6 +244,15 @@ struct RecordFormView: View {
                     }
                 }
 
+                Section(NSLocalizedString("record.chest.circumference.optional", comment: "")) {
+                    HStack {
+                        NumericTextField(NSLocalizedString("record.chest.circumference", comment: ""), text: $chestString)
+
+                        Text("cm")
+                            .foregroundColor(.secondaryText)
+                    }
+                }
+
                 Section(NSLocalizedString("record.thigh.circumference.optional", comment: "")) {
                     HStack {
                         NumericTextField(NSLocalizedString("record.thigh.circumference", comment: ""), text: $thighString)
@@ -354,6 +371,7 @@ struct RecordFormView: View {
             bodyFatPercentage: bodyFatPercentage,
             waistCircumference: waistCircumference,
             hipCircumference: hipCircumference,
+            chestCircumference: chestCircumference,
             thighCircumference: thighCircumference,
             note: note.isEmpty ? nil : note,
             imageUrl: imageUrl,
@@ -389,6 +407,7 @@ struct RecordFormView: View {
         record.bodyFatPercentage = Double(bodyFatString)
         record.waistCircumference = Double(waistString)
         record.hipCircumference = Double(hipString)
+        record.chestCircumference = Double(chestString)
         record.thighCircumference = Double(thighString)
         record.measurementTimePeriod = selectedTimePeriod.rawValue
         record.note = note.isEmpty ? nil : note

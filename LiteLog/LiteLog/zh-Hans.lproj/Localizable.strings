@@ -103,11 +103,13 @@
 "period.after_exercise" = "运动后";
 "period.before_bed" = "睡前";
 "period.random" = "随机";
-"record.waist.circumference.optional" = "腰围（cm）";
-"record.hip.circumference.optional" = "臀围（cm）";
-"record.thigh.circumference.optional" = "大腿围（cm）";
+"record.waist.circumference.optional" = "腰围（可选）";
+"record.hip.circumference.optional" = "臀围（可选）";
+"record.chest.circumference.optional" = "胸围（可选）";
+"record.thigh.circumference.optional" = "大腿围（可选）";
 "record.waist.circumference" = "腰围";
 "record.hip.circumference" = "臀围";
+"record.chest.circumference" = "胸围";
 "record.thigh.circumference" = "大腿围";
 
 // 记录页相关
