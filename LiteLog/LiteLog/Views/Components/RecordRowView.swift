@@ -12,8 +12,8 @@ struct RecordRowView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // 主要信息：日期 + 体重
+        VStack(alignment: .leading, spacing: 8) {
+            // 主要信息：日期 + 体重 + 体脂率
             HStack(spacing: 16) {
                 if showDate {
                     dateView
@@ -23,44 +23,50 @@ struct RecordRowView: View {
 
                 Spacer()
 
-                // 测量时段（如果有值）
-                if let timePeriod = record.measurementTimePeriod, 
-                   let period = MeasurementTimePeriod(rawValue: timePeriod) {
-                    timePeriodView(period)
+                // 体脂率
+                if let bodyFat = record.bodyFatPercentage {
+                    bodyFatView(bodyFat)
                 }
-
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.tertiaryText)
             }
 
-            // 次要信息：体脂率、腰围、臀围、胸围、大腿围（有值才显示）
+            // 次要信息：腰围、臀围、胸围、大腿围（有值才显示）
             if hasSecondaryInfo {
-                HStack(spacing: 16) {
+                HStack {
                     if showDate {
                         Spacer().frame(width: 50)
                     }
+                    
+                    // 使用自适应网格布局，支持自动换行
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 70))], spacing: 12) {
+                        if let waist = record.waistCircumference {
+                            waistView(waist)
+                        }
 
-                    if let bodyFat = record.bodyFatPercentage {
-                        bodyFatView(bodyFat)
+                        if let hip = record.hipCircumference {
+                            hipView(hip)
+                        }
+
+                        if let chest = record.chestCircumference {
+                            chestView(chest)
+                        }
+
+                        if let thigh = record.thighCircumference {
+                            thighView(thigh)
+                        }
                     }
+                    
+                    Spacer()
+                }
+            }
 
-                    if let waist = record.waistCircumference {
-                        waistView(waist)
+            // 测量时段（移到备注上面）
+            if let timePeriod = record.measurementTimePeriod, 
+               let period = MeasurementTimePeriod(rawValue: timePeriod) {
+                HStack {
+                    if showDate {
+                        Spacer().frame(width: 50)
                     }
-
-                    if let hip = record.hipCircumference {
-                        hipView(hip)
-                    }
-
-                    if let chest = record.chestCircumference {
-                        chestView(chest)
-                    }
-
-                    if let thigh = record.thighCircumference {
-                        thighView(thigh)
-                    }
-
+                    timePeriodView(period)
                     Spacer()
                 }
             }
@@ -91,7 +97,6 @@ struct RecordRowView: View {
     }
 
     private var hasSecondaryInfo: Bool {
-        record.bodyFatPercentage != nil ||
         record.waistCircumference != nil ||
         record.hipCircumference != nil ||
         record.chestCircumference != nil ||
@@ -137,63 +142,90 @@ struct RecordRowView: View {
     }
 
     private func bodyFatView(_ bodyFat: Double) -> some View {
-        VStack(alignment: .trailing, spacing: 2) {
-            Text("\(bodyFat.smartFormatted)%")
-                .font(.subheadline)
-                .foregroundColor(.primaryText)
-
-            Text(NSLocalizedString("record.body.fat", comment: ""))
-                .font(.caption2)
-                .foregroundColor(.secondaryText)
-        }
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(NSLocalizedString("record.body.fat", comment: ""))
+                    .font(.caption2)
+                    .foregroundColor(.secondaryText)
+                Text("\(bodyFat.smartFormatted)")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primaryText)
+                Text("%")
+                    .font(.caption2)
+                    .foregroundColor(.secondaryText)
+            }
     }
 
     private func waistView(_ waist: Double) -> some View {
-        VStack(alignment: .trailing, spacing: 2) {
-            Text("\(waist.smartFormatted)cm")
-                .font(.subheadline)
-                .foregroundColor(.primaryText)
-
+        VStack(alignment: .center, spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text("\(waist.smartFormatted)")
+                    .font(.subheadline)
+                    .foregroundColor(.primaryText)
+                Text("cm")
+                    .font(.caption2)
+                    .foregroundColor(.secondaryText)
+            }
+            
             Text(NSLocalizedString("record.waist.circumference", comment: ""))
                 .font(.caption2)
                 .foregroundColor(.secondaryText)
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private func hipView(_ hip: Double) -> some View {
-        VStack(alignment: .trailing, spacing: 2) {
-            Text("\(hip.smartFormatted)cm")
-                .font(.subheadline)
-                .foregroundColor(.primaryText)
+        VStack(alignment: .center, spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text("\(hip.smartFormatted)")
+                    .font(.subheadline)
+                    .foregroundColor(.primaryText)
+                Text("cm")
+                    .font(.caption2)
+                    .foregroundColor(.secondaryText)
+            }
 
             Text(NSLocalizedString("record.hip.circumference", comment: ""))
                 .font(.caption2)
                 .foregroundColor(.secondaryText)
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private func thighView(_ thigh: Double) -> some View {
-        VStack(alignment: .trailing, spacing: 2) {
-            Text("\(thigh.smartFormatted)cm")
-                .font(.subheadline)
-                .foregroundColor(.primaryText)
-
+        VStack(alignment: .center, spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text("\(thigh.smartFormatted)")
+                    .font(.subheadline)
+                    .foregroundColor(.primaryText)
+                Text("cm")
+                    .font(.caption2)
+                    .foregroundColor(.secondaryText)
+            }
+            
             Text(NSLocalizedString("record.thigh.circumference", comment: ""))
                 .font(.caption2)
                 .foregroundColor(.secondaryText)
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private func chestView(_ chest: Double) -> some View {
-        VStack(alignment: .trailing, spacing: 2) {
-            Text("\(chest.smartFormatted)cm")
-                .font(.subheadline)
-                .foregroundColor(.primaryText)
+        VStack(alignment: .center, spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text("\(chest.smartFormatted)")
+                    .font(.subheadline)
+                    .foregroundColor(.primaryText)
+                Text("cm")
+                    .font(.caption2)
+                    .foregroundColor(.secondaryText)
+            }
 
             Text(NSLocalizedString("record.chest.circumference", comment: ""))
                 .font(.caption2)
                 .foregroundColor(.secondaryText)
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private func timePeriodView(_ period: MeasurementTimePeriod) -> some View {
