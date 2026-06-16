@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var isLoading = false
     @State private var showingError = false
     @State private var errorMessage = ""
+    @State private var showingProfileEditor = false
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -104,6 +105,10 @@ struct HomeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(isPresented: $showingAddSheet) {
                 RecordFormView(isPresented: $showingAddSheet)
+            }
+            .navigationDestination(isPresented: $showingProfileEditor) {
+                ProfileEditorView()
+                    .navigationBarTitleDisplayMode(.inline)
             }
             .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
                 Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
@@ -571,7 +576,7 @@ struct HomeView: View {
                             .foregroundColor(.secondaryText)
                         
                         Button(NSLocalizedString("action.edit", comment: "")) {
-                            NotificationCenter.default.post(name: .showProfileEditor, object: nil)
+                            showingProfileEditor = true
                         }
                         .foregroundColor(.primaryBlue)
                         .font(.subheadline)
