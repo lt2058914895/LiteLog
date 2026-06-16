@@ -32,7 +32,7 @@ struct BMIProgressView: View {
             HStack {
                 Text(NSLocalizedString("home.bmi", comment: ""))
                     .font(.subheadline)
-                    .foregroundColor(.secondaryText)
+                    .foregroundColor(.primaryText)
                 
                 Spacer()
                 

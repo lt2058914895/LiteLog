@@ -124,7 +124,7 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(NSLocalizedString("home.today", comment: ""))
                         .font(.subheadline)
-                        .foregroundColor(.secondaryText)
+                        .foregroundColor(.primaryText)
 
                     if let latest = latestWeight {
                         HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -166,7 +166,7 @@ struct HomeView: View {
                 
                 Text(NSLocalizedString("home.goal.weight", comment: ""))
                     .font(.subheadline)
-                    .foregroundColor(.secondaryText)
+                    .foregroundColor(.primaryText)
                 
                 Spacer()
             }
@@ -245,7 +245,7 @@ struct HomeView: View {
                 
                 Text(NSLocalizedString("home.goal.body.fat", comment: ""))
                     .font(.subheadline)
-                    .foregroundColor(.secondaryText)
+                    .foregroundColor(.primaryText)
                 
                 Spacer()
             }
@@ -349,6 +349,20 @@ struct HomeView: View {
 
     private var goalMeasurementsCard: some View {
         VStack(spacing: 12) {
+            // 始终显示图标+标题行
+            HStack(spacing: 8) {
+                Image(systemName: "ruler")
+                    .font(.title)
+                    .foregroundColor(.primaryBlue)
+                
+                Text(NSLocalizedString("home.goal.measurements", comment: ""))
+                    .font(.subheadline)
+                    .foregroundColor(.primaryText)
+                
+                Spacer()
+            }
+            
+            // 内容区域
             if let profile = profile {
                 let hasWaistData = profile.goalWaistCircumference != nil || latestWaist != nil
                 let hasHipData = profile.goalHipCircumference != nil || latestHip != nil
@@ -378,42 +392,14 @@ struct HomeView: View {
                                        current: latestThigh)
                     }
                 } else {
-                    VStack(spacing: 8) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "ruler")
-                                .font(.title)
-                                .foregroundColor(.primaryBlue)
-                            
-                            Text(NSLocalizedString("home.goal.measurements", comment: ""))
-                                .font(.subheadline)
-                                .foregroundColor(.secondaryText)
-                            
-                            Spacer()
-                        }
-                        
-                        Text(NSLocalizedString("home.goal.no.data", comment: ""))
-                            .font(.subheadline)
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-            } else {
-                VStack(spacing: 8) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "ruler")
-                            .font(.title)
-                            .foregroundColor(.primaryBlue)
-                        
-                        Text(NSLocalizedString("home.goal.measurements", comment: ""))
-                            .font(.subheadline)
-                            .foregroundColor(.secondaryText)
-                        
-                        Spacer()
-                    }
-                    
                     Text(NSLocalizedString("home.goal.no.data", comment: ""))
                         .font(.subheadline)
                         .foregroundColor(.secondaryText)
                 }
+            } else {
+                Text(NSLocalizedString("home.goal.no.data", comment: ""))
+                    .font(.subheadline)
+                    .foregroundColor(.secondaryText)
             }
         }
         .padding()
@@ -422,17 +408,10 @@ struct HomeView: View {
     
     private func measurementRow(title: String, goal: Double?, current: Double?) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            // 第一行：图标 + 标题
-            HStack(spacing: 8) {
-                Image(iconForMeasurement(title))
-                    .resizable()
-                    .frame(width: 24, height: 24)
-                    .foregroundColor(.primaryBlue)
-                
-                Text("目标\(title)")
-                    .font(.subheadline)
-                    .foregroundColor(.secondaryText)
-            }
+            // 第一行：标题（无图标，无前缀）
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(.primaryText)
             
             // 第二行：目标
             HStack(spacing: 8) {
@@ -545,7 +524,7 @@ struct HomeView: View {
                         HStack {
                             Text(NSLocalizedString("home.bmi", comment: ""))
                                 .font(.subheadline)
-                                .foregroundColor(.secondaryText)
+                                .foregroundColor(.primaryText)
                             
                             Spacer()
                         }
@@ -565,7 +544,7 @@ struct HomeView: View {
                     HStack {
                         Text(NSLocalizedString("home.bmi", comment: ""))
                             .font(.subheadline)
-                            .foregroundColor(.secondaryText)
+                            .foregroundColor(.primaryText)
                         
                         Spacer()
                     }
