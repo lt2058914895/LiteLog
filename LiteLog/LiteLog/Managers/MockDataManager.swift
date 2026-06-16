@@ -28,6 +28,11 @@ class MockDataManager {
             gender: .male,
             age: 28,
             goalWeight: 70.0,
+            goalBodyFat: 15.0,
+            goalWaistCircumference: 78.0,
+            goalHipCircumference: 92.0,
+            goalChestCircumference: 98.0,
+            goalThighCircumference: 54.0,
             weightUnit: WeightUnit.kg.rawValue,
             createdAt: Date().addingTimeInterval(-30 * 24 * 60 * 60),
             updatedAt: Date(),
@@ -55,10 +60,20 @@ class MockDataManager {
             let fluctuation = Double.random(in: -0.3...0.3)
             let weight = currentWeight + fluctuation
             
-            // 随机添加体脂率和备注
+            // 随机添加体脂率
             let bodyFatPercentage = Bool.random() ? 18.0 + Double.random(in: 0...3) : nil
-            let note: String?
             
+            // 随机添加围度数据（70%概率有值）
+            let waistCircumference = Bool.random() ? 80.0 + Double.random(in: 0...5) : nil
+            let hipCircumference = Bool.random() ? 90.0 + Double.random(in: 0...5) : nil
+            let chestCircumference = Bool.random() ? 95.0 + Double.random(in: 0...5) : nil
+            let thighCircumference = Bool.random() ? 55.0 + Double.random(in: 0...3) : nil
+            
+            // 随机选择测量时段
+            let measurementTimePeriod = MeasurementTimePeriod.allCases.randomElement()?.rawValue ?? MeasurementTimePeriod.random.rawValue
+            
+            // 随机添加备注
+            let note: String?
             if dayOffset % 7 == 0 {
                 note = ["Good progress!", "Keep going!", "Great job!", "Steady decline!"].randomElement()
             } else {
@@ -69,7 +84,12 @@ class MockDataManager {
                 date: date,
                 weight: weight,
                 bodyFatPercentage: bodyFatPercentage,
+                waistCircumference: waistCircumference,
+                hipCircumference: hipCircumference,
+                chestCircumference: chestCircumference,
+                thighCircumference: thighCircumference,
                 note: note,
+                measurementTimePeriod: measurementTimePeriod,
                 createdAt: date,
                 updatedAt: date,
                 syncStatus: WeightRecordSyncStatus.synced

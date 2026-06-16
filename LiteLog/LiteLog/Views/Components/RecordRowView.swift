@@ -12,39 +12,90 @@ struct RecordRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: 16) {
-            if showDate {
-                dateView
+        VStack(alignment: .leading, spacing: 12) {
+            // 主要信息：日期 + 体重
+            HStack(spacing: 16) {
+                if showDate {
+                    dateView
+                }
+
+                weightView
+
+                Spacer()
+
+                // 测量时段（如果有值）
+                if let timePeriod = record.measurementTimePeriod, 
+                   let period = MeasurementTimePeriod(rawValue: timePeriod) {
+                    timePeriodView(period)
+                }
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.tertiaryText)
             }
 
-            weightView
+            // 次要信息：体脂率、腰围、臀围、胸围、大腿围（有值才显示）
+            if hasSecondaryInfo {
+                HStack(spacing: 16) {
+                    if showDate {
+                        Spacer().frame(width: 50)
+                    }
 
-            Spacer()
+                    if let bodyFat = record.bodyFatPercentage {
+                        bodyFatView(bodyFat)
+                    }
 
-            if let bodyFat = record.bodyFatPercentage {
-                bodyFatView(bodyFat)
+                    if let waist = record.waistCircumference {
+                        waistView(waist)
+                    }
+
+                    if let hip = record.hipCircumference {
+                        hipView(hip)
+                    }
+
+                    if let chest = record.chestCircumference {
+                        chestView(chest)
+                    }
+
+                    if let thigh = record.thighCircumference {
+                        thighView(thigh)
+                    }
+
+                    Spacer()
+                }
             }
 
-            if let waist = record.waistCircumference {
-                waistView(waist)
-            }
+            // 备注（如果有值）
+            if let note = record.note, !note.isEmpty {
+                HStack(spacing: 8) {
+                    if showDate {
+                        Spacer().frame(width: 50)
+                    }
 
-            if let hip = record.hipCircumference {
-                hipView(hip)
-            }
+                    Image(systemName: "note.text")
+                        .font(.caption)
+                        .foregroundColor(.secondaryText)
 
-            if let thigh = record.thighCircumference {
-                thighView(thigh)
-            }
+                    Text(note)
+                        .font(.caption)
+                        .foregroundColor(.secondaryText)
 
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.tertiaryText)
+                    Spacer()
+                }
+            }
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 16)
         .padding(.horizontal, 16)
         .background(Color.cardBackground)
         .cornerRadius(12)
+    }
+
+    private var hasSecondaryInfo: Bool {
+        record.bodyFatPercentage != nil ||
+        record.waistCircumference != nil ||
+        record.hipCircumference != nil ||
+        record.chestCircumference != nil ||
+        record.thighCircumference != nil
     }
 
     private var dateView: some View {
@@ -131,6 +182,28 @@ struct RecordRowView: View {
                 .font(.caption2)
                 .foregroundColor(.secondaryText)
         }
+    }
+
+    private func chestView(_ chest: Double) -> some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text("\(chest.smartFormatted)cm")
+                .font(.subheadline)
+                .foregroundColor(.primaryText)
+
+            Text(NSLocalizedString("record.chest.circumference", comment: ""))
+                .font(.caption2)
+                .foregroundColor(.secondaryText)
+        }
+    }
+
+    private func timePeriodView(_ period: MeasurementTimePeriod) -> some View {
+        Text(period.displayName)
+            .font(.caption)
+            .foregroundColor(.primaryBlue)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 2)
+            .background(Color.primaryBlue.opacity(0.1))
+            .cornerRadius(4)
     }
 }
 
