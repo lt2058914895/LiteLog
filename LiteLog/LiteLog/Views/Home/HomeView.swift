@@ -345,31 +345,70 @@ struct HomeView: View {
     private var goalMeasurementsCard: some View {
         VStack(spacing: 12) {
             if let profile = profile {
-                VStack(spacing: 20) {
-                    // 腰围
-                    measurementRow(title: NSLocalizedString("home.waist", comment: ""),
-                                   goal: profile.goalWaistCircumference,
-                                   current: latestWaist)
-                    
-                    // 臀围
-                    measurementRow(title: NSLocalizedString("home.hip", comment: ""),
-                                   goal: profile.goalHipCircumference,
-                                   current: latestHip)
-                    
-                    // 胸围
-                    measurementRow(title: NSLocalizedString("home.chest", comment: ""),
-                                   goal: profile.goalChestCircumference,
-                                   current: latestChest)
-                    
-                    // 大腿围
-                    measurementRow(title: NSLocalizedString("home.thigh", comment: ""),
-                                   goal: profile.goalThighCircumference,
-                                   current: latestThigh)
+                let hasWaistData = profile.goalWaistCircumference != nil || latestWaist != nil
+                let hasHipData = profile.goalHipCircumference != nil || latestHip != nil
+                let hasChestData = profile.goalChestCircumference != nil || latestChest != nil
+                let hasThighData = profile.goalThighCircumference != nil || latestThigh != nil
+                
+                if hasWaistData || hasHipData || hasChestData || hasThighData {
+                    VStack(spacing: 20) {
+                        // 腰围
+                        measurementRow(title: NSLocalizedString("home.waist", comment: ""),
+                                       goal: profile.goalWaistCircumference,
+                                       current: latestWaist)
+                        
+                        // 臀围
+                        measurementRow(title: NSLocalizedString("home.hip", comment: ""),
+                                       goal: profile.goalHipCircumference,
+                                       current: latestHip)
+                        
+                        // 胸围
+                        measurementRow(title: NSLocalizedString("home.chest", comment: ""),
+                                       goal: profile.goalChestCircumference,
+                                       current: latestChest)
+                        
+                        // 大腿围
+                        measurementRow(title: NSLocalizedString("home.thigh", comment: ""),
+                                       goal: profile.goalThighCircumference,
+                                       current: latestThigh)
+                    }
+                } else {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "ruler")
+                                .font(.title)
+                                .foregroundColor(.primaryBlue)
+                            
+                            Text(NSLocalizedString("home.goal.measurements", comment: ""))
+                                .font(.subheadline)
+                                .foregroundColor(.secondaryText)
+                            
+                            Spacer()
+                        }
+                        
+                        Text(NSLocalizedString("home.goal.no.data", comment: ""))
+                            .font(.subheadline)
+                            .foregroundColor(.secondaryText)
+                    }
                 }
             } else {
-                Text("--")
-                    .font(.caption)
-                    .foregroundColor(.secondaryText)
+                VStack(spacing: 8) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "ruler")
+                            .font(.title)
+                            .foregroundColor(.primaryBlue)
+                        
+                        Text(NSLocalizedString("home.goal.measurements", comment: ""))
+                            .font(.subheadline)
+                            .foregroundColor(.secondaryText)
+                        
+                        Spacer()
+                    }
+                    
+                    Text(NSLocalizedString("home.goal.no.data", comment: ""))
+                        .font(.subheadline)
+                        .foregroundColor(.secondaryText)
+                }
             }
         }
         .padding()
