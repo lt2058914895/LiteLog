@@ -59,9 +59,9 @@ struct RecordRowView: View {
                 }
             }
 
-            // 备注（如果有值）
+            // 备注
             if let note = record.note, !note.isEmpty {
-                HStack(spacing: 8) {
+                HStack(alignment: .top, spacing: 8) {
                     if showDate {
                         Spacer().frame(width: 50)
                     }
@@ -73,8 +73,6 @@ struct RecordRowView: View {
                     Text(note)
                         .font(.caption)
                         .foregroundColor(.secondaryText)
-
-                    Spacer()
                 }
             }
             

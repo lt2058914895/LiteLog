@@ -263,7 +263,7 @@ struct RecordFormView: View {
                 }
 
                 Section(NSLocalizedString("record.note", comment: "")) {
-                    TextField(NSLocalizedString("record.note.placeholder", comment: ""), text: $note)
+                    noteEditorView
                 }
 
                 if isEditMode {
@@ -445,6 +445,22 @@ struct RecordFormView: View {
             }
         }
         dismiss()
+    }
+    
+    private var noteEditorView: some View {
+        ZStack(alignment: .topLeading) {
+            Text(note.isEmpty ? NSLocalizedString("record.note.placeholder", comment: "") : "")
+                .font(.body)
+                .foregroundColor(.secondaryText)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 8)
+                .opacity(note.isEmpty ? 1 : 0)
+            
+            TextEditor(text: $note)
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
+        }
+        .frame(minHeight: 100)
     }
 
     private func deleteRecordsForSelectedDate() {
