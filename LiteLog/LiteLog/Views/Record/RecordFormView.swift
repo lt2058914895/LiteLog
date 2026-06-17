@@ -1,6 +1,32 @@
 import SwiftUI
 import SwiftData
 
+extension View {
+    func dismissKeyboardOnTapOutside() -> some View {
+        self.modifier(DismissKeyboardModifier())
+    }
+}
+
+struct DismissKeyboardModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .onAppear {
+                let tapGesture = UITapGestureRecognizer(target: UIApplication.shared, action: #selector(UIApplication.shared.dismissKeyboard))
+                tapGesture.cancelsTouchesInView = false
+                UIApplication.shared.windows.first?.addGestureRecognizer(tapGesture)
+            }
+            .onDisappear {
+                UIApplication.shared.windows.first?.gestureRecognizers?.removeAll { $0 is UITapGestureRecognizer }
+            }
+    }
+}
+
+extension UIApplication {
+    @objc func dismissKeyboard() {
+        sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
 struct RecordFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -332,9 +358,8 @@ struct RecordFormView: View {
                     weightString = unit.convertFromKg(record.weight).smartFormatted
                 }
             }
-            .onTapGesture {
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-            }
+            .dismissKeyboardOnTapOutside()
+            
     }
 
     private func saveRecord() {
