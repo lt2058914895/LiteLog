@@ -59,18 +59,6 @@ struct RecordRowView: View {
                 }
             }
 
-            // 测量时段（移到备注上面）
-            if let timePeriod = record.measurementTimePeriod, 
-               let period = MeasurementTimePeriod(rawValue: timePeriod) {
-                HStack {
-                    if showDate {
-                        Spacer().frame(width: 50)
-                    }
-                    timePeriodView(period)
-                    Spacer()
-                }
-            }
-
             // 备注（如果有值）
             if let note = record.note, !note.isEmpty {
                 HStack(spacing: 8) {
@@ -87,6 +75,15 @@ struct RecordRowView: View {
                         .foregroundColor(.secondaryText)
 
                     Spacer()
+                }
+            }
+            
+            // 测量时段
+            if let timePeriod = record.measurementTimePeriod,
+               let period = MeasurementTimePeriod(rawValue: timePeriod) {
+                HStack {
+                    Spacer()
+                    timePeriodView(period)
                 }
             }
         }
