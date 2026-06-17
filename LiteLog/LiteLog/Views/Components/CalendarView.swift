@@ -91,7 +91,7 @@ struct CalendarView: View {
         let emptyDays = Array(repeating: 0, count: firstWeekdayOfMonth)
         let allItems = emptyDays + Array(1...daysInMonth.count)
 
-        return LazyVGrid(columns: columns, spacing: 4) {
+        return LazyVGrid(columns: columns, spacing: 10) {
             ForEach(allItems, id: \.self) { item in
                 if item == 0 {
                     Color.clear
@@ -126,7 +126,7 @@ struct CalendarView: View {
                         .foregroundColor(isSelected ? .white : .secondaryText)
                 }
             }
-            .frame(width: 40, height: 44)
+            .frame(width: 44, height: 44)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(isSelected ? Color.primaryBlue : Color.primaryBlue.opacity(0.15))
