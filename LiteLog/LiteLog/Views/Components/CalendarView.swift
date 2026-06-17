@@ -23,6 +23,10 @@ struct CalendarView: View {
         Set(records.map { calendar.startOfDay(for: $0.date) })
     }
 
+    private var recordsByDate: [Date: WeightRecord] {
+        Dictionary(uniqueKeysWithValues: records.map { (calendar.startOfDay(for: $0.date), $0) })
+    }
+
     private var firstWeekdayOfMonth: Int {
         let firstDayOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth))!
         return calendar.component(.weekday, from: firstDayOfMonth) - 1
@@ -87,7 +91,7 @@ struct CalendarView: View {
         let emptyDays = Array(repeating: 0, count: firstWeekdayOfMonth)
         let allItems = emptyDays + Array(1...daysInMonth.count)
 
-        return LazyVGrid(columns: columns, spacing: 8) {
+        return LazyVGrid(columns: columns, spacing: 4) {
             ForEach(allItems, id: \.self) { item in
                 if item == 0 {
                     Color.clear
@@ -108,34 +112,31 @@ struct CalendarView: View {
         let hasRecord = recordDates.contains(calendar.startOfDay(for: date))
         let isToday = calendar.isDateInToday(date)
         let dayNumber = calendar.component(.day, from: date)
+        let record = recordsByDate[calendar.startOfDay(for: date)]
 
         return Button(action: { selectDate(date) }) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Text("\(dayNumber)")
                     .font(.system(size: 16, weight: isToday ? .bold : .regular))
                     .foregroundColor(textColor(isToday: isToday, isSelected: isSelected))
 
-                if hasRecord {
-                    Circle()
-                        .fill(Color.primaryBlue)
-                        .frame(width: 6, height: 6)
-                } else {
-                    Circle()
-                        .fill(Color.clear)
-                        .frame(width: 6, height: 6)
+                if let record = record {
+                    Text(unit.convertFromKg(record.weight).smartFormatted)
+                        .font(.caption2)
+                        .foregroundColor(isSelected ? .white : .secondaryText)
                 }
             }
-            .frame(width: 40, height: 40)
+            .frame(width: 40, height: 44)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.primaryBlue.opacity(0.2) : Color.clear)
+                    .fill(isSelected ? Color.primaryBlue : Color.primaryBlue.opacity(0.15))
             )
         }
     }
 
     private func textColor(isToday: Bool, isSelected: Bool) -> Color {
         if isSelected {
-            return .primaryBlue
+            return .white
         } else if isToday {
             return .primaryBlue
         } else {
