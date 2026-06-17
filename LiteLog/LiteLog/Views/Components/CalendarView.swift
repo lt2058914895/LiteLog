@@ -117,7 +117,8 @@ struct CalendarView: View {
         return Button(action: { selectDate(date) }) {
             VStack(spacing: 2) {
                 Text("\(dayNumber)")
-                    .font(.system(size: 16, weight: isToday ? .bold : .regular))
+                    .font(.caption2)
+                    .fontWeight(.bold)
                     .foregroundColor(textColor(isToday: isToday, isSelected: isSelected))
 
                 if let record = record {
@@ -126,9 +127,9 @@ struct CalendarView: View {
                         .foregroundColor(isSelected ? .white : .secondaryText)
                 }
             }
-            .frame(width: 44, height: 44)
+            .frame(width: 44, height: 48)
             .background(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 10)
                     .fill(isSelected ? Color.primaryBlue : Color.primaryBlue.opacity(0.15))
             )
         }
