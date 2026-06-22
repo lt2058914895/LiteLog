@@ -10,6 +10,7 @@ struct StatisticsView: View {
     @Query private var userProfile: [UserProfile]
 
     @State private var selectedPeriod: Period = .week
+    @State private var selectedMetric: Metric = .weight
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -20,6 +21,35 @@ struct StatisticsView: View {
         case quarter = "stats.quarter"
 
         var localizedKey: String { rawValue }
+    }
+
+    enum Metric: String, CaseIterable, Identifiable {
+        case weight = "stats.metric.weight"
+        case bodyFat = "stats.metric.body.fat"
+        case waist = "stats.metric.waist"
+        case hip = "stats.metric.hip"
+        case chest = "stats.metric.chest"
+        case thigh = "stats.metric.thigh"
+
+        var id: String { rawValue }
+        var localizedKey: String { rawValue }
+        var unit: String {
+            switch self {
+            case .weight: return "kg"
+            case .bodyFat: return "%"
+            case .waist, .hip, .chest, .thigh: return "cm"
+            }
+        }
+        var color: Color {
+            switch self {
+            case .weight: return .primaryBlue
+            case .bodyFat: return .purple
+            case .waist: return .orange
+            case .hip: return .green
+            case .chest: return .pink
+            case .thigh: return .cyan
+            }
+        }
     }
 
     private var startDate: Date {
@@ -75,11 +105,56 @@ struct StatisticsView: View {
         filteredRecords.map { $0.weight }.max() ?? 0
     }
 
+    // MARK: - Metric Data
+    
+    private func metricData(for metric: Metric) -> [(Date, Double)] {
+        filteredRecords.compactMap { record in
+            let value: Double?
+            switch metric {
+            case .weight:
+                value = record.weight
+            case .bodyFat:
+                value = record.bodyFatPercentage
+            case .waist:
+                value = record.waistCircumference
+            case .hip:
+                value = record.hipCircumference
+            case .chest:
+                value = record.chestCircumference
+            case .thigh:
+                value = record.thighCircumference
+            }
+            if let value = value {
+                return (record.date.startOfDay, value)
+            }
+            return nil
+        }
+    }
+
+    private var currentMetricData: [(Date, Double)] {
+        metricData(for: selectedMetric)
+    }
+
+    private var currentMetricAverage: Double {
+        guard !currentMetricData.isEmpty else { return 0 }
+        let sum = currentMetricData.reduce(0) { $0 + $1.1 }
+        return sum / Double(currentMetricData.count)
+    }
+
+    private var currentMetricChange: Double {
+        guard currentMetricData.count >= 2 else { return 0 }
+        let first = currentMetricData.first!.1
+        let last = currentMetricData.last!.1
+        return last - first
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
                     periodPicker
+                    
+                    metricPicker
 
                     if records.isEmpty {
                         EmptyStateView(
@@ -88,9 +163,9 @@ struct StatisticsView: View {
                             message: NSLocalizedString("home.start.record", comment: "")
                         )
                     } else {
-                        summaryCards
+                        metricSummaryCards
 
-                        weightChart
+                        metricChart
 
                         bmiChartSection
 
@@ -148,6 +223,28 @@ struct StatisticsView: View {
         .pickerStyle(.segmented)
     }
 
+    private var metricPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(NSLocalizedString("stats.metric", comment: ""))
+                .font(.caption)
+                .foregroundColor(.secondaryText)
+            
+            LazyHStack(spacing: 8) {
+                ForEach(Metric.allCases) { metric in
+                    Button(action: { selectedMetric = metric }) {
+                        Text(NSLocalizedString(metric.localizedKey, comment: ""))
+                            .font(.caption)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(selectedMetric == metric ? selectedMetric.color.opacity(0.2) : Color.cardBackground)
+                            .foregroundColor(selectedMetric == metric ? selectedMetric.color : .secondaryText)
+                            .cornerRadius(8)
+                    }
+                }
+            }
+        }
+    }
+
     private var summaryCards: some View {
         HStack(spacing: 12) {
             SummaryCard(
@@ -163,6 +260,24 @@ struct StatisticsView: View {
                 unit: unit.shortName,
                 icon: weightChange >= 0 ? "arrow.up.right" : "arrow.down.right",
                 color: weightChange >= 0 ? .red : .green
+            )
+        }
+    }
+
+    private var metricSummaryCards: some View {
+        HStack(spacing: 12) {
+            MetricSummaryCard(
+                title: NSLocalizedString("stats.average", comment: ""),
+                value: currentMetricAverage.smartFormatted,
+                unit: selectedMetric.unit,
+                color: selectedMetric.color
+            )
+
+            MetricSummaryCard(
+                title: NSLocalizedString("stats.change", comment: ""),
+                value: (currentMetricChange >= 0 ? "+" : "") + currentMetricChange.smartFormatted,
+                unit: selectedMetric.unit,
+                color: currentMetricChange >= 0 ? .red : .green
             )
         }
     }
@@ -206,6 +321,74 @@ struct StatisticsView: View {
                         y: .value("Weight", unit.convertFromKg(record.weight))
                     )
                     .foregroundStyle(Color.primaryBlue)
+                    .symbolSize(30)
+                }
+                .chartXScale(domain: startDate...Date().startOfDay)
+                .chartXAxis {
+                    AxisMarks(values: [startDate, Date().startOfDay]) { value in
+                        AxisGridLine()
+                        AxisValueLabel {
+                            if let date = value.as(Date.self) {
+                                Text(date.shortDateString)
+                            }
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading)
+                }
+                .frame(height: 200)
+            }
+        }
+        .padding()
+        .cardStyle()
+    }
+
+    private var metricChart: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(NSLocalizedString("home.trend", comment: ""))
+                    .font(.headline)
+                    .foregroundColor(.primaryText)
+                
+                Text(NSLocalizedString(selectedMetric.localizedKey, comment: ""))
+                    .font(.subheadline)
+                    .foregroundColor(selectedMetric.color)
+            }
+
+            if currentMetricData.isEmpty {
+                Text(NSLocalizedString("stats.no.data", comment: ""))
+                    .font(.subheadline)
+                    .foregroundColor(.secondaryText)
+                    .frame(height: 200)
+                    .frame(maxWidth: .infinity)
+            } else {
+                Chart(currentMetricData, id: \.0) { item in
+                    LineMark(
+                        x: .value("Date", item.0),
+                        y: .value("Value", item.1)
+                    )
+                    .foregroundStyle(selectedMetric.color)
+                    .interpolationMethod(.catmullRom)
+
+                    AreaMark(
+                        x: .value("Date", item.0),
+                        y: .value("Value", item.1)
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [selectedMetric.color.opacity(0.3), selectedMetric.color.opacity(0.0)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .interpolationMethod(.catmullRom)
+
+                    PointMark(
+                        x: .value("Date", item.0),
+                        y: .value("Value", item.1)
+                    )
+                    .foregroundStyle(selectedMetric.color)
                     .symbolSize(30)
                 }
                 .chartXScale(domain: startDate...Date().startOfDay)
@@ -474,6 +657,35 @@ struct SummaryCard: View {
                     .font(.title)
                     .fontWeight(.bold)
                     .foregroundColor(.primaryText)
+
+                Text(unit)
+                    .font(.caption)
+                    .foregroundColor(.secondaryText)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .cardStyle()
+    }
+}
+
+struct MetricSummaryCard: View {
+    let title: String
+    let value: String
+    let unit: String
+    var color: Color = .primaryBlue
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondaryText)
+
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(value)
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(color)
 
                 Text(unit)
                     .font(.caption)

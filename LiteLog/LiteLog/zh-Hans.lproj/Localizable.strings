@@ -181,6 +181,13 @@
 "settings.goal.chest.circumference.invalid" = "请输入有效的胸围";
 "settings.goal.thigh" = "大腿围";
 "settings.goal.thigh.circumference.invalid" = "请输入有效的大腿围";
+"stats.metric" = "指标";
+"stats.metric.weight" = "体重";
+"stats.metric.body.fat" = "体脂率";
+"stats.metric.waist" = "腰围";
+"stats.metric.hip" = "臀围";
+"stats.metric.chest" = "胸围";
+"stats.metric.thigh" = "大腿围";
 "settings.cm" = "cm";
 "settings.error" = "提示";
 "settings.prompt.enter" = "请输入";
