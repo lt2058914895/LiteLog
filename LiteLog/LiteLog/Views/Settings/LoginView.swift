@@ -49,7 +49,7 @@ struct LoginView: View {
                     .environmentObject(settingsManager)
             }
             .errorAlert(manager: errorAlertManager)
-            .onChange(of: settingsManager.isLoggedIn) { isLoggedIn in
+            .onChange(of: settingsManager.isLoggedIn) { _, isLoggedIn in
                 if isLoggedIn {
                     dismiss()
                 }

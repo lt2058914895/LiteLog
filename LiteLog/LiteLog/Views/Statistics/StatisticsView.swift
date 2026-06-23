@@ -245,25 +245,6 @@ struct StatisticsView: View {
         }
     }
 
-    private var summaryCards: some View {
-        HStack(spacing: 12) {
-            SummaryCard(
-                title: NSLocalizedString("stats.average", comment: ""),
-                value: unit.convertFromKg(averageWeight).smartFormatted,
-                unit: unit.shortName,
-                icon: "scalemass"
-            )
-
-            SummaryCard(
-                title: NSLocalizedString("stats.change", comment: ""),
-                value: (weightChange >= 0 ? "+" : "") + unit.convertFromKg(weightChange).smartFormatted,
-                unit: unit.shortName,
-                icon: weightChange >= 0 ? "arrow.up.right" : "arrow.down.right",
-                color: weightChange >= 0 ? .red : .green
-            )
-        }
-    }
-
     private var metricSummaryCards: some View {
         HStack(spacing: 12) {
             MetricSummaryCard(
@@ -280,68 +261,6 @@ struct StatisticsView: View {
                 color: currentMetricChange >= 0 ? .red : .green
             )
         }
-    }
-
-    private var weightChart: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(NSLocalizedString("home.trend", comment: ""))
-                .font(.headline)
-                .foregroundColor(.primaryText)
-
-            if filteredRecords.isEmpty {
-                Text(NSLocalizedString("stats.no.data", comment: ""))
-                    .font(.subheadline)
-                    .foregroundColor(.secondaryText)
-                    .frame(height: 200)
-                    .frame(maxWidth: .infinity)
-            } else {
-                Chart(filteredRecords) { record in
-                    LineMark(
-                        x: .value("Date", record.date.startOfDay),
-                        y: .value("Weight", unit.convertFromKg(record.weight))
-                    )
-                    .foregroundStyle(Color.primaryBlue)
-                    .interpolationMethod(.catmullRom)
-
-                    AreaMark(
-                        x: .value("Date", record.date.startOfDay),
-                        y: .value("Weight", unit.convertFromKg(record.weight))
-                    )
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Color.primaryBlue.opacity(0.3), Color.primaryBlue.opacity(0.0)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .interpolationMethod(.catmullRom)
-
-                    PointMark(
-                        x: .value("Date", record.date.startOfDay),
-                        y: .value("Weight", unit.convertFromKg(record.weight))
-                    )
-                    .foregroundStyle(Color.primaryBlue)
-                    .symbolSize(30)
-                }
-                .chartXScale(domain: startDate...Date().startOfDay)
-                .chartXAxis {
-                    AxisMarks(values: [startDate, Date().startOfDay]) { value in
-                        AxisGridLine()
-                        AxisValueLabel {
-                            if let date = value.as(Date.self) {
-                                Text(date.shortDateString)
-                            }
-                        }
-                    }
-                }
-                .chartYAxis {
-                    AxisMarks(position: .leading)
-                }
-                .frame(height: 200)
-            }
-        }
-        .padding()
-        .cardStyle()
     }
 
     private var metricChart: some View {

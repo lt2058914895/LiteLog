@@ -109,7 +109,7 @@ struct CalendarView: View {
 
     private func dayCellView(_ date: Date) -> some View {
         let isSelected = selectedDate.map { calendar.isDate(date, inSameDayAs: $0) } ?? false
-        let hasRecord = recordDates.contains(calendar.startOfDay(for: date))
+        _ = recordDates.contains(calendar.startOfDay(for: date))
         let isToday = calendar.isDateInToday(date)
         let dayNumber = calendar.component(.day, from: date)
         let record = recordsByDate[calendar.startOfDay(for: date)]

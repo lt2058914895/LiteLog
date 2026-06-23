@@ -13,10 +13,14 @@ struct DismissKeyboardModifier: ViewModifier {
             .onAppear {
                 let tapGesture = UITapGestureRecognizer(target: UIApplication.shared, action: #selector(UIApplication.shared.dismissKeyboard))
                 tapGesture.cancelsTouchesInView = false
-                UIApplication.shared.windows.first?.addGestureRecognizer(tapGesture)
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                    windowScene.windows.first?.addGestureRecognizer(tapGesture)
+                }
             }
             .onDisappear {
-                UIApplication.shared.windows.first?.gestureRecognizers?.removeAll { $0 is UITapGestureRecognizer }
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                    windowScene.windows.first?.gestureRecognizers?.removeAll { $0 is UITapGestureRecognizer }
+                }
             }
     }
 }

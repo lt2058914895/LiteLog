@@ -1,7 +1,6 @@
 import Foundation
 
-@frozen
-public struct UserInfo: Codable, Sendable {
+public struct UserInfo: Codable {
     public let userId: String
     public let nickname: String?
     public let avatarUrl: String?
@@ -10,8 +9,7 @@ public struct UserInfo: Codable, Sendable {
     public let expiresIn: TimeInterval?
 }
 
-@frozen
-public struct AuthResponse: Codable, Sendable {
+public struct AuthResponse: Codable {
     public let success: Bool
     public let userId: String?
     public let nickname: String?
@@ -34,43 +32,37 @@ public struct AuthResponse: Codable, Sendable {
     }
 }
 
-@frozen
-public struct LogoutResponse: Codable, Sendable {
+public struct LogoutResponse: Codable {
     public let success: Bool
     public let message: String?
 }
 
-@frozen
-public struct UpdateProfileResponse: Codable, Sendable {
+public struct UpdateProfileResponse: Codable {
     public let success: Bool
     public let message: String?
     public let nickname: String?
     public let avatarUrl: String?
 }
 
-@frozen
-public struct AvatarUploadResponse: Codable, Sendable {
+public struct AvatarUploadResponse: Codable {
     public let success: Bool
     public let message: String?
     public let avatarUrl: String?
 }
 
-@frozen
-public struct FeedbackSubmitResponse: Codable, Sendable {
+public struct FeedbackSubmitResponse: Codable {
     public let success: Bool
     public let code: Int
     public let message: String?
     public let feedbackId: Int?
 }
 
-@frozen
-public struct ResetPasswordResponse: Codable, Sendable {
+public struct ResetPasswordResponse: Codable {
     public let success: Bool
     public let message: String?
 }
 
-@frozen
-public struct WeightRecordRequest: Codable, Sendable {
+public struct WeightRecordRequest: Codable {
     public let recordId: String
     public let weight: Double
     public let bodyFatPercentage: Double?
@@ -87,13 +79,11 @@ public struct WeightRecordRequest: Codable, Sendable {
     public let measurementTimePeriod: String?
 }
 
-@frozen
-public struct WeightRecordSyncRequest: Codable, Sendable {
+public struct WeightRecordSyncRequest: Codable {
     public let records: [WeightRecordRequest]
 }
 
-@frozen
-public struct WeightRecordSyncResponse: Codable, Sendable {
+public struct WeightRecordSyncResponse: Codable {
     public let success: Bool
     public let message: String?
     public let syncedCount: Int

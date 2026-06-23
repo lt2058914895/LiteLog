@@ -57,7 +57,7 @@ final class SettingsManager: ObservableObject {
                     try context.save()
                     
                     // 触发同步到云数据库
-                    await DataSyncManager.shared.triggerProfileSync(modelContext: context)
+                    DataSyncManager.shared.triggerProfileSync(modelContext: context)
                 } else {
                     // 如果没有个人资料，创建一个新的
                     let newProfile = UserProfile(
@@ -136,8 +136,8 @@ final class SettingsManager: ObservableObject {
     }
     
     var isAvatarCached: Bool {
-        if let cachedHash = defaults.integer(forKey: Keys.avatarUrlHash) as? Int,
-           cachedHash == avatarUrl.hashValue {
+        let cachedHash = defaults.integer(forKey: Keys.avatarUrlHash)
+        if cachedHash == avatarUrl.hashValue {
             return cachedAvatarImage != nil
         }
         return false
@@ -245,7 +245,7 @@ final class SettingsManager: ObservableObject {
         clearCachedAvatar()
         
         if let token = currentToken {
-            try? await APIService.shared.logout(token: token)
+            _ = try? await APIService.shared.logout(token: token)
         }
     }
     

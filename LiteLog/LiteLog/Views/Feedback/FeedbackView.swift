@@ -119,7 +119,7 @@ struct FeedbackView: View {
                                     .foregroundColor(.primaryText)
                             }
                             .toggleStyle(SwitchToggleStyle(tint: .primaryBlue))
-                            .onChange(of: isAnonymous) { _ in
+                            .onChange(of: isAnonymous) { _, _ in
                                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                             }
 
@@ -129,7 +129,7 @@ struct FeedbackView: View {
                                         .foregroundColor(.primaryText)
                                 }
                                 .toggleStyle(SwitchToggleStyle(tint: .primaryBlue))
-                                .onChange(of: allowContact) { _ in
+                                .onChange(of: allowContact) { _, _ in
                                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                                 }
 

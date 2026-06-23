@@ -1,6 +1,7 @@
 import Foundation
 import Alamofire
 
+@MainActor
 class APIService {
     static let shared = APIService()
     
@@ -266,7 +267,7 @@ class APIService {
     func updateUserProfile(height: Double, gender: Int, age: Int, goalWeight: Double, weightUnit: String) async throws -> UpdateProfileResponse {
         let endpoint = baseURL.appending(path: "/user/profile")
         
-        var parameters: [String: Any] = [
+        let parameters: [String: Any] = [
             "height": height,
             "gender": gender,
             "age": age,
@@ -323,7 +324,7 @@ class APIService {
                 if let data = response.data {
                     do {
                         let decoder = JSONDecoder()
-                        let uploadResponse = try decoder.decode(AvatarUploadResponse.self, from: data)
+                            let uploadResponse = try decoder.decode(AvatarUploadResponse.self, from: data)
                         continuation.resume(returning: uploadResponse)
                     } catch {
                         continuation.resume(throwing: APIError.decodingError)
@@ -336,10 +337,6 @@ class APIService {
     }
     
     func deleteWeightRecords(recordIds: [String]) async throws -> WeightRecordSyncResponse {
-        let endpoint = baseURL.appending(path: "/weight/sync")
-        
-        let token = SettingsManager.shared.token
-        
         // 创建标记为已删除的记录请求
         let records = recordIds.map { recordId in
             WeightRecordRequest(
@@ -455,7 +452,7 @@ class APIService {
                 case .success(let data):
                     do {
                         let decoder = JSONDecoder()
-                        let syncResponse = try decoder.decode(WeightRecordSyncResponse.self, from: data)
+                            let syncResponse = try decoder.decode(WeightRecordSyncResponse.self, from: data)
                         continuation.resume(returning: syncResponse)
                     } catch {
                         continuation.resume(throwing: APIError.decodingError)

@@ -13,7 +13,7 @@ struct SettingsView: View {
     @State private var showingUserInfoEditor = false
     @State private var showingExportSheet = false
     @State private var showingDeleteAlert = false
-    @State private var exportURL: URL?
+    @State private var exportURL: IdentifiableURL?
     @State private var showingExportError = false
     @State private var notificationTime = SettingsManager.defaultNotificationTime()
     @State private var showingLoginSheet = false
@@ -48,7 +48,7 @@ struct SettingsView: View {
                 UserInfoEditorView()
             }
             .adaptiveSheet(item: $exportURL) { url in
-                ShareSheet(items: [url])
+                ShareSheet(items: [url.url])
             }
             .adaptiveSheet(isPresented: $showingLoginSheet) {
                 LoginView()
@@ -360,7 +360,10 @@ struct SettingsView: View {
             Button(action: {
                 if let url = URL(string: "https://apps.apple.com/cn/app/6768547821") {
                     let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-                    UIApplication.shared.windows.first?.rootViewController?.present(activityVC, animated: true)
+                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let rootViewController = windowScene.windows.first?.rootViewController {
+                    rootViewController.present(activityVC, animated: true)
+                }
                 }
             }) {
                 HStack {
@@ -393,7 +396,7 @@ struct SettingsView: View {
         }
         
         if let url = ExportManager.shared.exportToCSV(records: records, unit: unit) {
-            exportURL = url
+            exportURL = IdentifiableURL(url)
         } else {
             showingExportError = true
         }
@@ -692,7 +695,14 @@ struct ShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
-// Make URL conform to Identifiable for sheet(item:)
-extension URL: Identifiable {
-    public var id: String { absoluteString }
+// Identifiable wrapper for URL to avoid conformance warning
+struct IdentifiableURL: Identifiable {
+    let id = UUID()
+    let url: URL
+    
+    init(_ url: URL) {
+        self.url = url
+    }
 }
+
+
