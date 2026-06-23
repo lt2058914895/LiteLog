@@ -345,6 +345,7 @@ class APIService {
                 bodyFatPercentage: nil,
                 waistCircumference: nil,
                 hipCircumference: nil,
+                chestCircumference: nil,
                 thighCircumference: nil,
                 note: nil,
                 date: Date().timeIntervalSince1970,
@@ -373,6 +374,10 @@ class APIService {
                     "weight": record.weight,
                     "bodyFatPercentage": record.bodyFatPercentage as Any,
                     "waistCircumference": record.waistCircumference as Any,
+                    "hipCircumference": record.hipCircumference as Any,
+                    "chestCircumference": record.chestCircumference as Any,
+                    "thighCircumference": record.thighCircumference as Any,
+                    "measurementTimePeriod": record.measurementTimePeriod as Any,
                     "note": record.note as Any,
                     "date": record.date,
                     "createdAt": record.createdAt,
@@ -383,6 +388,9 @@ class APIService {
                 }
                 if let imageUrl = record.imageUrl {
                     dict["imageUrl"] = imageUrl
+                }
+                if let imageFileName = record.imageFileName {
+                    dict["imageFileName"] = imageFileName
                 }
                 return dict
             }

@@ -68,6 +68,7 @@ public struct WeightRecordRequest: Codable {
     public let bodyFatPercentage: Double?
     public let waistCircumference: Double?
     public let hipCircumference: Double?
+    public let chestCircumference: Double?
     public let thighCircumference: Double?
     public let note: String?
     public let date: TimeInterval
