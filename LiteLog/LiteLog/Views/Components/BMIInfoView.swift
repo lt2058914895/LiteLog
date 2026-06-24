@@ -6,6 +6,8 @@ struct BMIInfoView: View {
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) private var userProfile: FetchedResults<UserProfile>
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var allRecords: FetchedResults<WeightRecord>
     
+    @Binding var isPresented: Bool
+    
     private var profile: UserProfile? { userProfile.first }
     
     private var latestWeightRecord: WeightRecord? {
@@ -120,6 +122,13 @@ struct BMIInfoView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("bmi.info.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(leading: Button(action: {
+                isPresented = false
+            }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(.primaryBlue)
+            })
         }
     }
     

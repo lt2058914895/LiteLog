@@ -4,6 +4,7 @@ import CoreData
 struct BMIProgressView: View {
     let currentWeight: Double
     let height: Double
+    var onInfoTapped: (() -> Void)? = nil
 
     private var currentBMI: Double {
         let heightInMeters = height / 100.0
@@ -38,7 +39,9 @@ struct BMIProgressView: View {
                 
                 Spacer()
                 
-                NavigationLink(destination: BMIInfoView()) {
+                Button(action: {
+                    onInfoTapped?()
+                }) {
                     HStack(spacing: 4) {
                         Image(systemName: "info.circle")
                         Text(NSLocalizedString("bmi.tips", comment: ""))

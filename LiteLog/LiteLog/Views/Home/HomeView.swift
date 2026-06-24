@@ -15,6 +15,7 @@ struct HomeView: View {
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var showingProfileEditor = false
+    @State private var showingBMIInfo = false
 
     private var profile: UserProfile? {
         let request = UserProfile.fetchRequest()
@@ -109,6 +110,9 @@ struct HomeView: View {
         }
         .adaptiveSheet(isPresented: $showingProfileEditor) {
             ProfileEditorView()
+        }
+        .fullScreenCover(isPresented: $showingBMIInfo) {
+            BMIInfoView(isPresented: $showingBMIInfo)
         }
         .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
             Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
@@ -515,7 +519,8 @@ struct HomeView: View {
             if let latest = latestWeight {
                 return AnyView(BMIProgressView(
                     currentWeight: latest,
-                    height: profile.height
+                    height: profile.height,
+                    onInfoTapped: { showingBMIInfo = true }
                 ))
             } else {
                 return AnyView(
