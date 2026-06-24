@@ -3,12 +3,8 @@ import CoreData
 
 struct BMIInfoView: View {
     @Environment(\.managedObjectContext) private var context
-    @FetchRequest private var userProfile: FetchedResults<UserProfile>
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) private var userProfile: FetchedResults<UserProfile>
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var allRecords: FetchedResults<WeightRecord>
-    
-    init() {
-        _userProfile = FetchRequest(fetchRequest: UserProfile.fetchRequest())
-    }
     
     private var profile: UserProfile? { userProfile.first }
     

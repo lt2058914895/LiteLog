@@ -6,17 +6,12 @@ struct RecordView: View {
     @EnvironmentObject private var settingsManager: SettingsManager
 
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var records: FetchedResults<WeightRecord>
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) private var userProfile: FetchedResults<UserProfile>
 
     @State private var selectedDate: Date?
-    @State private var showingAddSheet = false
     @State private var selectedRecord: WeightRecord?
     @State private var viewMode: ViewMode = .list
-
-    @FetchRequest private var userProfile: FetchedResults<UserProfile>
-    
-    init() {
-        _userProfile = FetchRequest(fetchRequest: UserProfile.fetchRequest())
-    }
+    @State private var showingAddSheet = false
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }

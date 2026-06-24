@@ -6,12 +6,8 @@ struct SettingsView: View {
     @EnvironmentObject private var settingsManager: SettingsManager
     @StateObject private var notificationManager = NotificationManager.shared
 
-    @FetchRequest private var userProfile: FetchedResults<UserProfile>
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) private var userProfile: FetchedResults<UserProfile>
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var records: FetchedResults<WeightRecord>
-    
-    init() {
-        _userProfile = FetchRequest(fetchRequest: UserProfile.fetchRequest())
-    }
 
     @State private var showingProfileEditor = false
     @State private var showingUserInfoEditor = false
@@ -421,11 +417,7 @@ struct ProfileEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var settingsManager: SettingsManager
 
-    @FetchRequest private var userProfile: FetchedResults<UserProfile>
-    
-    init() {
-        _userProfile = FetchRequest(fetchRequest: UserProfile.fetchRequest())
-    }
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) private var userProfile: FetchedResults<UserProfile>
 
     @State private var heightString: String = ""
     @State private var gender: UserProfile.Gender = .male

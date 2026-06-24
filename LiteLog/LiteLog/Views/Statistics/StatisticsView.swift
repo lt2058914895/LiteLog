@@ -6,11 +6,7 @@ struct StatisticsView: View {
     @EnvironmentObject private var settingsManager: SettingsManager
 
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: true)]) private var records: FetchedResults<WeightRecord>
-    @FetchRequest private var userProfile: FetchedResults<UserProfile>
-    
-    init() {
-        _userProfile = FetchRequest(fetchRequest: UserProfile.fetchRequest())
-    }
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) private var userProfile: FetchedResults<UserProfile>
 
     @State private var selectedPeriod: Period = .week
     @State private var selectedMetric: Metric = .weight
