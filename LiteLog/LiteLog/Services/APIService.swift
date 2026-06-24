@@ -1,7 +1,6 @@
 import Foundation
 import Alamofire
 
-@MainActor
 class APIService {
     static let shared = APIService()
     
@@ -90,20 +89,20 @@ class APIService {
         return try await withCheckedThrowingContinuation { continuation in
             AF.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default)
                 .validate(statusCode: 200..<300)
-                .responseData { response in
-                    switch response.result {
-                    case .success(let data):
-                        do {
-                            let decoder = JSONDecoder()
-                            let profileResponse = try decoder.decode(UpdateProfileResponse.self, from: data)
-                            continuation.resume(returning: profileResponse)
-                        } catch {
-                            continuation.resume(throwing: APIError.decodingError)
-                        }
-                    case .failure:
-                        continuation.resume(throwing: APIError.invalidResponse)
+            .responseData { response in
+                switch response.result {
+                case .success(let data):
+                    do {
+                        let decoder = JSONDecoder()
+                        let profileResponse = try decoder.decode(UpdateProfileResponse.self, from: data)
+                        continuation.resume(returning: profileResponse)
+                    } catch {
+                        continuation.resume(throwing: APIError.decodingError)
                     }
+                case .failure:
+                    continuation.resume(throwing: APIError.invalidResponse)
                 }
+            }
         }
     }
     
@@ -121,20 +120,20 @@ class APIService {
         return try await withCheckedThrowingContinuation { continuation in
             AF.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default)
                 .validate(statusCode: 200..<300)
-                .responseData { response in
-                    switch response.result {
-                    case .success(let data):
-                        do {
-                            let decoder = JSONDecoder()
-                            let profileResponse = try decoder.decode(UpdateProfileResponse.self, from: data)
-                            continuation.resume(returning: profileResponse)
-                        } catch {
-                            continuation.resume(throwing: APIError.decodingError)
-                        }
-                    case .failure:
-                        continuation.resume(throwing: APIError.invalidResponse)
+            .responseData { response in
+                switch response.result {
+                case .success(let data):
+                    do {
+                        let decoder = JSONDecoder()
+                        let profileResponse = try decoder.decode(UpdateProfileResponse.self, from: data)
+                        continuation.resume(returning: profileResponse)
+                    } catch {
+                        continuation.resume(throwing: APIError.decodingError)
                     }
+                case .failure:
+                    continuation.resume(throwing: APIError.invalidResponse)
                 }
+            }
         }
     }
     
@@ -197,20 +196,20 @@ class APIService {
         return try await withCheckedThrowingContinuation { continuation in
             AF.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
                 .validate(statusCode: 200..<300)
-                .responseData { response in
-                    switch response.result {
-                    case .success(let data):
-                        do {
-                            let decoder = JSONDecoder()
-                            let syncResponse = try decoder.decode(WeightRecordSyncResponse.self, from: data)
-                            continuation.resume(returning: syncResponse)
-                        } catch {
-                            continuation.resume(throwing: APIError.decodingError)
-                        }
-                    case .failure:
-                        continuation.resume(throwing: APIError.invalidResponse)
+            .responseData { response in
+                switch response.result {
+                case .success(let data):
+                    do {
+                        let decoder = JSONDecoder()
+                        let syncResponse = try decoder.decode(WeightRecordSyncResponse.self, from: data)
+                        continuation.resume(returning: syncResponse)
+                    } catch {
+                        continuation.resume(throwing: APIError.decodingError)
                     }
+                case .failure:
+                    continuation.resume(throwing: APIError.invalidResponse)
                 }
+            }
         }
     }
     
@@ -246,7 +245,7 @@ class APIService {
                 case .success(let data):
                     do {
                         let decoder = JSONDecoder()
-                            let syncResponse = try decoder.decode(WeightRecordSyncResponse.self, from: data)
+                        let syncResponse = try decoder.decode(WeightRecordSyncResponse.self, from: data)
                         continuation.resume(returning: syncResponse)
                     } catch {
                         continuation.resume(throwing: APIError.decodingError)
