@@ -49,41 +49,49 @@ struct ContentView: View {
 
     private var iPhoneLayout: some View {
         TabView(selection: $selectedTab) {
-            HomeView()
-                .tabItem {
-                    Label(NSLocalizedString("tab.home", comment: ""), systemImage: "house.fill")
-                }
-                .tag(0)
+            NavigationView {
+                HomeView()
+            }
+            .tabItem {
+                Label(NSLocalizedString("tab.home", comment: ""), systemImage: "house.fill")
+            }
+            .tag(0)
 
-            StatisticsView()
-                .tabItem {
-                    Label(NSLocalizedString("tab.statistics", comment: ""), systemImage: "chart.bar.fill")
-                }
-                .tag(1)
+            NavigationView {
+                StatisticsView()
+            }
+            .tabItem {
+                Label(NSLocalizedString("tab.statistics", comment: ""), systemImage: "chart.bar.fill")
+            }
+            .tag(1)
 
-            RecordView()
-                .tabItem {
-                    Label(NSLocalizedString("tab.record", comment: ""), systemImage: "plus.circle.fill")
-                }
-                .tag(2)
+            NavigationView {
+                RecordView()
+            }
+            .tabItem {
+                Label(NSLocalizedString("tab.record", comment: ""), systemImage: "plus.circle.fill")
+            }
+            .tag(2)
 
-            SettingsView()
-                .tabItem {
-                    Label(NSLocalizedString("tab.settings", comment: ""), systemImage: "gearshape.fill")
-                }
-                .tag(3)
+            NavigationView {
+                SettingsView()
+            }
+            .tabItem {
+                Label(NSLocalizedString("tab.settings", comment: ""), systemImage: "gearshape.fill")
+            }
+            .tag(3)
         }
         .tint(.primaryBlue)
     }
 
     private var iPadLayout: some View {
-        NavigationSplitView {
+        NavigationView {
             VStack(spacing: 0) {
                 Text(NSLocalizedString("app.name", comment: ""))
                     .font(.title)
                     .fontWeight(.bold)
                     .padding()
-                
+
                 List {
                     ForEach(TabItem.allCases) { item in
                         Button(action: {
@@ -102,23 +110,7 @@ struct ContentView: View {
                 }
                 .listStyle(.sidebar)
             }
-        } detail: {
-            selectedView
-                .navigationTitle(selectedSidebarItem.title)
-        }
-    }
-
-    @ViewBuilder
-    private var selectedView: some View {
-        switch selectedSidebarItem {
-        case .home:
-            HomeView()
-        case .statistics:
-            StatisticsView()
-        case .record:
-            RecordView()
-        case .settings:
-            SettingsView()
+            .navigationTitle("LiteLog")
         }
     }
 }

@@ -41,7 +41,7 @@ struct FeedbackView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ZStack {
                 Color.cardBackground
                     .ignoresSafeArea()
@@ -88,7 +88,6 @@ struct FeedbackView: View {
                             ZStack(alignment: .topLeading) {
                                 TextEditor(text: $message)
                                     .frame(height: 150)
-                                    .scrollContentBackground(.hidden)
                                     .background(Color.secondaryBackground)
                                     .cornerRadius(8)
                                     .foregroundColor(.primaryText)
@@ -119,7 +118,7 @@ struct FeedbackView: View {
                                     .foregroundColor(.primaryText)
                             }
                             .toggleStyle(SwitchToggleStyle(tint: .primaryBlue))
-                            .onChange(of: isAnonymous) { _, _ in
+                            .onChange(of: isAnonymous) { _ in
                                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                             }
 
@@ -129,7 +128,7 @@ struct FeedbackView: View {
                                         .foregroundColor(.primaryText)
                                 }
                                 .toggleStyle(SwitchToggleStyle(tint: .primaryBlue))
-                                .onChange(of: allowContact) { _, _ in
+                                .onChange(of: allowContact) { _ in
                                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                                 }
 
@@ -181,7 +180,6 @@ struct FeedbackView: View {
             }
             .navigationTitle(NSLocalizedString("feedback.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .tabBar)
             .sheet(isPresented: $showingSuccess, onDismiss: {
                 dismiss()
             }) {
@@ -229,7 +227,7 @@ struct FeedbackSuccessView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: 24) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 80))

@@ -1,30 +1,31 @@
 import Foundation
 import SwiftUI
-import SwiftData
+import CoreData
 
 enum UserProfileSyncStatus: Int, Codable {
     case pending = 0
     case synced = 1
 }
 
-@Model
-final class UserProfile {
-    var id: UUID
-    var height: Double
-    var gender: Gender
-    var age: Int
-    var goalWeight: Double
-    var goalBodyFat: Double?
-    var goalWaistCircumference: Double?
-    var goalHipCircumference: Double?
-    var goalChestCircumference: Double?
-    var goalThighCircumference: Double?
-    var weightUnit: String
-    var createdAt: Date
-    var updatedAt: Date
-    var syncStatus: UserProfileSyncStatus
+@objc(UserProfile)
+final class UserProfile: NSManagedObject {
+    @NSManaged var id: UUID
+    @NSManaged var height: Double
+    @NSManaged var gender: Int16
+    @NSManaged var age: Int16
+    @NSManaged var goalWeight: Double
+    @NSManaged var goalBodyFat: Double
+    @NSManaged var goalWaistCircumference: Double
+    @NSManaged var goalHipCircumference: Double
+    @NSManaged var goalChestCircumference: Double
+    @NSManaged var goalThighCircumference: Double
+    @NSManaged var weightUnit: String
+    @NSManaged var createdAt: Date
+    @NSManaged var updatedAt: Date
+    @NSManaged var syncStatus: Int16
 
-    enum Gender: Int, Codable, CaseIterable {
+    @objc(Gender)
+    enum Gender: Int16, CaseIterable {
         case male = 0
         case female = 1
 
@@ -36,36 +37,44 @@ final class UserProfile {
         }
     }
 
-    init(
-        id: UUID = UUID(),
-        height: Double = 170.0,
-        gender: Gender = .male,
-        age: Int = 30,
-        goalWeight: Double = 65.0,
-        goalBodyFat: Double? = nil,
-        goalWaistCircumference: Double? = nil,
-        goalHipCircumference: Double? = nil,
-        goalChestCircumference: Double? = nil,
-        goalThighCircumference: Double? = nil,
-        weightUnit: String = "kg",
-        createdAt: Date = Date(),
-        updatedAt: Date = Date(),
-        syncStatus: UserProfileSyncStatus = .pending
-    ) {
-        self.id = id
-        self.height = height
-        self.gender = gender
-        self.age = age
-        self.goalWeight = goalWeight
-        self.goalBodyFat = goalBodyFat
-        self.goalWaistCircumference = goalWaistCircumference
-        self.goalHipCircumference = goalHipCircumference
-        self.goalChestCircumference = goalChestCircumference
-        self.goalThighCircumference = goalThighCircumference
-        self.weightUnit = weightUnit
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
-        self.syncStatus = syncStatus
+    @objc(SyncStatus)
+    enum SyncStatus: Int16 {
+        case pending = 0
+        case synced = 1
+    }
+
+    static func fetchRequest() -> NSFetchRequest<UserProfile> {
+        NSFetchRequest<UserProfile>(entityName: "UserProfile")
+    }
+
+    var goalBodyFatPercentage: Double? {
+        goalBodyFat == 0 ? nil : goalBodyFat
+    }
+
+    var goalWaistCircumferenceValue: Double? {
+        goalWaistCircumference == 0 ? nil : goalWaistCircumference
+    }
+
+    var goalHipCircumferenceValue: Double? {
+        goalHipCircumference == 0 ? nil : goalHipCircumference
+    }
+
+    var goalChestCircumferenceValue: Double? {
+        goalChestCircumference == 0 ? nil : goalChestCircumference
+    }
+
+    var goalThighCircumferenceValue: Double? {
+        goalThighCircumference == 0 ? nil : goalThighCircumference
+    }
+
+    var genderEnum: Gender {
+        get { Gender(rawValue: gender) ?? .male }
+        set { gender = newValue.rawValue }
+    }
+
+    var syncStatusEnum: SyncStatus {
+        get { SyncStatus(rawValue: syncStatus) ?? .pending }
+        set { syncStatus = newValue.rawValue }
     }
 
     func calculateBMI(weight: Double) -> Double {
@@ -117,7 +126,28 @@ final class UserProfile {
 }
 
 extension UserProfile {
+    static func create(in context: NSManagedObjectContext) -> UserProfile {
+        let profile = UserProfile(context: context)
+        profile.id = UUID()
+        profile.height = 170.0
+        profile.gender = Gender.male.rawValue
+        profile.age = 30
+        profile.goalWeight = 65.0
+        profile.goalBodyFat = 0
+        profile.goalWaistCircumference = 0
+        profile.goalHipCircumference = 0
+        profile.goalChestCircumference = 0
+        profile.goalThighCircumference = 0
+        profile.weightUnit = "kg"
+        profile.createdAt = Date()
+        profile.updatedAt = Date()
+        profile.syncStatus = SyncStatus.pending.rawValue
+        return profile
+    }
+
     static var defaultProfile: UserProfile {
-        UserProfile()
+        let context = PersistenceController.shared.viewContext
+        return UserProfile.create(in: context)
     }
 }
+

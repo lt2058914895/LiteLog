@@ -1,12 +1,12 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct HomeView: View {
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var settingsManager: SettingsManager
 
-    @Query(sort: \WeightRecord.date, order: .reverse) private var allRecords: [WeightRecord]
-    @Query private var userProfile: [UserProfile]
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) 
+    private var allRecords: FetchedResults<WeightRecord>
 
     @State private var weightInput = ""
     @State private var showingAddSheet = false
@@ -16,7 +16,10 @@ struct HomeView: View {
     @State private var errorMessage = ""
     @State private var showingProfileEditor = false
 
-    private var profile: UserProfile? { userProfile.first }
+    private var profile: UserProfile? {
+        let request = UserProfile.fetchRequest()
+        return try? context.fetch(request).first
+    }
     private var unit: WeightUnit { settingsManager.weightUnit }
 
     private var latestWeight: Double? {
@@ -29,43 +32,43 @@ struct HomeView: View {
     }
 
     private var latestBodyFatRecord: WeightRecord? {
-        allRecords.first { $0.bodyFatPercentage != nil }
+        allRecords.first { $0.bodyFatPercentage != 0 }
     }
 
     private var latestBodyFat: Double? {
-        latestBodyFatRecord?.bodyFatPercentage
+        latestBodyFatRecord?.bodyFatPercentageValue
     }
 
     private var latestWaistRecord: WeightRecord? {
-        allRecords.first { $0.waistCircumference != nil }
+        allRecords.first { $0.waistCircumference != 0 }
     }
 
     private var latestWaist: Double? {
-        latestWaistRecord?.waistCircumference
+        latestWaistRecord?.waistCircumferenceValue
     }
 
     private var latestHipRecord: WeightRecord? {
-        allRecords.first { $0.hipCircumference != nil }
+        allRecords.first { $0.hipCircumference != 0 }
     }
 
     private var latestHip: Double? {
-        latestHipRecord?.hipCircumference
+        latestHipRecord?.hipCircumferenceValue
     }
 
     private var latestChestRecord: WeightRecord? {
-        allRecords.first { $0.chestCircumference != nil }
+        allRecords.first { $0.chestCircumference != 0 }
     }
 
     private var latestChest: Double? {
-        latestChestRecord?.chestCircumference
+        latestChestRecord?.chestCircumferenceValue
     }
 
     private var latestThighRecord: WeightRecord? {
-        allRecords.first { $0.thighCircumference != nil }
+        allRecords.first { $0.thighCircumference != 0 }
     }
 
     private var latestThigh: Double? {
-        latestThighRecord?.thighCircumference
+        latestThighRecord?.thighCircumferenceValue
     }
 
     private var bodyFatProgress: Double {
@@ -73,10 +76,9 @@ struct HomeView: View {
         return min(current / 50.0 * 100, 100)
     }
 
-    
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
                     todayWeightCard
@@ -103,12 +105,11 @@ struct HomeView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(isPresented: $showingAddSheet) {
+            .adaptiveSheet(isPresented: $showingAddSheet) {
                 RecordFormView(isPresented: $showingAddSheet)
             }
-            .navigationDestination(isPresented: $showingProfileEditor) {
+            .adaptiveSheet(isPresented: $showingProfileEditor) {
                 ProfileEditorView()
-                    .navigationBarTitleDisplayMode(.inline)
             }
             .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
                 Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
@@ -251,8 +252,8 @@ struct HomeView: View {
             }
             
             // 只有目标体脂率和当前体脂率都为空时才展示暂无数据
-            if let profile = profile, (profile.goalBodyFat != nil || latestBodyFat != nil) {
-                let goalBodyFat = profile.goalBodyFat
+            if let profile = profile, (profile.goalBodyFat != 0 || latestBodyFat != nil) {
+                let goalBodyFat = profile.goalBodyFatPercentage
                 let currentBodyFat = latestBodyFat ?? 0
                 
                 VStack(spacing: 8) {
@@ -364,31 +365,31 @@ struct HomeView: View {
             
             // 内容区域
             if let profile = profile {
-                let hasWaistData = profile.goalWaistCircumference != nil || latestWaist != nil
-                let hasHipData = profile.goalHipCircumference != nil || latestHip != nil
-                let hasChestData = profile.goalChestCircumference != nil || latestChest != nil
-                let hasThighData = profile.goalThighCircumference != nil || latestThigh != nil
+                let hasWaistData = profile.goalWaistCircumference != 0 || latestWaist != nil
+                let hasHipData = profile.goalHipCircumference != 0 || latestHip != nil
+                let hasChestData = profile.goalChestCircumference != 0 || latestChest != nil
+                let hasThighData = profile.goalThighCircumference != 0 || latestThigh != nil
                 
                 if hasWaistData || hasHipData || hasChestData || hasThighData {
                     VStack(spacing: 20) {
                         // 腰围
                         measurementRow(title: NSLocalizedString("home.waist", comment: ""),
-                                       goal: profile.goalWaistCircumference,
+                                       goal: profile.goalWaistCircumferenceValue,
                                        current: latestWaist)
                         
                         // 臀围
                         measurementRow(title: NSLocalizedString("home.hip", comment: ""),
-                                       goal: profile.goalHipCircumference,
+                                       goal: profile.goalHipCircumferenceValue,
                                        current: latestHip)
                         
                         // 胸围
                         measurementRow(title: NSLocalizedString("home.chest", comment: ""),
-                                       goal: profile.goalChestCircumference,
+                                       goal: profile.goalChestCircumferenceValue,
                                        current: latestChest)
                         
                         // 大腿围
                         measurementRow(title: NSLocalizedString("home.thigh", comment: ""),
-                                       goal: profile.goalThighCircumference,
+                                       goal: profile.goalThighCircumferenceValue,
                                        current: latestThigh)
                     }
                 } else {
@@ -576,7 +577,7 @@ struct HomeView: View {
     }
     
 
-    
+
     @ViewBuilder
     private var avatarImageView: some View {
         if !settingsManager.avatarUrl.isEmpty {

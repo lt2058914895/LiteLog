@@ -1,5 +1,5 @@
 import Foundation
-import SwiftData
+import CoreData
 import UIKit
 
 enum WeightRecordSyncStatus: Int, Codable {
@@ -28,79 +28,98 @@ enum MeasurementTimePeriod: String, Codable, CaseIterable {
     }
 }
 
-@Model
-final class WeightRecord {
-    var id: UUID
-    var date: Date
-    var weight: Double
-    var bodyFatPercentage: Double?
-    var waistCircumference: Double?
-    var hipCircumference: Double?
-    var chestCircumference: Double?
-    var thighCircumference: Double?
-    var note: String?
-    var imageUrl: String?
-    var measurementTimePeriod: String?
-    var createdAt: Date
-    var updatedAt: Date
-    var syncStatus: WeightRecordSyncStatus
-    
-    @Transient
+@objc(WeightRecord)
+final class WeightRecord: NSManagedObject, Identifiable {
+    @NSManaged var id: UUID
+    @NSManaged var date: Date
+    @NSManaged var weight: Double
+    @NSManaged var bodyFatPercentage: Double
+    @NSManaged var waistCircumference: Double
+    @NSManaged var hipCircumference: Double
+    @NSManaged var chestCircumference: Double
+    @NSManaged var thighCircumference: Double
+    @NSManaged var note: String?
+    @NSManaged var imageUrl: String?
+    @NSManaged var measurementTimePeriod: String?
+    @NSManaged var createdAt: Date
+    @NSManaged var updatedAt: Date
+    @NSManaged var syncStatus: Int16
+
     var selectedImage: UIImage?
 
-    init(
-        id: UUID = UUID(),
-        date: Date = Date(),
-        weight: Double,
-        bodyFatPercentage: Double? = nil,
-        waistCircumference: Double? = nil,
-        hipCircumference: Double? = nil,
-        chestCircumference: Double? = nil,
-        thighCircumference: Double? = nil,
-        note: String? = nil,
-        imageUrl: String? = nil,
-        measurementTimePeriod: String? = nil,
-        createdAt: Date = Date(),
-        updatedAt: Date = Date(),
-        syncStatus: WeightRecordSyncStatus = .pending
-    ) {
-        self.id = id
-        self.date = date
-        self.weight = weight
-        self.bodyFatPercentage = bodyFatPercentage
-        self.waistCircumference = waistCircumference
-        self.hipCircumference = hipCircumference
-        self.chestCircumference = chestCircumference
-        self.thighCircumference = thighCircumference
-        self.note = note
-        self.imageUrl = imageUrl
-        self.measurementTimePeriod = measurementTimePeriod
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
-        self.syncStatus = syncStatus
-        self.selectedImage = nil
+    @objc(SyncStatus)
+    enum SyncStatus: Int16 {
+        case pending
+        case synced
+        case failed
+    }
+
+    static func fetchRequest() -> NSFetchRequest<WeightRecord> {
+        NSFetchRequest<WeightRecord>(entityName: "WeightRecord")
+    }
+
+    var bodyFatPercentageValue: Double? {
+        bodyFatPercentage == 0 ? nil : bodyFatPercentage
+    }
+
+    var waistCircumferenceValue: Double? {
+        waistCircumference == 0 ? nil : waistCircumference
+    }
+
+    var hipCircumferenceValue: Double? {
+        hipCircumference == 0 ? nil : hipCircumference
+    }
+
+    var chestCircumferenceValue: Double? {
+        chestCircumference == 0 ? nil : chestCircumference
+    }
+
+    var thighCircumferenceValue: Double? {
+        thighCircumference == 0 ? nil : thighCircumference
+    }
+
+    var syncStatusEnum: SyncStatus {
+        get { SyncStatus(rawValue: syncStatus) ?? .pending }
+        set { syncStatus = newValue.rawValue }
     }
 }
 
 extension WeightRecord {
+    static func create(in context: NSManagedObjectContext, weight: Double) -> WeightRecord {
+        let record = WeightRecord(context: context)
+        record.id = UUID()
+        record.date = Date()
+        record.weight = weight
+        record.bodyFatPercentage = 0
+        record.waistCircumference = 0
+        record.hipCircumference = 0
+        record.chestCircumference = 0
+        record.thighCircumference = 0
+        record.note = nil
+        record.imageUrl = nil
+        record.measurementTimePeriod = nil
+        record.createdAt = Date()
+        record.updatedAt = Date()
+        record.syncStatus = SyncStatus.pending.rawValue
+        return record
+    }
+
     static var sampleData: WeightRecord {
-        WeightRecord(
-            date: Date(),
-            weight: 70.0,
-            bodyFatPercentage: 20.0,
-            note: "Sample record"
-        )
+        let context = PersistenceController.shared.viewContext
+        let record = WeightRecord.create(in: context, weight: 70.0)
+        record.bodyFatPercentage = 20.0
+        return record
     }
 
     static var sampleDataArray: [WeightRecord] {
         let calendar = Calendar.current
+        let context = PersistenceController.shared.viewContext
         return (0..<7).map { dayOffset in
             let date = calendar.date(byAdding: .day, value: -dayOffset, to: Date()) ?? Date()
-            return WeightRecord(
-                date: date,
-                weight: 70.0 + Double(dayOffset) * 0.2,
-                bodyFatPercentage: 20.0 + Double(dayOffset) * 0.5
-            )
+            let record = WeightRecord.create(in: context, weight: 70.0 + Double(dayOffset) * 0.2)
+            record.date = date
+            record.bodyFatPercentage = 20.0 + Double(dayOffset) * 0.5
+            return record
         }
     }
 }

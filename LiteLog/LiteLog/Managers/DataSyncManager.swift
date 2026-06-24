@@ -1,6 +1,6 @@
 import Foundation
 import UIKit
-import SwiftData
+import CoreData
 
 final class DataSyncManager {
     static let shared = DataSyncManager()
@@ -8,13 +8,13 @@ final class DataSyncManager {
     private init() {}
     
     @MainActor
-    func syncLocalDataToCloud(modelContext: ModelContext) async {
+    func syncLocalDataToCloud(context: NSManagedObjectContext) async {
         do {
             // 同步个人资料
-            try await syncUserProfile(modelContext: modelContext)
+            try await syncUserProfile(context: context)
             
             // 同步体重记录
-            try await syncWeightRecords(modelContext: modelContext)
+            try await syncWeightRecords(context: context)
             
         } catch {
             print("数据同步失败: \(error)")
@@ -22,9 +22,10 @@ final class DataSyncManager {
     }
     
     @MainActor
-    private func syncUserProfile(modelContext: ModelContext) async throws {
-        let allProfiles = try modelContext.fetch(FetchDescriptor<UserProfile>())
-        let pendingProfiles = allProfiles.filter { $0.syncStatus == .pending }
+    private func syncUserProfile(context: NSManagedObjectContext) async throws {
+        let request = UserProfile.fetchRequest()
+        let allProfiles = try context.fetch(request)
+        let pendingProfiles = allProfiles.filter { $0.syncStatus == UserProfile.SyncStatus.pending.rawValue }
         
         if let profile = pendingProfiles.first {
             do {
@@ -35,15 +36,15 @@ final class DataSyncManager {
                 
                 let response = try await APIService.shared.updateUserProfile(
                     height: profile.height,
-                    gender: profile.gender.rawValue,
-                    age: profile.age,
+                    gender: Int(profile.gender),
+                    age: Int(profile.age),
                     goalWeight: goalWeightInCurrentUnit,
                     weightUnit: profile.weightUnit
                 )
                 
                 if response.success {
-                    profile.syncStatus = .synced
-                    try modelContext.save()
+                    profile.syncStatus = UserProfile.SyncStatus.synced.rawValue
+                    try context.save()
                     print("个人资料（身高、性别、年龄、目标体重）同步成功")
                 }
             } catch {
@@ -54,25 +55,26 @@ final class DataSyncManager {
     }
     
     @MainActor
-    func triggerProfileSync(modelContext: ModelContext) {
+    func triggerProfileSync(context: NSManagedObjectContext) {
         // 将个人资料标记为待同步
-        let profiles = try? modelContext.fetch(FetchDescriptor<UserProfile>())
+        let request = UserProfile.fetchRequest()
+        let profiles = try? context.fetch(request)
         if let profile = profiles?.first {
-            profile.syncStatus = .pending
-            try? modelContext.save()
+            profile.syncStatus = UserProfile.SyncStatus.pending.rawValue
+            try? context.save()
             
             // 异步触发同步
             Task {
-                await syncLocalDataToCloud(modelContext: modelContext)
+                await syncLocalDataToCloud(context: context)
             }
         }
     }
     
     @MainActor
-    func triggerWeightRecordSync(modelContext: ModelContext) {
+    func triggerWeightRecordSync(context: NSManagedObjectContext) {
         // 异步触发同步（记录已经标记为 pending）
         Task {
-            await syncLocalDataToCloud(modelContext: modelContext)
+            await syncLocalDataToCloud(context: context)
         }
     }
     
@@ -89,9 +91,10 @@ final class DataSyncManager {
     }
     
     @MainActor
-    private func syncWeightRecords(modelContext: ModelContext) async throws {
-        let allRecords = try modelContext.fetch(FetchDescriptor<WeightRecord>())
-        let pendingRecords = allRecords.filter { $0.syncStatus == .pending }
+    private func syncWeightRecords(context: NSManagedObjectContext) async throws {
+        let request = WeightRecord.fetchRequest()
+        let allRecords = try context.fetch(request)
+        let pendingRecords = allRecords.filter { $0.syncStatus == WeightRecord.SyncStatus.pending.rawValue }
         
         if pendingRecords.isEmpty {
             return
@@ -107,11 +110,11 @@ final class DataSyncManager {
                 WeightRecordRequest(
                     recordId: record.id.uuidString,
                     weight: record.weight,
-                    bodyFatPercentage: record.bodyFatPercentage,
-                    waistCircumference: record.waistCircumference,
-                    hipCircumference: record.hipCircumference,
-                    chestCircumference: record.chestCircumference,
-                    thighCircumference: record.thighCircumference,
+                    bodyFatPercentage: record.bodyFatPercentage == 0 ? nil : record.bodyFatPercentage,
+                    waistCircumference: record.waistCircumference == 0 ? nil : record.waistCircumference,
+                    hipCircumference: record.hipCircumference == 0 ? nil : record.hipCircumference,
+                    chestCircumference: record.chestCircumference == 0 ? nil : record.chestCircumference,
+                    thighCircumference: record.thighCircumference == 0 ? nil : record.thighCircumference,
                     note: record.note,
                     date: record.date.timeIntervalSince1970,
                     createdAt: record.createdAt.timeIntervalSince1970,
@@ -129,10 +132,10 @@ final class DataSyncManager {
                 if response.success {
                     if let syncedIds = response.syncedRecordIds {
                         for record in recordsWithoutImages where syncedIds.contains(record.id.uuidString) {
-                            record.syncStatus = .synced
+                            record.syncStatus = WeightRecord.SyncStatus.synced.rawValue
                         }
                     }
-                    try modelContext.save()
+                    try context.save()
                     print("体重记录同步成功，同步了 \(response.syncedCount) 条")
                 }
             } catch {
@@ -146,11 +149,11 @@ final class DataSyncManager {
                 WeightRecordRequest(
                     recordId: record.id.uuidString,
                     weight: record.weight,
-                    bodyFatPercentage: record.bodyFatPercentage,
-                    waistCircumference: record.waistCircumference,
-                    hipCircumference: record.hipCircumference,
-                    chestCircumference: record.chestCircumference,
-                    thighCircumference: record.thighCircumference,
+                    bodyFatPercentage: record.bodyFatPercentage == 0 ? nil : record.bodyFatPercentage,
+                    waistCircumference: record.waistCircumference == 0 ? nil : record.waistCircumference,
+                    hipCircumference: record.hipCircumference == 0 ? nil : record.hipCircumference,
+                    chestCircumference: record.chestCircumference == 0 ? nil : record.chestCircumference,
+                    thighCircumference: record.thighCircumference == 0 ? nil : record.thighCircumference,
                     note: record.note,
                     date: record.date.timeIntervalSince1970,
                     createdAt: record.createdAt.timeIntervalSince1970,
@@ -173,11 +176,11 @@ final class DataSyncManager {
                 if response.success {
                     if let syncedIds = response.syncedRecordIds {
                         for record in recordsWithImages where syncedIds.contains(record.id.uuidString) {
-                            record.syncStatus = .synced
+                            record.syncStatus = WeightRecord.SyncStatus.synced.rawValue
                             record.selectedImage = nil  // 清除临时图片
                         }
                     }
-                    try modelContext.save()
+                    try context.save()
                     print("带图片的体重记录同步成功，同步了 \(response.syncedCount) 条")
                 }
             } catch {

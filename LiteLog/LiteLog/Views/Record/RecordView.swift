@@ -1,18 +1,22 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct RecordView: View {
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var settingsManager: SettingsManager
 
-    @Query(sort: \WeightRecord.date, order: .reverse) private var records: [WeightRecord]
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var records: FetchedResults<WeightRecord>
 
     @State private var selectedDate: Date?
     @State private var showingAddSheet = false
     @State private var selectedRecord: WeightRecord?
     @State private var viewMode: ViewMode = .list
 
-    @Query private var userProfile: [UserProfile]
+    @FetchRequest private var userProfile: FetchedResults<UserProfile>
+    
+    init() {
+        _userProfile = FetchRequest(fetchRequest: UserProfile.fetchRequest())
+    }
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -25,7 +29,7 @@ struct RecordView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: 0) {
                 viewModePicker
 
@@ -54,10 +58,10 @@ struct RecordView: View {
                     }
                 }
             }
-            .navigationDestination(isPresented: $showingAddSheet) {
+            .adaptiveSheet(isPresented: $showingAddSheet) {
                 RecordFormView(isPresented: $showingAddSheet)
             }
-            .navigationDestination(item: $selectedRecord) { record in
+            .adaptiveSheet(item: $selectedRecord) { record in
                 RecordFormView(record: record, isPresented: .constant(false))
             }
         }
@@ -126,7 +130,7 @@ struct RecordView: View {
         ScrollView {
             VStack(spacing: 20) {
                 CalendarView(
-                    records: records,
+                    records: Array(records),
                     unit: unit,
                     selectedDate: $selectedDate,
                     onDateSelected: { _ in }
@@ -183,7 +187,8 @@ struct RecordView: View {
     private func deleteRecord(_ record: WeightRecord) {
         let recordId = record.id.uuidString
         withAnimation {
-            modelContext.delete(record)
+            context.delete(record)
+            try? context.save()
         }
         
         // 同步删除到云数据库

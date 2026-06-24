@@ -1,10 +1,14 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct BMIInfoView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var userProfile: [UserProfile]
-    @Query(sort: \WeightRecord.date, order: .reverse) private var allRecords: [WeightRecord]
+    @Environment(\.managedObjectContext) private var context
+    @FetchRequest private var userProfile: FetchedResults<UserProfile>
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var allRecords: FetchedResults<WeightRecord>
+    
+    init() {
+        _userProfile = FetchRequest(fetchRequest: UserProfile.fetchRequest())
+    }
     
     private var profile: UserProfile? { userProfile.first }
     
@@ -51,7 +55,8 @@ struct BMIInfoView: View {
     
     private var bodyFatStatus: (name: String, color: Color)? {
         guard let bodyFat = currentBodyFat, let profile = profile else { return nil }
-        let gender = profile.gender == .male ? "male" : "female"
+        let genderEnum = UserProfile.Gender(rawValue: profile.gender) ?? .male
+        let gender = genderEnum == .male ? "male" : "female"
         if let range = bodyFatRanges.first(where: { $0.gender == gender && $0.range.contains(bodyFat) }) {
             return (name: range.name, color: range.color)
         }
@@ -63,7 +68,8 @@ struct BMIInfoView: View {
             return NSLocalizedString("rating.insufficient", comment: "")
         }
         
-        let gender = profile.gender == .male ? "male" : "female"
+        let genderEnum = UserProfile.Gender(rawValue: profile.gender) ?? .male
+        let gender = genderEnum == .male ? "male" : "female"
         let bodyFatRange = bodyFatRanges.first { $0.gender == gender && $0.range.contains(bodyFat) }
         
         if bmiCat == .normal {
@@ -96,7 +102,7 @@ struct BMIInfoView: View {
     }
     
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
                     if let profile = profile {
@@ -108,7 +114,7 @@ struct BMIInfoView: View {
                         
                         comprehensiveAnalysisSection
                         
-                        referenceRangeSection(gender: profile.gender, age: profile.age, height: profile.height)
+                        referenceRangeSection(gender: UserProfile.Gender(rawValue: profile.gender) ?? .male, age: Int(profile.age), height: profile.height)
                     } else {
                         emptyStateView
                     }
@@ -118,7 +124,6 @@ struct BMIInfoView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("bmi.info.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .tabBar)
         }
     }
     

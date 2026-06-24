@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ContactView: View {
     var body: some View {
-        NavigationStack {
+        NavigationView {
             List {
                 Section {
                     HStack {
@@ -26,7 +26,6 @@ struct ContactView: View {
             }
             .navigationTitle(NSLocalizedString("settings.contact", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .tabBar)
         }
     }
 }

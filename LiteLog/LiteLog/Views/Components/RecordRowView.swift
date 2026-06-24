@@ -24,7 +24,7 @@ struct RecordRowView: View {
                 Spacer()
 
                 // 体脂率
-                if let bodyFat = record.bodyFatPercentage {
+                if let bodyFat = record.bodyFatPercentageValue {
                     bodyFatView(bodyFat)
                 }
             }
@@ -38,19 +38,19 @@ struct RecordRowView: View {
                     
                     // 使用自适应网格布局，支持自动换行
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 70))], spacing: 12) {
-                        if let waist = record.waistCircumference {
+                        if let waist = record.waistCircumferenceValue {
                             waistView(waist)
                         }
 
-                        if let hip = record.hipCircumference {
+                        if let hip = record.hipCircumferenceValue {
                             hipView(hip)
                         }
 
-                        if let chest = record.chestCircumference {
+                        if let chest = record.chestCircumferenceValue {
                             chestView(chest)
                         }
 
-                        if let thigh = record.thighCircumference {
+                        if let thigh = record.thighCircumferenceValue {
                             thighView(thigh)
                         }
                     }
@@ -92,10 +92,10 @@ struct RecordRowView: View {
     }
 
     private var hasSecondaryInfo: Bool {
-        record.waistCircumference != nil ||
-        record.hipCircumference != nil ||
-        record.chestCircumference != nil ||
-        record.thighCircumference != nil
+        record.waistCircumferenceValue != nil ||
+        record.hipCircumferenceValue != nil ||
+        record.chestCircumferenceValue != nil ||
+        record.thighCircumferenceValue != nil
     }
 
     private var dateView: some View {

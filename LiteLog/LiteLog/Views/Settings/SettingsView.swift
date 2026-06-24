@@ -1,13 +1,17 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct SettingsView: View {
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var settingsManager: SettingsManager
     @StateObject private var notificationManager = NotificationManager.shared
 
-    @Query private var userProfile: [UserProfile]
-    @Query(sort: \WeightRecord.date, order: .reverse) private var records: [WeightRecord]
+    @FetchRequest private var userProfile: FetchedResults<UserProfile>
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var records: FetchedResults<WeightRecord>
+    
+    init() {
+        _userProfile = FetchRequest(fetchRequest: UserProfile.fetchRequest())
+    }
 
     @State private var showingProfileEditor = false
     @State private var showingUserInfoEditor = false
@@ -21,7 +25,7 @@ struct SettingsView: View {
     private var unit: WeightUnit { settingsManager.weightUnit }
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             List {
                 userHeaderSection
                 
@@ -39,9 +43,8 @@ struct SettingsView: View {
             .onReceive(NotificationCenter.default.publisher(for: .showProfileEditor)) { _ in
                 showingProfileEditor = true
             }
-            .navigationDestination(isPresented: $showingProfileEditor) {
+            .adaptiveSheet(isPresented: $showingProfileEditor) {
                 ProfileEditorView()
-                    .navigationBarTitleDisplayMode(.inline)
             }
             .adaptiveSheet(isPresented: $showingUserInfoEditor) {
                 UserInfoEditorView()
@@ -159,7 +162,7 @@ struct SettingsView: View {
                 HStack {
                     Text(NSLocalizedString("settings.gender", comment: ""))
                     Spacer()
-                    Text(profile.gender.displayName)
+                    Text(UserProfile.Gender(rawValue: profile.gender)?.displayName ?? "")
                         .foregroundColor(.secondaryText)
                 }
 
@@ -177,7 +180,7 @@ struct SettingsView: View {
                         .foregroundColor(.secondaryText)
                 }
 
-                if let goalBodyFat = profile.goalBodyFat {
+                if let goalBodyFat = profile.goalBodyFatPercentage {
                     HStack {
                         Text(NSLocalizedString("settings.goal.body.fat", comment: ""))
                         Spacer()
@@ -186,7 +189,7 @@ struct SettingsView: View {
                     }
                 }
 
-                if let goalWaistCircumference = profile.goalWaistCircumference {
+                if let goalWaistCircumference = profile.goalWaistCircumferenceValue {
                     HStack {
                         Text(NSLocalizedString("settings.goal.waist", comment: ""))
                         Spacer()
@@ -195,7 +198,7 @@ struct SettingsView: View {
                     }
                 }
 
-                if let goalHipCircumference = profile.goalHipCircumference {
+                if let goalHipCircumference = profile.goalHipCircumferenceValue {
                     HStack {
                         Text(NSLocalizedString("settings.goal.hip", comment: ""))
                         Spacer()
@@ -204,7 +207,7 @@ struct SettingsView: View {
                     }
                 }
 
-                if let goalChestCircumference = profile.goalChestCircumference {
+                if let goalChestCircumference = profile.goalChestCircumferenceValue {
                     HStack {
                         Text(NSLocalizedString("settings.goal.chest", comment: ""))
                         Spacer()
@@ -251,7 +254,7 @@ struct SettingsView: View {
                         .foregroundColor(.orange)
                 }
             }
-            .onChange(of: settingsManager.notificationsEnabled) { _, newValue in
+            .onChange(of: settingsManager.notificationsEnabled) { newValue in
                 if newValue {
                     Task {
                         try? await notificationManager.requestAuthorization()
@@ -272,7 +275,7 @@ struct SettingsView: View {
                     selection: $settingsManager.notificationTime,
                     displayedComponents: .hourAndMinute
                 )
-                .onChange(of: settingsManager.notificationTime) { _, newValue in
+                .onChange(of: settingsManager.notificationTime) { newValue in
                     Task {
                         try? await notificationManager.scheduleDailyReminder(at: newValue)
                     }
@@ -382,7 +385,7 @@ struct SettingsView: View {
             return
         }
         
-        if let url = ExportManager.shared.exportToCSV(records: records, unit: unit) {
+        if let url = ExportManager.shared.exportToCSV(records: Array(records), unit: unit) {
             exportURL = IdentifiableURL(url)
         } else {
             showingExportError = true
@@ -392,18 +395,18 @@ struct SettingsView: View {
     private func deleteAllData() {
         let recordIds = records.map { $0.id.uuidString }
         for record in records {
-            modelContext.delete(record)
+            context.delete(record)
         }
         
-        let profileFetch = FetchDescriptor<UserProfile>()
-        if let profiles = try? modelContext.fetch(profileFetch) {
+        let profileFetch = UserProfile.fetchRequest()
+        if let profiles = try? context.fetch(profileFetch) {
             for profile in profiles {
-                modelContext.delete(profile)
+                context.delete(profile)
             }
         }
 
         do {
-            try modelContext.save()
+            try context.save()
             Task {
                 await DataSyncManager.shared.syncDeletedRecords(recordIds: recordIds)
             }
@@ -414,11 +417,15 @@ struct SettingsView: View {
 }
 
 struct ProfileEditorView: View {
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var context
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var settingsManager: SettingsManager
 
-    @Query private var userProfile: [UserProfile]
+    @FetchRequest private var userProfile: FetchedResults<UserProfile>
+    
+    init() {
+        _userProfile = FetchRequest(fetchRequest: UserProfile.fetchRequest())
+    }
 
     @State private var heightString: String = ""
     @State private var gender: UserProfile.Gender = .male
@@ -535,7 +542,6 @@ struct ProfileEditorView: View {
                 }
             }
         }
-        .toolbar(.hidden, for: .tabBar)
         .onAppear {
             loadExistingProfile()
         }
@@ -544,14 +550,14 @@ struct ProfileEditorView: View {
     private func loadExistingProfile() {
         if let profile = existingProfile {
             heightString = heightUnit.convertFromCm(profile.height).smartFormatted
-            gender = profile.gender
-            age = profile.age
+            gender = profile.genderEnum
+            age = Int(profile.age)
             goalWeightString = unit.convertFromKg(profile.goalWeight).smartFormatted
-            goalBodyFatString = profile.goalBodyFat?.smartFormatted ?? ""
-            goalWaistCircumferenceString = profile.goalWaistCircumference?.smartFormatted ?? ""
-            goalHipCircumferenceString = profile.goalHipCircumference?.smartFormatted ?? ""
-            goalChestCircumferenceString = profile.goalChestCircumference?.smartFormatted ?? ""
-            goalThighCircumferenceString = profile.goalThighCircumference?.smartFormatted ?? ""
+            goalBodyFatString = profile.goalBodyFatPercentage?.smartFormatted ?? ""
+            goalWaistCircumferenceString = profile.goalWaistCircumferenceValue?.smartFormatted ?? ""
+            goalHipCircumferenceString = profile.goalHipCircumferenceValue?.smartFormatted ?? ""
+            goalChestCircumferenceString = profile.goalChestCircumferenceValue?.smartFormatted ?? ""
+            goalThighCircumferenceString = profile.goalThighCircumferenceValue?.smartFormatted ?? ""
         }
     }
 
@@ -621,36 +627,32 @@ struct ProfileEditorView: View {
 
         if let existing = existingProfile {
             existing.height = heightInCm
-            existing.gender = gender
-            existing.age = age
+            existing.genderEnum = gender
+            existing.age = Int16(age)
             existing.goalWeight = goalWeightInKg
-            existing.goalBodyFat = goalBodyFat
-            existing.goalWaistCircumference = goalWaistCircumference
-            existing.goalHipCircumference = goalHipCircumference
-            existing.goalChestCircumference = goalChestCircumference
-            existing.goalThighCircumference = goalThighCircumference
+            existing.goalBodyFat = goalBodyFat ?? 0
+            existing.goalWaistCircumference = goalWaistCircumference ?? 0
+            existing.goalHipCircumference = goalHipCircumference ?? 0
+            existing.goalChestCircumference = goalChestCircumference ?? 0
+            existing.goalThighCircumference = goalThighCircumference ?? 0
             existing.updatedAt = Date()
-            existing.syncStatus = .pending
+            existing.syncStatusEnum = .pending
         } else {
-            let newProfile = UserProfile(
-                height: heightInCm,
-                gender: gender,
-                age: age,
-                goalWeight: goalWeightInKg,
-                goalBodyFat: goalBodyFat,
-                goalWaistCircumference: goalWaistCircumference,
-                goalHipCircumference: goalHipCircumference,
-                goalChestCircumference: goalChestCircumference,
-                goalThighCircumference: goalThighCircumference,
-                weightUnit: SettingsManager.shared.weightUnit.rawValue,
-                syncStatus: UserProfileSyncStatus.pending
-            )
-            modelContext.insert(newProfile)
+            let newProfile = UserProfile.create(in: context)
+            newProfile.height = heightInCm
+            newProfile.genderEnum = gender
+            newProfile.age = Int16(age)
+            newProfile.goalWeight = goalWeightInKg
+            newProfile.goalBodyFat = goalBodyFat ?? 0
+            newProfile.goalWaistCircumference = goalWaistCircumference ?? 0
+            newProfile.goalHipCircumference = goalHipCircumference ?? 0
+            newProfile.goalChestCircumference = goalChestCircumference ?? 0
+            newProfile.goalThighCircumference = goalThighCircumference ?? 0
         }
         
         do {
-            try modelContext.save()
-            DataSyncManager.shared.triggerProfileSync(modelContext: modelContext)
+            try context.save()
+            DataSyncManager.shared.triggerProfileSync(context: context)
         } catch {
             print("保存个人资料失败: \(error)")
         }

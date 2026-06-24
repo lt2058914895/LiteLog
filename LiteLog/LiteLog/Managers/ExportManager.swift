@@ -15,7 +15,7 @@ final class ExportManager {
         for record in records.sorted(by: { $0.date > $1.date }) {
             let dateString = dateFormatter.string(from: record.date)
             let weight = unit.convertFromKg(record.weight)
-            let bodyFat = record.bodyFatPercentage.map { String(format: "%.1f", $0) } ?? ""
+            let bodyFat = record.bodyFatPercentageValue != nil ? String(format: "%.1f", record.bodyFatPercentageValue!) : ""
             let note = record.note?.replacingOccurrences(of: ",", with: ";").replacingOccurrences(of: "\n", with: " ") ?? ""
 
             csvContent += "\(dateString),\(String(format: "%.1f", weight)),\(bodyFat),\"\(note)\"\n"

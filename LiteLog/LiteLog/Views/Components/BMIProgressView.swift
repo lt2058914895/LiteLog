@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreData
 
 struct BMIProgressView: View {
     let currentWeight: Double
@@ -10,7 +11,8 @@ struct BMIProgressView: View {
     }
 
     private var bmiCategory: UserProfile.BMICategory {
-        let profile = UserProfile(height: height)
+        let profile = UserProfile.create(in: PersistenceController.shared.viewContext)
+        profile.height = height
         return profile.bmiCategory(bmi: currentBMI)
     }
 

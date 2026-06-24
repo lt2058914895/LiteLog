@@ -1,13 +1,16 @@
 import SwiftUI
-import SwiftData
-import Charts
+import CoreData
 
 struct StatisticsView: View {
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var settingsManager: SettingsManager
 
-    @Query(sort: \WeightRecord.date, order: .forward) private var records: [WeightRecord]
-    @Query private var userProfile: [UserProfile]
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: true)]) private var records: FetchedResults<WeightRecord>
+    @FetchRequest private var userProfile: FetchedResults<UserProfile>
+    
+    init() {
+        _userProfile = FetchRequest(fetchRequest: UserProfile.fetchRequest())
+    }
 
     @State private var selectedPeriod: Period = .week
     @State private var selectedMetric: Metric = .weight
@@ -149,7 +152,7 @@ struct StatisticsView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
                     periodPicker
@@ -281,110 +284,17 @@ struct StatisticsView: View {
                     .foregroundColor(.secondaryText)
                     .frame(height: 200)
                     .frame(maxWidth: .infinity)
+                    .padding()
+                    .cardStyle()
             } else {
-                Chart(currentMetricData, id: \.0) { item in
-                    LineMark(
-                        x: .value("Date", item.0),
-                        y: .value("Value", item.1)
-                    )
-                    .foregroundStyle(selectedMetric.color)
-                    .interpolationMethod(.catmullRom)
-
-                    AreaMark(
-                        x: .value("Date", item.0),
-                        y: .value("Value", item.1)
-                    )
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [selectedMetric.color.opacity(0.3), selectedMetric.color.opacity(0.0)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .interpolationMethod(.catmullRom)
-
-                    PointMark(
-                        x: .value("Date", item.0),
-                        y: .value("Value", item.1)
-                    )
-                    .foregroundStyle(selectedMetric.color)
-                    .symbolSize(30)
-                }
-                .chartXScale(domain: startDate...Date().startOfDay)
-                .chartXAxis {
-                    AxisMarks(values: [startDate, Date().startOfDay]) { value in
-                        AxisGridLine()
-                        AxisValueLabel {
-                            if let date = value.as(Date.self) {
-                                Text(date.shortDateString)
-                            }
-                        }
-                    }
-                }
-                .chartYAxis {
-                    AxisMarks(position: .leading)
-                }
-                .frame(height: 200)
+                TrendChartView(
+                    data: currentMetricData,
+                    color: selectedMetric.color,
+                    unit: selectedMetric.unit,
+                    title: ""
+                )
             }
         }
-        .padding()
-        .cardStyle()
-    }
-
-    private func bmiChart(for profile: UserProfile) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(NSLocalizedString("stats.bmi.trend", comment: ""))
-                .font(.headline)
-                .foregroundColor(.primaryText)
-
-            let bmiData = filteredRecords.map { record -> (Date, Double) in
-                (record.date.startOfDay, profile.calculateBMI(weight: record.weight))
-            }
-
-            if bmiData.isEmpty {
-                Text(NSLocalizedString("stats.no.data", comment: ""))
-                    .font(.subheadline)
-                    .foregroundColor(.secondaryText)
-                    .frame(height: 150)
-                    .frame(maxWidth: .infinity)
-            } else {
-                Chart(bmiData, id: \.0) { item in
-                    LineMark(
-                        x: .value("Date", item.0),
-                        y: .value("BMI", item.1)
-                    )
-                    .foregroundStyle(Color.green)
-                    .interpolationMethod(.catmullRom)
-
-                    PointMark(
-                        x: .value("Date", item.0),
-                        y: .value("BMI", item.1)
-                    )
-                    .foregroundStyle(bmiCategoryColor(item.1))
-                    .symbolSize(30)
-                }
-                .chartYScale(domain: 15...35)
-                .chartXScale(domain: startDate...Date().startOfDay)
-                .chartXAxis {
-                    AxisMarks(values: [startDate, Date().startOfDay]) { value in
-                        AxisGridLine()
-                        AxisValueLabel {
-                            if let date = value.as(Date.self) {
-                                Text(date.shortDateString)
-                            }
-                        }
-                    }
-                }
-                .chartYAxis {
-                    AxisMarks(position: .leading)
-                }
-                .frame(height: 150)
-
-                bmiLegend
-            }
-        }
-        .padding()
-        .cardStyle()
     }
 
     private var bmiChartSection: some View {
@@ -405,39 +315,38 @@ struct StatisticsView: View {
                         (record.date.startOfDay, profile.calculateBMI(weight: record.weight))
                     }
 
-                    Chart(bmiData, id: \.0) { item in
-                        LineMark(
-                            x: .value("Date", item.0),
-                            y: .value("BMI", item.1)
-                        )
-                        .foregroundStyle(Color.green)
-                        .interpolationMethod(.catmullRom)
+                    VStack(spacing: 12) {
+                        GeometryReader { geometry in
+                            ZStack {
+                                if bmiData.count > 1 {
+                                    let points = calculateBMIPoints(data: bmiData, in: geometry.size)
+                                    
+                                    Path { path in
+                                        path.move(to: points[0])
+                                        for i in 1..<points.count {
+                                            path.addLine(to: points[i])
+                                        }
+                                    }
+                                    .stroke(Color.green, lineWidth: 2)
 
-                        PointMark(
-                            x: .value("Date", item.0),
-                            y: .value("BMI", item.1)
-                        )
-                        .foregroundStyle(bmiCategoryColor(item.1))
-                        .symbolSize(30)
-                    }
-                    .chartYScale(domain: 15...35)
-                    .chartXScale(domain: startDate...Date().startOfDay)
-                    .chartXAxis {
-                        AxisMarks(values: [startDate, Date().startOfDay]) { value in
-                            AxisGridLine()
-                            AxisValueLabel {
-                                if let date = value.as(Date.self) {
-                                    Text(date.shortDateString)
+                                    ForEach(Array(points.enumerated()), id: \.offset) { index, point in
+                                        Circle()
+                                            .fill(bmiCategoryColor(bmiData[index].1))
+                                            .frame(width: 6, height: 6)
+                                            .position(point)
+                                    }
+                                } else if let point = bmiData.first {
+                                    Text(String(format: "%.1f", point.1))
+                                        .font(.title)
+                                        .foregroundColor(bmiCategoryColor(point.1))
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 }
                             }
                         }
+                        .frame(height: 150)
+                        
+                        bmiLegend
                     }
-                    .chartYAxis {
-                        AxisMarks(position: .leading)
-                    }
-                    .frame(height: 150)
-
-                    bmiLegend
                 }
             } else {
                 VStack(spacing: 8) {
@@ -457,6 +366,24 @@ struct StatisticsView: View {
         }
         .padding()
         .cardStyle()
+    }
+    
+    private func calculateBMIPoints(data: [(Date, Double)], in size: CGSize) -> [CGPoint] {
+        guard !data.isEmpty else { return [] }
+        
+        let width = size.width
+        let height = size.height
+        let padding: CGFloat = 20
+        let minBMI: Double = 15
+        let maxBMI: Double = 35
+        
+        return data.enumerated().map { index, point in
+            let x = padding + CGFloat(index) * (width - 2 * padding) / CGFloat(max(data.count - 1, 1))
+            let normalizedY = (point.1 - minBMI) / (maxBMI - minBMI)
+            let clampedY = max(0, min(normalizedY, 1))
+            let y = height - padding - clampedY * (height - 2 * padding)
+            return CGPoint(x: x, y: y)
+        }
     }
 
     private func bmiCategoryColor(_ bmi: Double) -> Color {

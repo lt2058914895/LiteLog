@@ -20,8 +20,8 @@ class APIService {
     }
     
     func submitFeedback(_ feedback: UserFeedback) async throws {
-        let endpoint = baseURL.appending(path: "/feedback/submit")
-        
+        let endpoint = baseURL.appendingPathComponent("feedback/submit")
+
         let parameters: [String: Any] = [
             "type": feedback.type,
             "message": feedback.message,
@@ -57,8 +57,8 @@ class APIService {
     }
     
     func uploadAvatar(image: UIImage) async throws -> AvatarUploadResponse {
-        let endpoint = baseURL.appending(path: "/user/avatar/upload")
-        
+        let endpoint = baseURL.appendingPathComponent("user/avatar/upload")
+
         return try await withCheckedThrowingContinuation { continuation in
             AF.upload(multipartFormData: { multipartFormData in
                 if let imageData = image.jpegData(compressionQuality: 0.8) {
@@ -84,8 +84,8 @@ class APIService {
     }
     
     func updateProfile(nickname: String, avatarUrl: String?) async throws -> UpdateProfileResponse {
-        let endpoint = baseURL.appending(path: "/user/profile")
-        
+        let endpoint = baseURL.appendingPathComponent("user/profile")
+
         var parameters: [String: Any] = [
             "nickname": nickname
         ]
@@ -120,8 +120,8 @@ class APIService {
     }
     
     func updateUserProfile(height: Double, gender: Int, age: Int, goalWeight: Double, weightUnit: String) async throws -> UpdateProfileResponse {
-        let endpoint = baseURL.appending(path: "/user/profile")
-        
+        let endpoint = baseURL.appendingPathComponent("user/profile")
+
         let parameters: [String: Any] = [
             "height": height,
             "gender": gender,
@@ -175,8 +175,8 @@ class APIService {
     }
     
     func syncWeightRecords(records: [WeightRecordRequest]) async throws -> WeightRecordSyncResponse {
-        let endpoint = baseURL.appending(path: "/weight/sync")
-        
+        let endpoint = baseURL.appendingPathComponent("weight/sync")
+
         let parameters: [String: Any] = [
             "records": records.map { record in
                 var dict: [String: Any] = [
@@ -227,8 +227,8 @@ class APIService {
     }
     
     func syncWeightRecordsWithImages(records: [WeightRecordRequest], images: [(recordId: String, image: UIImage)]) async throws -> WeightRecordSyncResponse {
-        let endpoint = baseURL.appending(path: "/weight/sync-with-images")
-        
+        let endpoint = baseURL.appendingPathComponent("weight/sync-with-images")
+
         return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<WeightRecordSyncResponse, Error>) in
             let encoder = JSONEncoder()
             var recordsJson: String

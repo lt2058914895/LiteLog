@@ -1,5 +1,5 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 extension View {
     func dismissKeyboardOnTapOutside() -> some View {
@@ -32,14 +32,14 @@ extension UIApplication {
 }
 
 struct RecordFormView: View {
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var context
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var settingsManager: SettingsManager
 
     let record: WeightRecord?
     @Binding var isPresented: Bool
 
-    @Query(sort: \WeightRecord.date, order: .reverse) private var records: [WeightRecord]
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var records: FetchedResults<WeightRecord>
 
     @State private var date: Date
     @State private var weightString: String
@@ -107,11 +107,11 @@ struct RecordFormView: View {
         if let record = record {
             self._date = State(initialValue: record.date)
             self._weightString = State(initialValue: "")
-            self._bodyFatString = State(initialValue: record.bodyFatPercentage?.smartFormatted ?? "")
-            self._waistString = State(initialValue: record.waistCircumference?.smartFormatted ?? "")
-            self._hipString = State(initialValue: record.hipCircumference?.smartFormatted ?? "")
-            self._chestString = State(initialValue: record.chestCircumference?.smartFormatted ?? "")
-            self._thighString = State(initialValue: record.thighCircumference?.smartFormatted ?? "")
+            self._bodyFatString = State(initialValue: record.bodyFatPercentageValue?.smartFormatted ?? "")
+            self._waistString = State(initialValue: record.waistCircumferenceValue?.smartFormatted ?? "")
+            self._hipString = State(initialValue: record.hipCircumferenceValue?.smartFormatted ?? "")
+            self._chestString = State(initialValue: record.chestCircumferenceValue?.smartFormatted ?? "")
+            self._thighString = State(initialValue: record.thighCircumferenceValue?.smartFormatted ?? "")
             self._note = State(initialValue: record.note ?? "")
             self._imageUrl = State(initialValue: record.imageUrl)
             self._selectedTimePeriod = State(initialValue: record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random)
@@ -143,22 +143,7 @@ struct RecordFormView: View {
                 }
                 
                 Section(NSLocalizedString("record.measurement_period", comment: "")) {
-                    HStack(spacing: 8) {
-                        ForEach(MeasurementTimePeriod.allCases, id: \.self) { period in
-                            Button(action: {
-                                selectedTimePeriod = period
-                            }) {
-                                Text(period.displayName)
-                                    .font(.caption)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(selectedTimePeriod == period ? Color.primaryBlue : Color(.secondarySystemGroupedBackground))
-                                    .foregroundColor(selectedTimePeriod == period ? .white : .primaryText)
-                                    .cornerRadius(20)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
+                    MeasurementPeriodSelector(selectedPeriod: $selectedTimePeriod)
                 }
                 
                 // 照片区域
@@ -220,22 +205,9 @@ struct RecordFormView: View {
                 } else {
                     // 相机按钮
                     Section {
-                        HStack {
-                            Spacer()
-                            Button(action: { showingImageSourcePicker = true }) {
-                                Image(systemName: "camera")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.primaryBlue)
-                            }
-                            
-                            .padding(8)
-                            .background(Color.primaryBlue.opacity(0.1))
-                            .cornerRadius(8)
-                            .accessibilityLabel(NSLocalizedString("record.accessibility.camera", comment: ""))
-                        }
+                        CameraButtonView(action: { showingImageSourcePicker = true })
                     }
                     .listRowBackground(Color.clear)
-                    .listSectionSpacing(0)
                 }
 
                 Section(NSLocalizedString("record.weight", comment: "")) {
@@ -312,7 +284,6 @@ struct RecordFormView: View {
             }
             .navigationTitle(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .tabBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(NSLocalizedString("action.save", comment: "")) {
@@ -397,27 +368,22 @@ struct RecordFormView: View {
             deleteRecordsForSelectedDate()
         }
         
-        let newRecord = WeightRecord(
-            date: date.startOfDay,
-            weight: weightInKg,
-            bodyFatPercentage: bodyFatPercentage,
-            waistCircumference: waistCircumference,
-            hipCircumference: hipCircumference,
-            chestCircumference: chestCircumference,
-            thighCircumference: thighCircumference,
-            note: note.isEmpty ? nil : note,
-            imageUrl: imageUrl,
-            measurementTimePeriod: selectedTimePeriod.rawValue,
-            syncStatus: WeightRecordSyncStatus.pending
-        )
+        let newRecord = WeightRecord.create(in: context, weight: weightInKg)
+        newRecord.date = date.startOfDay
+        newRecord.bodyFatPercentage = bodyFatPercentage ?? 0
+        newRecord.waistCircumference = waistCircumference ?? 0
+        newRecord.hipCircumference = hipCircumference ?? 0
+        newRecord.chestCircumference = chestCircumference ?? 0
+        newRecord.thighCircumference = thighCircumference ?? 0
+        newRecord.note = note.isEmpty ? nil : note
+        newRecord.imageUrl = imageUrl
+        newRecord.measurementTimePeriod = selectedTimePeriod.rawValue
         newRecord.selectedImage = selectedImage
 
-        modelContext.insert(newRecord)
-        
         do {
-            try modelContext.save()
+            try context.save()
             // 触发同步到云数据库
-            DataSyncManager.shared.triggerWeightRecordSync(modelContext: modelContext)
+            DataSyncManager.shared.triggerWeightRecordSync(context: context)
         } catch {
             errorMessage = NSLocalizedString("error.save.failed", comment: "")
             showingError = true
@@ -436,22 +402,22 @@ struct RecordFormView: View {
 
         record.date = date.startOfDay
         record.weight = unit.convertToKg(weightValue)
-        record.bodyFatPercentage = Double(bodyFatString)
-        record.waistCircumference = Double(waistString)
-        record.hipCircumference = Double(hipString)
-        record.chestCircumference = Double(chestString)
-        record.thighCircumference = Double(thighString)
+        record.bodyFatPercentage = Double(bodyFatString) ?? 0
+        record.waistCircumference = Double(waistString) ?? 0
+        record.hipCircumference = Double(hipString) ?? 0
+        record.chestCircumference = Double(chestString) ?? 0
+        record.thighCircumference = Double(thighString) ?? 0
         record.measurementTimePeriod = selectedTimePeriod.rawValue
         record.note = note.isEmpty ? nil : note
         record.imageUrl = imageUrl
         record.selectedImage = selectedImage
         record.updatedAt = Date()
-        record.syncStatus = .pending  // 标记为待同步
+        record.syncStatusEnum = .pending  // 标记为待同步
         
         do {
-            try modelContext.save()
+            try context.save()
             // 触发同步到云数据库
-            DataSyncManager.shared.triggerWeightRecordSync(modelContext: modelContext)
+            DataSyncManager.shared.triggerWeightRecordSync(context: context)
         } catch {
             errorMessage = NSLocalizedString("error.save.failed", comment: "")
             showingError = true
@@ -464,10 +430,10 @@ struct RecordFormView: View {
     private func deleteRecord() {
         if let record = record {
             let recordId = record.id.uuidString
-            modelContext.delete(record)
+            context.delete(record)
             
             do {
-                try modelContext.save()
+                try context.save()
                 // 同步删除到云数据库
                 Task {
                     await DataSyncManager.shared.syncDeletedRecords(recordIds: [recordId])
@@ -489,7 +455,6 @@ struct RecordFormView: View {
                 .opacity(note.isEmpty ? 1 : 0)
             
             TextEditor(text: $note)
-                .scrollContentBackground(.hidden)
                 .background(Color.clear)
         }
         .frame(minHeight: 100)
@@ -499,11 +464,11 @@ struct RecordFormView: View {
         let dateRecords = records.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
         let recordIds = dateRecords.map { $0.id.uuidString }
         for record in dateRecords {
-            modelContext.delete(record)
+            context.delete(record)
         }
         
         do {
-            try modelContext.save()
+            try context.save()
             // 同步删除到云数据库
             Task {
                 await DataSyncManager.shared.syncDeletedRecords(recordIds: recordIds)
@@ -513,4 +478,47 @@ struct RecordFormView: View {
         }
     }
 
+}
+
+struct MeasurementPeriodSelector: View {
+    @Binding var selectedPeriod: MeasurementTimePeriod
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(MeasurementTimePeriod.allCases, id: \.self) { period in
+                Button(action: {
+                    selectedPeriod = period
+                }) {
+                    Text(period.displayName)
+                        .font(.caption)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(selectedPeriod == period ? Color.primaryBlue : Color(.secondarySystemGroupedBackground))
+                        .foregroundColor(selectedPeriod == period ? .white : .primaryText)
+                        .cornerRadius(20)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+}
+
+struct CameraButtonView: View {
+    let action: () -> Void
+    
+    var body: some View {
+        HStack {
+            Spacer()
+            Button(action: action) {
+                Image(systemName: "camera")
+                    .font(.system(size: 20))
+                    .foregroundColor(.primaryBlue)
+            }
+            .padding(8)
+            .background(Color.primaryBlue.opacity(0.1))
+            .cornerRadius(8)
+            .accessibilityLabel(NSLocalizedString("record.accessibility.camera", comment: ""))
+            Spacer()
+        }
+    }
 }

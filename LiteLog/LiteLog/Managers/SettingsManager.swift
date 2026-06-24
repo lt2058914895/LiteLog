@@ -1,17 +1,17 @@
 import Foundation
 import SwiftUI
 import Combine
-import SwiftData
+import CoreData
 
 final class SettingsManager: ObservableObject {
     static let shared = SettingsManager()
 
     private let defaults = UserDefaults.standard
     
-    weak var modelContext: ModelContext?
+    weak var context: NSManagedObjectContext?
     
-    func setModelContext(_ context: ModelContext) {
-        self.modelContext = context
+    func setContext(_ context: NSManagedObjectContext) {
+        self.context = context
     }
 
     private enum Keys {
@@ -37,24 +37,22 @@ final class SettingsManager: ObservableObject {
     }
     
     private func updateWeightUnitInDatabase() {
-        guard let context = modelContext else { return }
+        guard let context = context else { return }
         
         Task { @MainActor in
+            let request = UserProfile.fetchRequest()
             do {
-                let profiles = try context.fetch(FetchDescriptor<UserProfile>())
+                let profiles = try context.fetch(request)
                 if let profile = profiles.first {
                     profile.weightUnit = weightUnit.rawValue
                     profile.updatedAt = Date()
-                    profile.syncStatus = .pending
+                    profile.syncStatus = UserProfile.SyncStatus.pending.rawValue
                     try context.save()
                     
-                    DataSyncManager.shared.triggerProfileSync(modelContext: context)
+                    DataSyncManager.shared.triggerProfileSync(context: context)
                 } else {
-                    let newProfile = UserProfile(
-                        weightUnit: weightUnit.rawValue,
-                        syncStatus: .pending
-                    )
-                    context.insert(newProfile)
+                    let newProfile = UserProfile.create(in: context)
+                    newProfile.weightUnit = weightUnit.rawValue
                     try context.save()
                 }
             } catch {

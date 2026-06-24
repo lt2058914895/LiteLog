@@ -16,7 +16,7 @@ struct NumericTextField: View {
     var body: some View {
         TextField(placeholder, text: $text)
             .keyboardType(keyboardType)
-            .onChange(of: text) { _, newValue in
+            .onChange(of: text) { newValue in
                 text = formatNumericInput(newValue)
             }
     }

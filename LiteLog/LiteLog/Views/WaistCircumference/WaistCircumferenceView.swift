@@ -1,11 +1,11 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct WaistCircumferenceView: View {
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var settingsManager: SettingsManager
 
-    @Query(sort: \WeightRecord.date, order: .reverse) private var records: [WeightRecord]
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var records: FetchedResults<WeightRecord>
 
     @State private var showingAddSheet = false
     @State private var selectedRecord: WeightRecord?
@@ -13,7 +13,7 @@ struct WaistCircumferenceView: View {
     private var unit: WeightUnit { settingsManager.weightUnit }
 
     private var chartData: [WaistCircumferenceChartView.ChartDataPoint] {
-        let filtered = records.filter { $0.waistCircumference != nil }
+        let filtered = records.filter { $0.waistCircumferenceValue != nil }
         let calendar = Calendar.current
 
         let grouped = Dictionary(grouping: filtered) { record in
@@ -21,7 +21,7 @@ struct WaistCircumferenceView: View {
         }
 
         return grouped.compactMap { key, values in
-            if let record = values.max(by: { $0.date < $1.date }), let waist = record.waistCircumference {
+            if let record = values.max(by: { $0.date < $1.date }), let waist = record.waistCircumferenceValue {
                 return WaistCircumferenceChartView.ChartDataPoint(date: key, waist: waist)
             }
             return nil
@@ -30,7 +30,7 @@ struct WaistCircumferenceView: View {
     }
 
     private var waistRecords: [WeightRecord] {
-        records.filter { $0.waistCircumference != nil }
+        records.filter { $0.waistCircumferenceValue != nil }
     }
 
     private var groupedRecords: [Date: [WeightRecord]] {
@@ -41,7 +41,7 @@ struct WaistCircumferenceView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
                     WaistCircumferenceChartView(data: chartData)
@@ -53,7 +53,6 @@ struct WaistCircumferenceView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("home.waist.circumference", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .tabBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddSheet = true }) {

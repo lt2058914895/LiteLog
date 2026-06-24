@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 
 struct UserInfoEditorView: View {
     @Environment(\.dismiss) private var dismiss
@@ -19,7 +18,7 @@ struct UserInfoEditorView: View {
     @StateObject private var errorAlertManager = ErrorAlertManager()
     
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ScrollView {
                 VStack(spacing: 32) {
                     avatarSection

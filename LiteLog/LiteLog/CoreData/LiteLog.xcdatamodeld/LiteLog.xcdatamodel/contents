@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="21531" systemVersion="23G33" minimumToolsVersion="Xcode 15.0" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="UserProfile" representedClassName="UserProfile" syncable="YES">
+        <attribute name="id" attributeType="UUID" defaultValueString="NEWUUID()" usesScalarValueType="NO"/>
+        <attribute name="height" attributeType="Double" usesScalarValueType="YES"/>
+        <attribute name="gender" attributeType="Integer 16" usesScalarValueType="YES"/>
+        <attribute name="age" attributeType="Integer 16" usesScalarValueType="YES"/>
+        <attribute name="goalWeight" attributeType="Double" usesScalarValueType="YES"/>
+        <attribute name="goalBodyFat" attributeType="Double" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="goalWaistCircumference" attributeType="Double" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="goalHipCircumference" attributeType="Double" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="goalChestCircumference" attributeType="Double" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="goalThighCircumference" attributeType="Double" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="weightUnit" attributeType="String"/>
+        <attribute name="createdAt" attributeType="Date"/>
+        <attribute name="updatedAt" attributeType="Date"/>
+        <attribute name="syncStatus" attributeType="Integer 16" usesScalarValueType="YES"/>
+        <index name="idIndex">
+            <indexAttribute name="id"/>
+        </index>
+    </entity>
+    <entity name="WeightRecord" representedClassName="WeightRecord" syncable="YES">
+        <attribute name="id" attributeType="UUID" defaultValueString="NEWUUID()" usesScalarValueType="NO"/>
+        <attribute name="date" attributeType="Date"/>
+        <attribute name="weight" attributeType="Double" usesScalarValueType="YES"/>
+        <attribute name="bodyFatPercentage" attributeType="Double" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="waistCircumference" attributeType="Double" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="hipCircumference" attributeType="Double" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="chestCircumference" attributeType="Double" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="thighCircumference" attributeType="Double" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="note" attributeType="String" optional="YES"/>
+        <attribute name="imageUrl" attributeType="String" optional="YES"/>
+        <attribute name="measurementTimePeriod" attributeType="String" optional="YES"/>
+        <attribute name="createdAt" attributeType="Date"/>
+        <attribute name="updatedAt" attributeType="Date"/>
+        <attribute name="syncStatus" attributeType="Integer 16" usesScalarValueType="YES"/>
+        <index name="dateIndex">
+            <indexAttribute name="date"/>
+        </index>
+    </entity>
+</model>
