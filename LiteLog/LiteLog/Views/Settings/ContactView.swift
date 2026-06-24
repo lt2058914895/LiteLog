@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct ContactView: View {
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
         NavigationView {
             List {
@@ -26,6 +28,13 @@ struct ContactView: View {
             }
             .navigationTitle(NSLocalizedString("settings.contact", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(leading: Button(action: {
+                dismiss()
+            }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(.primaryBlue)
+            })
         }
     }
 }

@@ -180,6 +180,13 @@ struct FeedbackView: View {
             }
             .navigationTitle(NSLocalizedString("feedback.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(leading: Button(action: {
+                dismiss()
+            }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(.primaryBlue)
+            })
             .sheet(isPresented: $showingSuccess, onDismiss: {
                 dismiss()
             }) {

@@ -16,6 +16,8 @@ struct SettingsView: View {
     @State private var exportURL: IdentifiableURL?
     @State private var showingExportError = false
     @State private var notificationTime = SettingsManager.defaultNotificationTime()
+    @State private var showingFeedback = false
+    @State private var showingContact = false
     
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -55,6 +57,16 @@ struct SettingsView: View {
         }
         .alert(NSLocalizedString("settings.export.error", comment: ""), isPresented: $showingExportError) {
             Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
+        }
+        .fullScreenCover(isPresented: $showingFeedback) {
+            NavigationView {
+                FeedbackView()
+            }
+        }
+        .fullScreenCover(isPresented: $showingContact) {
+            NavigationView {
+                ContactView()
+            }
         }
     }
 
@@ -302,20 +314,26 @@ struct SettingsView: View {
 
     private var actionSection: some View {
         Section {
-            NavigationLink(destination: FeedbackView()) {
+            Button(action: {
+                showingFeedback = true
+            }) {
                 HStack {
                     Image(systemName: "message.badge.filled.fill")
                         .foregroundColor(.green)
                     Text(NSLocalizedString("settings.send.feedback", comment: ""))
+                        .foregroundColor(.primary)
                     Spacer()
                 }
             }
 
-            NavigationLink(destination: ContactView()) {
+            Button(action: {
+                showingContact = true
+            }) {
                 HStack {
                     Image(systemName: "envelope.fill")
                         .foregroundColor(.primaryBlue)
                     Text(NSLocalizedString("settings.contact", comment: ""))
+                        .foregroundColor(.primary)
                     Spacer()
                 }
             }
