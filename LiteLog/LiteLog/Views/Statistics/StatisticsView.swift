@@ -148,29 +148,35 @@ struct StatisticsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                periodPicker
-                
-                metricPicker
+        VStack(spacing: 0) {
+            // 固定在顶部的周月季度选择器
+            periodPicker
+                .padding()
+            
+            // 可滚动的内容区域（包含指标选择器）
+            ScrollView {
+                VStack(spacing: 20) {
+                    metricPicker
+                    
+                    if records.isEmpty {
+                        EmptyStateView(
+                            icon: "chart.bar",
+                            title: NSLocalizedString("stats.no.data", comment: ""),
+                            message: NSLocalizedString("home.start.record", comment: "")
+                        )
+                    } else {
+                        metricSummaryCards
 
-                if records.isEmpty {
-                    EmptyStateView(
-                        icon: "chart.bar",
-                        title: NSLocalizedString("stats.no.data", comment: ""),
-                        message: NSLocalizedString("home.start.record", comment: "")
-                    )
-                } else {
-                    metricSummaryCards
+                        metricChart
 
-                    metricChart
+                        bmiChartSection
 
-                    bmiChartSection
-
-                    statsDetails
+                        statsDetails
+                    }
                 }
+                .padding()
             }
-            .padding()
+            .background(Color(.systemGroupedBackground))
         }
         .background(Color(.systemGroupedBackground))
         .toolbar {
