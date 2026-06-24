@@ -9,10 +9,6 @@ final class DataSyncManager {
     
     @MainActor
     func syncLocalDataToCloud(modelContext: ModelContext) async {
-        guard SettingsManager.shared.isLoggedIn else {
-            return
-        }
-        
         do {
             // 同步个人资料
             try await syncUserProfile(modelContext: modelContext)
@@ -82,10 +78,6 @@ final class DataSyncManager {
     
     @MainActor
     func syncDeletedRecords(recordIds: [String]) async {
-        guard SettingsManager.shared.isLoggedIn else {
-            return
-        }
-        
         do {
             let response = try await APIService.shared.deleteWeightRecords(recordIds: recordIds)
             if response.success {

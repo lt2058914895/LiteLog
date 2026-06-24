@@ -9,7 +9,6 @@ struct UserInfoEditorView: View {
     @State private var avatarImage: UIImage?
     @State private var avatarUrl: String = ""
     @State private var showImagePicker = false
-    @State private var showLogoutAlert = false
     @State private var isLoading = false
     
     init() {
@@ -28,8 +27,6 @@ struct UserInfoEditorView: View {
                     inputSection
                     
                     saveButton
-                    
-                    logoutButton
                 }
                 .padding()
             }
@@ -39,12 +36,6 @@ struct UserInfoEditorView: View {
                 imagePicker
             }
             .errorAlert(manager: errorAlertManager)
-            .alert(NSLocalizedString("profile.logout.confirm", comment: ""), isPresented: $showLogoutAlert) {
-                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-                Button(NSLocalizedString("action.logout", comment: ""), role: .destructive) {
-                    logout()
-                }
-            }
             .onTapGesture {
                 hideKeyboard()
             }
@@ -172,16 +163,6 @@ struct UserInfoEditorView: View {
         .disabled(nickname.isEmpty || isLoading)
     }
     
-    private var logoutButton: some View {
-        Button(action: {
-            showLogoutAlert = true
-        }) {
-            Text(NSLocalizedString("action.logout", comment: ""))
-                .font(.subheadline)
-                .foregroundColor(.primaryBlue)
-        }
-    }
-    
     private var imagePicker: some View {
         ImagePicker(image: $avatarImage, isPresented: $showImagePicker)
     }
@@ -253,11 +234,6 @@ struct UserInfoEditorView: View {
                 settingsManager.clearCachedAvatar()
             }
         }
-    }
-    
-    private func logout() {
-        settingsManager.logout()
-        dismiss()
     }
 }
 

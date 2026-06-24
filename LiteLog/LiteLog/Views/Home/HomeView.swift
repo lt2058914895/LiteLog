@@ -579,7 +579,7 @@ struct HomeView: View {
     
     @ViewBuilder
     private var avatarImageView: some View {
-        if settingsManager.isLoggedIn, !settingsManager.avatarUrl.isEmpty {
+        if !settingsManager.avatarUrl.isEmpty {
             if let cachedImage = settingsManager.cachedAvatarImage {
                 Image(uiImage: cachedImage)
                     .resizable()

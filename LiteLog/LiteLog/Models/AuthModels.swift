@@ -1,42 +1,5 @@
 import Foundation
 
-public struct UserInfo: Codable {
-    public let userId: String
-    public let nickname: String?
-    public let avatarUrl: String?
-    public let token: String
-    public let tokenType: String?
-    public let expiresIn: TimeInterval?
-}
-
-public struct AuthResponse: Codable {
-    public let success: Bool
-    public let userId: String?
-    public let nickname: String?
-    public let avatarUrl: String?
-    public let token: String?
-    public let tokenType: String?
-    public let expiresIn: TimeInterval?
-    public let message: String?
-    
-    public var userInfo: UserInfo? {
-        guard let userId = userId, let token = token else { return nil }
-        return UserInfo(
-            userId: userId,
-            nickname: nickname,
-            avatarUrl: avatarUrl,
-            token: token,
-            tokenType: tokenType,
-            expiresIn: expiresIn
-        )
-    }
-}
-
-public struct LogoutResponse: Codable {
-    public let success: Bool
-    public let message: String?
-}
-
 public struct UpdateProfileResponse: Codable {
     public let success: Bool
     public let message: String?
@@ -55,11 +18,6 @@ public struct FeedbackSubmitResponse: Codable {
     public let code: Int
     public let message: String?
     public let feedbackId: Int?
-}
-
-public struct ResetPasswordResponse: Codable {
-    public let success: Bool
-    public let message: String?
 }
 
 public struct WeightRecordRequest: Codable {

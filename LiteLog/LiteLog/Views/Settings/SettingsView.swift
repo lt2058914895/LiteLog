@@ -16,7 +16,6 @@ struct SettingsView: View {
     @State private var exportURL: IdentifiableURL?
     @State private var showingExportError = false
     @State private var notificationTime = SettingsManager.defaultNotificationTime()
-    @State private var showingLoginSheet = false
     
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -50,9 +49,6 @@ struct SettingsView: View {
             .adaptiveSheet(item: $exportURL) { url in
                 ShareSheet(items: [url.url])
             }
-            .adaptiveSheet(isPresented: $showingLoginSheet) {
-                LoginView()
-            }
             .alert(NSLocalizedString("settings.delete.confirm", comment: ""), isPresented: $showingDeleteAlert) {
                 Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
                 Button(NSLocalizedString("action.delete", comment: ""), role: .destructive) {
@@ -68,17 +64,13 @@ struct SettingsView: View {
     private var userHeaderSection: some View {
             Section {
                 Button(action: {
-                    if settingsManager.isLoggedIn {
-                        showingUserInfoEditor = true
-                    } else {
-                        showingLoginSheet = true
-                    }
+                    showingUserInfoEditor = true
                 }) {
                     HStack(alignment: .center, spacing: 16) {
                         avatarImageView
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(settingsManager.isLoggedIn ? settingsManager.displayName : NSLocalizedString("settings.not.logged.in", comment: ""))
+                            Text(settingsManager.displayName)
                                 .font(.title3)
                                 .foregroundColor(.primary)
                         }
@@ -94,8 +86,7 @@ struct SettingsView: View {
         
         @ViewBuilder
         private var avatarImageView: some View {
-            if settingsManager.isLoggedIn, !settingsManager.avatarUrl.isEmpty {
-                // 优先使用缓存的头像，提升加载速度
+            if !settingsManager.avatarUrl.isEmpty {
                 if let cachedImage = settingsManager.cachedAvatarImage {
                     Image(uiImage: cachedImage)
                         .resizable()
@@ -104,13 +95,11 @@ struct SettingsView: View {
                         .clipShape(Circle())
                 } else {
                     ZStack {
-                        // 默认头像作为占位符
                         Image(systemName: "person.circle.fill")
                             .resizable()
                             .frame(width: 54, height: 54)
                             .foregroundColor(.primaryBlue)
                         
-                        // 异步加载并缓存
                         AsyncImage(url: URL(string: settingsManager.avatarUrl)) { phase in
                             switch phase {
                             case .success(let image):
@@ -126,7 +115,6 @@ struct SettingsView: View {
                             }
                         }
                         .onAppear {
-                            // 在后台异步加载并缓存头像
                             Task {
                                 await loadAndCacheAvatar()
                             }
@@ -232,7 +220,6 @@ struct SettingsView: View {
             }
         }
     }
-
 
 
     private var syncNotificationSection: some View {
@@ -403,13 +390,11 @@ struct SettingsView: View {
     }
 
     private func deleteAllData() {
-        // 删除体重记录
         let recordIds = records.map { $0.id.uuidString }
         for record in records {
             modelContext.delete(record)
         }
         
-        // 删除个人资料数据
         let profileFetch = FetchDescriptor<UserProfile>()
         if let profiles = try? modelContext.fetch(profileFetch) {
             for profile in profiles {
@@ -419,7 +404,6 @@ struct SettingsView: View {
 
         do {
             try modelContext.save()
-            // 同步删除到云数据库
             Task {
                 await DataSyncManager.shared.syncDeletedRecords(recordIds: recordIds)
             }
@@ -666,7 +650,6 @@ struct ProfileEditorView: View {
         
         do {
             try modelContext.save()
-            // 触发同步到云数据库
             DataSyncManager.shared.triggerProfileSync(modelContext: modelContext)
         } catch {
             print("保存个人资料失败: \(error)")
@@ -682,7 +665,6 @@ struct ShareSheet: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIActivityViewController {
         let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
         
-        // iPad support - configure popover presentation
         if let popover = controller.popoverPresentationController {
             popover.sourceView = UIView()
             popover.sourceRect = CGRect(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY, width: 0, height: 0)
@@ -695,7 +677,6 @@ struct ShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
-// Identifiable wrapper for URL to avoid conformance warning
 struct IdentifiableURL: Identifiable {
     let id = UUID()
     let url: URL
@@ -704,5 +685,3 @@ struct IdentifiableURL: Identifiable {
         self.url = url
     }
 }
-
-
