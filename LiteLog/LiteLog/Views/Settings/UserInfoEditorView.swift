@@ -170,6 +170,7 @@ struct UserInfoEditorView: View {
     private func saveProfile() async {
         guard !nickname.isEmpty else { return }
         
+        hideKeyboard()
         isLoading = true
         
         do {

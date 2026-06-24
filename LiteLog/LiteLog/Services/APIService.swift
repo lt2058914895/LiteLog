@@ -5,12 +5,19 @@ class APIService {
     static let shared = APIService()
     
     #if DEBUG
-    private let baseURL = URL(string: "http://10.226.200.64:8080")!
+    private let baseURL = URL(string: "http://localhost:8080")!
     #else
     private let baseURL = URL(string: "https://litelog.com.cn")!
     #endif
     
     private init() {}
+    
+    private var session: Session {
+        let configuration = URLSessionConfiguration.af.default
+        configuration.timeoutIntervalForRequest = 30
+        configuration.timeoutIntervalForResource = 60
+        return Session(configuration: configuration)
+    }
     
     func submitFeedback(_ feedback: UserFeedback) async throws {
         let endpoint = baseURL.appending(path: "/feedback/submit")
@@ -24,7 +31,8 @@ class APIService {
         ]
         
         return try await withCheckedThrowingContinuation { continuation in
-            AF.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
+            print("DEBUG: Sending request to \(endpoint)")
+            session.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
                 .validate(statusCode: 200..<300)
                 .responseData { response in
                     switch response.result {
@@ -87,19 +95,24 @@ class APIService {
         }
         
         return try await withCheckedThrowingContinuation { continuation in
-            AF.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default)
-                .validate(statusCode: 200..<300)
+            print("DEBUG: Sending updateProfile request to \(endpoint) with parameters: \(parameters)")
+            session.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default)
             .responseData { response in
                 switch response.result {
                 case .success(let data):
+                    if let responseString = String(data: data, encoding: .utf8) {
+                        print("DEBUG: Response data: \(responseString)")
+                    }
                     do {
                         let decoder = JSONDecoder()
                         let profileResponse = try decoder.decode(UpdateProfileResponse.self, from: data)
                         continuation.resume(returning: profileResponse)
                     } catch {
+                        print("DEBUG: Decoding error: \(error)")
                         continuation.resume(throwing: APIError.decodingError)
                     }
-                case .failure:
+                case .failure(let error):
+                    print("DEBUG: API Error: \(error)")
                     continuation.resume(throwing: APIError.invalidResponse)
                 }
             }
