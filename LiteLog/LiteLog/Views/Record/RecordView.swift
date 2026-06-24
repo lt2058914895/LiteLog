@@ -24,41 +24,39 @@ struct RecordView: View {
     }
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                viewModePicker
+        VStack(spacing: 0) {
+            viewModePicker
 
-                switch viewMode {
-                case .list:
-                    listView
-                case .calendar:
-                    calendarView
+            switch viewMode {
+            case .list:
+                listView
+            case .calendar:
+                calendarView
+            }
+        }
+        .background(Color(.systemGroupedBackground))
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                HStack(spacing: 12) {
+                    avatarImageView
+                    Text(NSLocalizedString("tab.record", comment: ""))
+                        .font(.headline)
+                        .foregroundColor(.primary)
                 }
             }
-            .background(Color(.systemGroupedBackground))
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    HStack(spacing: 12) {
-                        avatarImageView
-                        Text(NSLocalizedString("tab.record", comment: ""))
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showingAddSheet = true }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(.primaryBlue)
-                    }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showingAddSheet = true }) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.primaryBlue)
                 }
             }
-            .adaptiveSheet(isPresented: $showingAddSheet) {
-                RecordFormView(isPresented: $showingAddSheet)
-            }
-            .adaptiveSheet(item: $selectedRecord) { record in
-                RecordFormView(record: record, isPresented: .constant(false))
-            }
+        }
+        .adaptiveSheet(isPresented: $showingAddSheet) {
+            RecordFormView(isPresented: $showingAddSheet)
+        }
+        .adaptiveSheet(item: $selectedRecord) { record in
+            RecordFormView(record: record, isPresented: .constant(false))
         }
     }
 

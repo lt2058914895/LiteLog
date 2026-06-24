@@ -148,44 +148,42 @@ struct StatisticsView: View {
     }
 
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    periodPicker
-                    
-                    metricPicker
+        ScrollView {
+            VStack(spacing: 20) {
+                periodPicker
+                
+                metricPicker
 
-                    if records.isEmpty {
-                        EmptyStateView(
-                            icon: "chart.bar",
-                            title: NSLocalizedString("stats.no.data", comment: ""),
-                            message: NSLocalizedString("home.start.record", comment: "")
-                        )
-                    } else {
-                        metricSummaryCards
+                if records.isEmpty {
+                    EmptyStateView(
+                        icon: "chart.bar",
+                        title: NSLocalizedString("stats.no.data", comment: ""),
+                        message: NSLocalizedString("home.start.record", comment: "")
+                    )
+                } else {
+                    metricSummaryCards
 
-                        metricChart
+                    metricChart
 
-                        bmiChartSection
+                    bmiChartSection
 
-                        statsDetails
-                    }
-                }
-                .padding()
-            }
-            .background(Color(.systemGroupedBackground))
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    HStack(spacing: 12) {
-                        avatarImageView
-                        Text(NSLocalizedString("stats.title", comment: ""))
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                    }
+                    statsDetails
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
+            .padding()
         }
+        .background(Color(.systemGroupedBackground))
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                HStack(spacing: 12) {
+                    avatarImageView
+                    Text(NSLocalizedString("stats.title", comment: ""))
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                }
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
     }
     
     @ViewBuilder

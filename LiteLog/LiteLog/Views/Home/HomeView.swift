@@ -78,44 +78,42 @@ struct HomeView: View {
 
 
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    todayWeightCard
+        ScrollView {
+            VStack(spacing: 20) {
+                todayWeightCard
 
-                    bmiProgressSection
+                bmiProgressSection
 
-                    goalWeightCard
-                    
-                    goalBodyFatCard
-                    
-                    goalMeasurementsCard
-                }
-                .padding()
+                goalWeightCard
+                
+                goalBodyFatCard
+                
+                goalMeasurementsCard
             }
-            .background(Color(.systemGroupedBackground))
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    HStack(spacing: 12) {
-                        avatarImageView
-                        Text(NSLocalizedString("tab.home", comment: ""))
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                    }
+            .padding()
+        }
+        .background(Color(.systemGroupedBackground))
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                HStack(spacing: 12) {
+                    avatarImageView
+                    Text(NSLocalizedString("tab.home", comment: ""))
+                        .font(.headline)
+                        .foregroundColor(.primary)
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .adaptiveSheet(isPresented: $showingAddSheet) {
-                RecordFormView(isPresented: $showingAddSheet)
-            }
-            .adaptiveSheet(isPresented: $showingProfileEditor) {
-                ProfileEditorView()
-            }
-            .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
-                Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
-            } message: {
-                Text(errorMessage)
-            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .adaptiveSheet(isPresented: $showingAddSheet) {
+            RecordFormView(isPresented: $showingAddSheet)
+        }
+        .adaptiveSheet(isPresented: $showingProfileEditor) {
+            ProfileEditorView()
+        }
+        .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
+            Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
+        } message: {
+            Text(errorMessage)
         }
     }
 

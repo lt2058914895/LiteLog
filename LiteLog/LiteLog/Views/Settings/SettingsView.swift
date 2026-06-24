@@ -21,42 +21,40 @@ struct SettingsView: View {
     private var unit: WeightUnit { settingsManager.weightUnit }
 
     var body: some View {
-        NavigationView {
-            List {
-                userHeaderSection
-                
-                profileSection
+        List {
+            userHeaderSection
+            
+            profileSection
 
-                syncNotificationSection
+            syncNotificationSection
 
-                actionSection
-                
-                dataSection
+            actionSection
+            
+            dataSection
 
-                aboutSection
+            aboutSection
+        }
+        .navigationBarHidden(true)
+        .onReceive(NotificationCenter.default.publisher(for: .showProfileEditor)) { _ in
+            showingProfileEditor = true
+        }
+        .adaptiveSheet(isPresented: $showingProfileEditor) {
+            ProfileEditorView()
+        }
+        .adaptiveSheet(isPresented: $showingUserInfoEditor) {
+            UserInfoEditorView()
+        }
+        .adaptiveSheet(item: $exportURL) { url in
+            ShareSheet(items: [url.url])
+        }
+        .alert(NSLocalizedString("settings.delete.confirm", comment: ""), isPresented: $showingDeleteAlert) {
+            Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+            Button(NSLocalizedString("action.delete", comment: ""), role: .destructive) {
+                deleteAllData()
             }
-            .navigationBarHidden(true)
-            .onReceive(NotificationCenter.default.publisher(for: .showProfileEditor)) { _ in
-                showingProfileEditor = true
-            }
-            .adaptiveSheet(isPresented: $showingProfileEditor) {
-                ProfileEditorView()
-            }
-            .adaptiveSheet(isPresented: $showingUserInfoEditor) {
-                UserInfoEditorView()
-            }
-            .adaptiveSheet(item: $exportURL) { url in
-                ShareSheet(items: [url.url])
-            }
-            .alert(NSLocalizedString("settings.delete.confirm", comment: ""), isPresented: $showingDeleteAlert) {
-                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-                Button(NSLocalizedString("action.delete", comment: ""), role: .destructive) {
-                    deleteAllData()
-                }
-            }
-            .alert(NSLocalizedString("settings.export.error", comment: ""), isPresented: $showingExportError) {
-                Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
-            }
+        }
+        .alert(NSLocalizedString("settings.export.error", comment: ""), isPresented: $showingExportError) {
+            Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
         }
     }
 
