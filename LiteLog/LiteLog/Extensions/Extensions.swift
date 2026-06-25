@@ -81,7 +81,7 @@ extension View {
 extension View {
     func cardStyle() -> some View {
         self
-            .background(Color.cardBackground)
+            .adaptiveCardBackground()
             .cornerRadius(16)
             .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
     }

@@ -3,6 +3,7 @@ import CoreData
 
 struct StatisticsView: View {
     @Environment(\.managedObjectContext) private var context
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var settingsManager: SettingsManager
 
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: true)]) private var records: FetchedResults<WeightRecord>
@@ -239,7 +240,7 @@ struct StatisticsView: View {
                             .font(.caption)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(selectedMetric == metric ? selectedMetric.color.opacity(0.2) : Color.cardBackground)
+                            .background(selectedMetric == metric ? selectedMetric.color.opacity(0.2) : (colorScheme == .dark ? Color(.secondarySystemBackground) : .white))
                             .foregroundColor(selectedMetric == metric ? selectedMetric.color : .secondaryText)
                             .cornerRadius(8)
                     }
