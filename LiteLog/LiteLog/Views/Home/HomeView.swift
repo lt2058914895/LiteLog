@@ -5,6 +5,8 @@ struct HomeView: View {
     @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var settingsManager: SettingsManager
 
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) 
+    private var userProfile: FetchedResults<UserProfile>
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) 
     private var allRecords: FetchedResults<WeightRecord>
 
@@ -17,10 +19,7 @@ struct HomeView: View {
     @State private var showingProfileEditor = false
     @State private var showingBMIInfo = false
 
-    private var profile: UserProfile? {
-        let request = UserProfile.fetchRequest()
-        return try? context.fetch(request).first
-    }
+    private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
 
     private var latestWeight: Double? {
@@ -105,10 +104,10 @@ struct HomeView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .adaptiveSheet(isPresented: $showingAddSheet) {
+        .fullScreenCover(isPresented: $showingAddSheet) {
             RecordFormView(isPresented: $showingAddSheet)
         }
-        .adaptiveSheet(isPresented: $showingProfileEditor) {
+        .fullScreenCover(isPresented: $showingProfileEditor) {
             ProfileEditorView()
         }
         .fullScreenCover(isPresented: $showingBMIInfo) {
