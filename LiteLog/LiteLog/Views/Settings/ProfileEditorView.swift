@@ -27,6 +27,10 @@ struct ProfileEditorView: View {
     private var inputBackgroundColor: Color {
         colorScheme == .dark ? Color(.secondarySystemBackground) : .white
     }
+    
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
 
     var body: some View {
         NavigationView {
@@ -68,7 +72,7 @@ struct ProfileEditorView: View {
                         
                         HStack {
                             Text("\(age)")
-                                .font(.title2)
+                                .font(.headline)
                                 .foregroundColor(.primaryText)
                             
                             Spacer()
@@ -191,6 +195,9 @@ struct ProfileEditorView: View {
                 }
                 .padding()
             }
+            .onTapGesture {
+                hideKeyboard()
+            }
             .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("settings.profile", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
@@ -225,6 +232,7 @@ struct ProfileEditorView: View {
     }
 
     private func saveProfile() {
+        hideKeyboard()
         var errors: [String] = []
         
         if heightString.trimmingCharacters(in: .whitespaces).isEmpty {
