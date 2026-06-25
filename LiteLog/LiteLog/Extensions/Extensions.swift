@@ -63,6 +63,21 @@ extension Color {
     }
 }
 
+struct AdaptiveCardBackground: ViewModifier {
+    @Environment(\.colorScheme) private var colorScheme
+
+    func body(content: Content) -> some View {
+        content
+            .background(colorScheme == .dark ? Color(.secondarySystemBackground) : .white)
+    }
+}
+
+extension View {
+    func adaptiveCardBackground() -> some View {
+        self.modifier(AdaptiveCardBackground())
+    }
+}
+
 extension View {
     func cardStyle() -> some View {
         self

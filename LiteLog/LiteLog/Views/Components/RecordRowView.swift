@@ -87,7 +87,7 @@ struct RecordRowView: View {
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 16)
-        .background(Color.cardBackground)
+        .adaptiveCardBackground()
         .cornerRadius(12)
     }
 
