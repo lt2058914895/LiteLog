@@ -4,6 +4,7 @@ import CoreData
 struct ProfileEditorView: View {
     @Environment(\.managedObjectContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var settingsManager: SettingsManager
 
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) private var userProfile: FetchedResults<UserProfile>
@@ -23,6 +24,9 @@ struct ProfileEditorView: View {
     private var existingProfile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
     private var heightUnit: HeightUnit { settingsManager.heightUnit }
+    private var inputBackgroundColor: Color {
+        colorScheme == .dark ? Color(.secondarySystemBackground) : .white
+    }
 
     var body: some View {
         NavigationView {
@@ -41,7 +45,7 @@ struct ProfileEditorView: View {
                         }
                         .frame(height: 50)
                         .padding(.horizontal, 16)
-                        .background(Color(.secondarySystemBackground))
+                        .background(inputBackgroundColor)
                         .cornerRadius(12)
                     }
                     
@@ -72,7 +76,7 @@ struct ProfileEditorView: View {
                             Stepper("", value: $age, in: 1...120)
                         }
                         .padding()
-                        .background(Color(.secondarySystemBackground))
+                        .background(inputBackgroundColor)
                         .cornerRadius(12)
                     }
                     
@@ -89,7 +93,7 @@ struct ProfileEditorView: View {
                         }
                         .frame(height: 50)
                         .padding(.horizontal, 16)
-                        .background(Color(.secondarySystemBackground))
+                        .background(inputBackgroundColor)
                         .cornerRadius(12)
                     }
                     
@@ -106,7 +110,7 @@ struct ProfileEditorView: View {
                         }
                         .frame(height: 50)
                         .padding(.horizontal, 16)
-                        .background(Color(.secondarySystemBackground))
+                        .background(inputBackgroundColor)
                         .cornerRadius(12)
                     }
                     
@@ -127,7 +131,7 @@ struct ProfileEditorView: View {
                             }
                             .frame(height: 50)
                             .padding(.horizontal, 16)
-                            .background(Color(.secondarySystemBackground))
+                            .background(inputBackgroundColor)
                             .cornerRadius(12)
                             
                             HStack {
@@ -141,7 +145,7 @@ struct ProfileEditorView: View {
                             }
                             .frame(height: 50)
                             .padding(.horizontal, 16)
-                            .background(Color(.secondarySystemBackground))
+                            .background(inputBackgroundColor)
                             .cornerRadius(12)
                             
                             HStack {
@@ -155,7 +159,7 @@ struct ProfileEditorView: View {
                             }
                             .frame(height: 50)
                             .padding(.horizontal, 16)
-                            .background(Color(.secondarySystemBackground))
+                            .background(inputBackgroundColor)
                             .cornerRadius(12)
                             
                             HStack {
@@ -169,13 +173,23 @@ struct ProfileEditorView: View {
                             }
                             .frame(height: 50)
                             .padding(.horizontal, 16)
-                            .background(Color(.secondarySystemBackground))
+                            .background(inputBackgroundColor)
                             .cornerRadius(12)
                         }
                     }
+                    
+                    Button(action: saveProfile) {
+                        Text(NSLocalizedString("action.save", comment: ""))
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color.primaryBlue)
+                            .cornerRadius(25)
+                            .padding(.vertical, 20)
+                    }
                 }
                 .padding()
-                .padding(.bottom, 100)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("settings.profile", comment: ""))
@@ -189,19 +203,6 @@ struct ProfileEditorView: View {
                 Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
             } message: {
                 Text(validationErrorMessage)
-            }
-            .overlay(alignment: .bottom) {
-                Button(action: saveProfile) {
-                    Text(NSLocalizedString("action.save", comment: ""))
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color.primaryBlue)
-                        .cornerRadius(25)
-                }
-                .padding()
-                .padding(.bottom, 20)
             }
             .onAppear {
                 loadExistingProfile()
