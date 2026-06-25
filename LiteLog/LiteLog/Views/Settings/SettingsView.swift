@@ -59,14 +59,10 @@ struct SettingsView: View {
             Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
         }
         .fullScreenCover(isPresented: $showingFeedback) {
-            NavigationView {
-                FeedbackView()
-            }
+            FeedbackView()
         }
         .fullScreenCover(isPresented: $showingContact) {
-            NavigationView {
-                ContactView()
-            }
+            ContactView()
         }
     }
 

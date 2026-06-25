@@ -85,23 +85,15 @@ struct FeedbackView: View {
                                 .font(.headline)
                                 .foregroundColor(.primaryText)
 
-                            ZStack(alignment: .topLeading) {
-                                TextEditor(text: $message)
-                                    .frame(height: 150)
-                                    .background(Color.secondaryBackground)
-                                    .cornerRadius(8)
-                                    .foregroundColor(.primaryText)
-                                    .font(.subheadline)
-
-                                if message.isEmpty {
-                                    Text(NSLocalizedString("feedback.content.placeholder", comment: ""))
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondaryText)
-                                        .padding(.top, 8)
-                                        .padding(.leading, 4)
-                                        .allowsHitTesting(false)
-                                }
-                            }
+                            ClearTextView(
+                                text: $message,
+                                placeholder: NSLocalizedString("feedback.content.placeholder", comment: ""),
+                                font: UIFont.preferredFont(forTextStyle: .subheadline),
+                                textColor: .label
+                            )
+                            .frame(height: 150)
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(8)
 
                             HStack {
                                 Spacer()
@@ -178,6 +170,7 @@ struct FeedbackView: View {
                         }
                 )
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("feedback.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(leading: Button(action: {
@@ -196,6 +189,9 @@ struct FeedbackView: View {
                 Button(NSLocalizedString("action.ok", comment: "")) {}
             } message: {
                 Text(errorMessage)
+            }
+            .onTapGesture {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             }
         }
     }

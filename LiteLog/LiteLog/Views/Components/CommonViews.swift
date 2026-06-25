@@ -132,3 +132,63 @@ struct ErrorView: View {
         .padding(32)
     }
 }
+
+struct ClearTextView: UIViewRepresentable {
+    @Binding var text: String
+    let placeholder: String
+    let font: UIFont
+    let textColor: UIColor
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.backgroundColor = .clear
+        textView.font = font
+        textView.textColor = textColor
+        textView.text = text.isEmpty ? placeholder : text
+        textView.textColor = text.isEmpty ? .secondaryLabel : textColor
+        textView.delegate = context.coordinator
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
+        return textView
+    }
+
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        if !text.isEmpty && uiView.text != text {
+            uiView.text = text
+            uiView.textColor = textColor
+        }
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, UITextViewDelegate {
+        let parent: ClearTextView
+
+        init(_ parent: ClearTextView) {
+            self.parent = parent
+        }
+
+        func textViewDidChange(_ textView: UITextView) {
+            if textView.text == parent.placeholder {
+                parent.text = ""
+            } else {
+                parent.text = textView.text
+            }
+        }
+
+        func textViewDidBeginEditing(_ textView: UITextView) {
+            if textView.text == parent.placeholder {
+                textView.text = ""
+                textView.textColor = parent.textColor
+            }
+        }
+
+        func textViewDidEndEditing(_ textView: UITextView) {
+            if textView.text.isEmpty {
+                textView.text = parent.placeholder
+                textView.textColor = .secondaryLabel
+            }
+        }
+    }
+}

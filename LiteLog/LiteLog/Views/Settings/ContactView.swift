@@ -26,6 +26,7 @@ struct ContactView: View {
                     }
                 }
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("settings.contact", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(leading: Button(action: {
