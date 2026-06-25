@@ -130,6 +130,7 @@ struct RecordFormView: View {
     }
 
     var body: some View {
+        NavigationView {
             Form {
                 Section(NSLocalizedString("record.date", comment: "")) {
                     DatePicker(
@@ -285,6 +286,13 @@ struct RecordFormView: View {
             .navigationTitle(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(.primaryBlue)
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(NSLocalizedString("action.save", comment: "")) {
                         saveRecord()
@@ -334,7 +342,8 @@ struct RecordFormView: View {
                 }
             }
             .dismissKeyboardOnTapOutside()
-            
+        }
+        
     }
 
     private func saveRecord() {
