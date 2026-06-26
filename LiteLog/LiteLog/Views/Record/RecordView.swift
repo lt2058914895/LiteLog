@@ -9,9 +9,11 @@ struct RecordView: View {
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) private var userProfile: FetchedResults<UserProfile>
 
     @State private var selectedDate: Date?
-    @State private var selectedRecord: WeightRecord?
+    @State private var recordToEditData: RecordFormData?
+    @State private var recordToDeleteId: String?
     @State private var viewMode: ViewMode = .list
     @State private var showingAddSheet = false
+    @State private var showingEditSheet = false
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -55,8 +57,28 @@ struct RecordView: View {
         .fullScreenCover(isPresented: $showingAddSheet) {
             RecordFormView(isPresented: $showingAddSheet)
         }
-        .fullScreenCover(item: $selectedRecord) { record in
-            RecordFormView(record: record, isPresented: .constant(false))
+        .fullScreenCover(isPresented: $showingEditSheet) {
+            if let data = recordToEditData {
+                RecordFormView(recordData: data, isPresented: $showingEditSheet, onDelete: { recordId in
+                    recordToDeleteId = recordId
+                })
+                .id(data.id)
+            }
+        }
+        .onChange(of: recordToEditData) { newValue in
+            if newValue != nil {
+                showingEditSheet = true
+            }
+        }
+        .onChange(of: recordToDeleteId) { newValue in
+            if let recordId = newValue {
+                showingEditSheet = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    performDelete(recordId: recordId)
+                    recordToDeleteId = nil
+                    recordToEditData = nil
+                }
+            }
         }
     }
 
@@ -85,7 +107,7 @@ struct RecordView: View {
                 List {
                     ForEach(groupedRecords.keys.sorted(by: >), id: \.self) { date in
                         Section(header: Text(date.monthYearString)) {
-                            ForEach(groupedRecords[date] ?? [], id: \.id) { record in
+                            ForEach(groupedRecords[date] ?? [], id: \.objectID) { record in
                                 RecordRowView(record: record, unit: unit)
                                     .listRowInsets(EdgeInsets())
                                     .listRowBackground(Color.clear)
@@ -93,7 +115,19 @@ struct RecordView: View {
                                     .padding(.bottom, 8)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
-                                        selectedRecord = record
+                                        recordToEditData = RecordFormData(
+                                            id: record.id.uuidString,
+                                            date: record.date,
+                                            weightString: unit.convertFromKg(record.weight).smartFormatted,
+                                            bodyFatString: record.bodyFatPercentageValue?.smartFormatted ?? "",
+                                            waistString: record.waistCircumferenceValue?.smartFormatted ?? "",
+                                            hipString: record.hipCircumferenceValue?.smartFormatted ?? "",
+                                            chestString: record.chestCircumferenceValue?.smartFormatted ?? "",
+                                            thighString: record.thighCircumferenceValue?.smartFormatted ?? "",
+                                            note: record.note ?? "",
+                                            imageUrl: record.imageUrl,
+                                            measurementTimePeriod: record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random
+                                        )
                                     }
                                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                         Button(role: .destructive) {
@@ -104,7 +138,19 @@ struct RecordView: View {
                                     }
                                     .swipeActions(edge: .leading) {
                                         Button {
-                                            selectedRecord = record
+                                            recordToEditData = RecordFormData(
+                                                id: record.id.uuidString,
+                                                date: record.date,
+                                                weightString: unit.convertFromKg(record.weight).smartFormatted,
+                                                bodyFatString: record.bodyFatPercentageValue?.smartFormatted ?? "",
+                                                waistString: record.waistCircumferenceValue?.smartFormatted ?? "",
+                                                hipString: record.hipCircumferenceValue?.smartFormatted ?? "",
+                                                chestString: record.chestCircumferenceValue?.smartFormatted ?? "",
+                                                thighString: record.thighCircumferenceValue?.smartFormatted ?? "",
+                                                note: record.note ?? "",
+                                                imageUrl: record.imageUrl,
+                                                measurementTimePeriod: record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random
+                                            )
                                         } label: {
                                             Label(NSLocalizedString("action.edit", comment: ""), systemImage: "pencil")
                                         }
@@ -152,10 +198,22 @@ struct RecordView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding()
             } else {
-                ForEach(dayRecords, id: \.id) { record in
+                ForEach(dayRecords, id: \.objectID) { record in
                     RecordRowView(record: record, unit: unit)
                         .onTapGesture {
-                            selectedRecord = record
+                            recordToEditData = RecordFormData(
+                                id: record.id.uuidString,
+                                date: record.date,
+                                weightString: unit.convertFromKg(record.weight).smartFormatted,
+                                bodyFatString: record.bodyFatPercentageValue?.smartFormatted ?? "",
+                                waistString: record.waistCircumferenceValue?.smartFormatted ?? "",
+                                hipString: record.hipCircumferenceValue?.smartFormatted ?? "",
+                                chestString: record.chestCircumferenceValue?.smartFormatted ?? "",
+                                thighString: record.thighCircumferenceValue?.smartFormatted ?? "",
+                                note: record.note ?? "",
+                                imageUrl: record.imageUrl,
+                                measurementTimePeriod: record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random
+                            )
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
@@ -187,6 +245,16 @@ struct RecordView: View {
         // 同步删除到云数据库
         Task {
             await DataSyncManager.shared.syncDeletedRecords(recordIds: [recordId])
+        }
+    }
+    
+    private func performDelete(recordId: String) {
+        if let uuid = UUID(uuidString: recordId) {
+            let fetchRequest = WeightRecord.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %@", uuid as CVarArg)
+            if let record = try? context.fetch(fetchRequest).first {
+                deleteRecord(record)
+            }
         }
     }
     

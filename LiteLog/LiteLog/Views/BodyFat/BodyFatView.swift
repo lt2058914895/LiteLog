@@ -8,7 +8,8 @@ struct BodyFatView: View {
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var records: FetchedResults<WeightRecord>
 
     @State private var showingAddSheet = false
-    @State private var selectedRecord: WeightRecord?
+    @State private var recordToEditData: RecordFormData?
+    @State private var showingEditSheet = false
 
     private var unit: WeightUnit { settingsManager.weightUnit }
 
@@ -65,8 +66,16 @@ struct BodyFatView: View {
             .fullScreenCover(isPresented: $showingAddSheet) {
                 RecordFormView(isPresented: $showingAddSheet)
             }
-            .fullScreenCover(item: $selectedRecord) { record in
-                RecordFormView(record: record, isPresented: .constant(false))
+            .fullScreenCover(isPresented: $showingEditSheet) {
+                if let data = recordToEditData {
+                    RecordFormView(recordData: data, isPresented: $showingEditSheet)
+                        .id(data.id)
+                }
+            }
+            .onChange(of: recordToEditData) { newValue in
+                if newValue != nil {
+                    showingEditSheet = true
+                }
             }
         }
     }
@@ -89,11 +98,23 @@ struct BodyFatView: View {
                 LazyVStack(spacing: 8) {
                     ForEach(groupedRecords.keys.sorted(by: >), id: \.self) { date in
                         Section {
-                            ForEach(groupedRecords[date] ?? [], id: \.id) { record in
+                            ForEach(groupedRecords[date] ?? [], id: \.objectID) { record in
                                 RecordRowView(record: record, unit: unit)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
-                                        selectedRecord = record
+                                        recordToEditData = RecordFormData(
+                                            id: record.id.uuidString,
+                                            date: record.date,
+                                            weightString: unit.convertFromKg(record.weight).smartFormatted,
+                                            bodyFatString: record.bodyFatPercentageValue?.smartFormatted ?? "",
+                                            waistString: record.waistCircumferenceValue?.smartFormatted ?? "",
+                                            hipString: record.hipCircumferenceValue?.smartFormatted ?? "",
+                                            chestString: record.chestCircumferenceValue?.smartFormatted ?? "",
+                                            thighString: record.thighCircumferenceValue?.smartFormatted ?? "",
+                                            note: record.note ?? "",
+                                            imageUrl: record.imageUrl,
+                                            measurementTimePeriod: record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random
+                                        )
                                     }
                             }
                         } header: {

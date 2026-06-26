@@ -242,7 +242,7 @@ struct RecordListView: View {
 
     var body: some View {
         LazyVStack(spacing: 8) {
-            ForEach(records, id: \.id) { record in
+            ForEach(records, id: \.objectID) { record in
                 RecordRowView(record: record, unit: unit)
                     .contextMenu {
                         Button(action: { onEdit(record) }) {

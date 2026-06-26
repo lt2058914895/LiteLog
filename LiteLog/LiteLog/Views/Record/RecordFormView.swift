@@ -1,6 +1,24 @@
 import SwiftUI
 import CoreData
 
+struct RecordFormData: Equatable {
+    let id: String
+    var date: Date
+    var weightString: String
+    var bodyFatString: String
+    var waistString: String
+    var hipString: String
+    var chestString: String
+    var thighString: String
+    var note: String
+    var imageUrl: String?
+    var measurementTimePeriod: MeasurementTimePeriod
+    
+    static func == (lhs: RecordFormData, rhs: RecordFormData) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
 extension View {
     func dismissKeyboardOnTapOutside() -> some View {
         self.modifier(DismissKeyboardModifier())
@@ -33,11 +51,15 @@ extension UIApplication {
 
 struct RecordFormView: View {
     @Environment(\.managedObjectContext) private var context
-    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var settingsManager: SettingsManager
 
-    let record: WeightRecord?
+    let recordData: RecordFormData?
     @Binding var isPresented: Bool
+    var onDelete: ((String) -> Void)?
+    
+    private func dismiss() {
+        isPresented = false
+    }
 
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var records: FetchedResults<WeightRecord>
 
@@ -64,7 +86,7 @@ struct RecordFormView: View {
 
     private var unit: WeightUnit { settingsManager.weightUnit }
 
-    private var isEditMode: Bool { record != nil }
+    private var isEditMode: Bool { recordData != nil }
 
     private var isValidWeight: Bool {
         guard let value = Double(weightString) else { return false }
@@ -100,21 +122,22 @@ struct RecordFormView: View {
         return value
     }
 
-    init(record: WeightRecord? = nil, isPresented: Binding<Bool>) {
-        self.record = record
+    init(recordData: RecordFormData? = nil, isPresented: Binding<Bool>, onDelete: ((String) -> Void)? = nil) {
+        self.recordData = recordData
         self._isPresented = isPresented
+        self.onDelete = onDelete
         
-        if let record = record {
-            self._date = State(initialValue: record.date)
-            self._weightString = State(initialValue: "")
-            self._bodyFatString = State(initialValue: record.bodyFatPercentageValue?.smartFormatted ?? "")
-            self._waistString = State(initialValue: record.waistCircumferenceValue?.smartFormatted ?? "")
-            self._hipString = State(initialValue: record.hipCircumferenceValue?.smartFormatted ?? "")
-            self._chestString = State(initialValue: record.chestCircumferenceValue?.smartFormatted ?? "")
-            self._thighString = State(initialValue: record.thighCircumferenceValue?.smartFormatted ?? "")
-            self._note = State(initialValue: record.note ?? "")
-            self._imageUrl = State(initialValue: record.imageUrl)
-            self._selectedTimePeriod = State(initialValue: record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random)
+        if let recordData = recordData {
+            self._date = State(initialValue: recordData.date)
+            self._weightString = State(initialValue: recordData.weightString)
+            self._bodyFatString = State(initialValue: recordData.bodyFatString)
+            self._waistString = State(initialValue: recordData.waistString)
+            self._hipString = State(initialValue: recordData.hipString)
+            self._chestString = State(initialValue: recordData.chestString)
+            self._thighString = State(initialValue: recordData.thighString)
+            self._note = State(initialValue: recordData.note)
+            self._imageUrl = State(initialValue: recordData.imageUrl)
+            self._selectedTimePeriod = State(initialValue: recordData.measurementTimePeriod)
         } else {
             self._date = State(initialValue: Date())
             self._weightString = State(initialValue: "")
@@ -269,37 +292,25 @@ struct RecordFormView: View {
                     noteEditorView
                 }
 
-                if isEditMode {
-                    Section {
-                        Button(role: .destructive) {
-                            showingDeleteAlert = true
-                        } label: {
-                            HStack {
-                                Spacer()
-                                Text(NSLocalizedString("record.delete", comment: ""))
-                                Spacer()
-                            }
+                Section {
+                    Button(action: {
+                        saveRecord()
+                    }) {
+                        HStack {
+                            Spacer()
+                            Text(NSLocalizedString("action.save", comment: ""))
+                                .foregroundColor(.white)
+                            Spacer()
                         }
                     }
+                    .disabled(!isValidWeight)
+                    .listRowBackground(isValidWeight ? Color.primaryBlue : Color.gray)
                 }
+                .listRowBackground(Color.clear)
             }
             .navigationTitle(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(.primaryBlue)
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(NSLocalizedString("action.save", comment: "")) {
-                        saveRecord()
-                    }
-                    .disabled(!isValidWeight)
-                }
-            }
+            .navigationBarItems(leading: backButton, trailing: isEditMode ? deleteButton : nil)
             .alert(NSLocalizedString("record.delete.confirm", comment: ""), isPresented: $showingDeleteAlert) {
                 Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
                 Button(NSLocalizedString("action.delete", comment: ""), role: .destructive) {
@@ -336,11 +347,7 @@ struct RecordFormView: View {
                     .background(Color.black)
             }
             
-            .onAppear {
-                if isEditMode && weightString.isEmpty, let record = record {
-                    weightString = unit.convertFromKg(record.weight).smartFormatted
-                }
-            }
+            
             .dismissKeyboardOnTapOutside()
         }
         
@@ -403,8 +410,14 @@ struct RecordFormView: View {
     }
 
     private func updateRecord() {
-        guard let record = record, let weightValue = Double(weightString) else {
+        guard let recordData = recordData, let recordId = UUID(uuidString: recordData.id), let weightValue = Double(weightString) else {
             errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
+            showingError = true
+            return
+        }
+
+        guard let record = records.first(where: { $0.id == recordId }) else {
+            errorMessage = NSLocalizedString("error.record.not.found", comment: "")
             showingError = true
             return
         }
@@ -437,21 +450,28 @@ struct RecordFormView: View {
     }
 
     private func deleteRecord() {
-        if let record = record {
-            let recordId = record.id.uuidString
-            context.delete(record)
-            
-            do {
-                try context.save()
-                // 同步删除到云数据库
-                Task {
-                    await DataSyncManager.shared.syncDeletedRecords(recordIds: [recordId])
-                }
-            } catch {
-                print("Failed to delete record: \(error)")
-            }
+        guard let recordData = recordData else {
+            dismiss()
+            return
         }
-        dismiss()
+        
+        onDelete?(recordData.id)
+    }
+    
+    private var backButton: some View {
+        Button(action: { dismiss() }) {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 20, weight: .medium))
+                .foregroundColor(.primaryBlue)
+        }
+    }
+    
+    private var deleteButton: some View {
+        Button(role: .destructive, action: {
+            showingDeleteAlert = true
+        }) {
+            Text(NSLocalizedString("record.delete", comment: ""))
+        }
     }
     
     private var noteEditorView: some View {
