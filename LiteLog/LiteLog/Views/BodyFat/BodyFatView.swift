@@ -12,7 +12,7 @@ struct BodyFatView: View {
 
     private var unit: WeightUnit { settingsManager.weightUnit }
 
-    private var chartData: [BodyFatChartView.ChartDataPoint] {
+    private var chartData: [(Date, Double)] {
         let filtered = records.filter { $0.bodyFatPercentageValue != nil }
         let calendar = Calendar.current
 
@@ -22,11 +22,11 @@ struct BodyFatView: View {
 
         return grouped.compactMap { key, values in
             if let record = values.max(by: { $0.date < $1.date }), let bodyFat = record.bodyFatPercentageValue {
-                return BodyFatChartView.ChartDataPoint(date: key, bodyFat: bodyFat)
+                return (key, bodyFat)
             }
             return nil
         }
-        .sorted { $0.date < $1.date }
+        .sorted { $0.0 < $1.0 }
     }
 
     private var bodyFatRecords: [WeightRecord] {
@@ -44,7 +44,7 @@ struct BodyFatView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
-                    BodyFatChartView(data: chartData)
+                    ModernTrendChartView(data: chartData, color: .primaryBlue, unit: "%", title: NSLocalizedString("home.trend", comment: ""))
 
                     historySection
                 }

@@ -124,7 +124,7 @@ struct StatisticsView: View {
             case .thigh:
                 value = record.thighCircumference
             }
-            if let value = value {
+            if let value = value, value > 0 {
                 return (record.date.startOfDay, value)
             }
             return nil
@@ -288,7 +288,7 @@ struct StatisticsView: View {
                     .padding()
                     .cardStyle()
             } else {
-                TrendChartView(
+                ModernTrendChartView(
                     data: currentMetricData,
                     color: selectedMetric.color,
                     unit: selectedMetric.unit,
@@ -299,120 +299,52 @@ struct StatisticsView: View {
     }
 
     private var bmiChartSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(NSLocalizedString("stats.bmi.trend", comment: ""))
-                .font(.headline)
-                .foregroundColor(.primaryText)
-
+        Group {
             if let profile = profile {
                 if filteredRecords.isEmpty {
-                    Text(NSLocalizedString("stats.no.data", comment: ""))
-                        .font(.subheadline)
-                        .foregroundColor(.secondaryText)
-                        .frame(height: 150)
-                        .frame(maxWidth: .infinity)
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(NSLocalizedString("stats.bmi.trend", comment: ""))
+                            .font(.headline)
+                            .foregroundColor(.primaryText)
+                        
+                        Text(NSLocalizedString("stats.no.data", comment: ""))
+                            .font(.subheadline)
+                            .foregroundColor(.secondaryText)
+                            .frame(height: 150)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .padding()
+                    .cardStyle()
                 } else {
                     let bmiData = filteredRecords.map { record -> (Date, Double) in
                         (record.date.startOfDay, profile.calculateBMI(weight: record.weight))
                     }
-
-                    VStack(spacing: 12) {
-                        GeometryReader { geometry in
-                            ZStack {
-                                if bmiData.count > 1 {
-                                    let points = calculateBMIPoints(data: bmiData, in: geometry.size)
-                                    
-                                    Path { path in
-                                        path.move(to: points[0])
-                                        for i in 1..<points.count {
-                                            path.addLine(to: points[i])
-                                        }
-                                    }
-                                    .stroke(Color.green, lineWidth: 2)
-
-                                    ForEach(Array(points.enumerated()), id: \.offset) { index, point in
-                                        Circle()
-                                            .fill(bmiCategoryColor(bmiData[index].1))
-                                            .frame(width: 6, height: 6)
-                                            .position(point)
-                                    }
-                                } else if let point = bmiData.first {
-                                    Text(String(format: "%.1f", point.1))
-                                        .font(.title)
-                                        .foregroundColor(bmiCategoryColor(point.1))
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                }
-                            }
-                        }
-                        .frame(height: 150)
-                        
-                        bmiLegend
-                    }
+                    
+                    BMITrendChartView(data: bmiData)
                 }
             } else {
-                VStack(spacing: 8) {
-                    Text(NSLocalizedString("stats.bmi.no.profile", comment: ""))
-                        .font(.subheadline)
-                        .foregroundColor(.secondaryText)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(NSLocalizedString("stats.bmi.trend", comment: ""))
+                        .font(.headline)
+                        .foregroundColor(.primaryText)
                     
-                    Button(NSLocalizedString("action.edit", comment: "")) {
-                        NotificationCenter.default.post(name: .showProfileEditor, object: nil)
+                    VStack(spacing: 8) {
+                        Text(NSLocalizedString("stats.bmi.no.profile", comment: ""))
+                            .font(.subheadline)
+                            .foregroundColor(.secondaryText)
+                        
+                        Button(NSLocalizedString("action.edit", comment: "")) {
+                            NotificationCenter.default.post(name: .showProfileEditor, object: nil)
+                        }
+                        .foregroundColor(.primaryBlue)
+                        .font(.subheadline)
                     }
-                    .foregroundColor(.primaryBlue)
-                    .font(.subheadline)
+                    .frame(height: 150)
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(height: 150)
-                .frame(maxWidth: .infinity)
+                .padding()
+                .cardStyle()
             }
-        }
-        .padding()
-        .cardStyle()
-    }
-    
-    private func calculateBMIPoints(data: [(Date, Double)], in size: CGSize) -> [CGPoint] {
-        guard !data.isEmpty else { return [] }
-        
-        let width = size.width
-        let height = size.height
-        let padding: CGFloat = 20
-        let minBMI: Double = 15
-        let maxBMI: Double = 35
-        
-        return data.enumerated().map { index, point in
-            let x = padding + CGFloat(index) * (width - 2 * padding) / CGFloat(max(data.count - 1, 1))
-            let normalizedY = (point.1 - minBMI) / (maxBMI - minBMI)
-            let clampedY = max(0, min(normalizedY, 1))
-            let y = height - padding - clampedY * (height - 2 * padding)
-            return CGPoint(x: x, y: y)
-        }
-    }
-
-    private func bmiCategoryColor(_ bmi: Double) -> Color {
-        switch bmi {
-        case ..<18.5: return .blue
-        case 18.5..<24: return .green
-        case 24..<28: return .orange
-        default: return .red
-        }
-    }
-
-    private var bmiLegend: some View {
-        HStack(spacing: 16) {
-            legendItem(color: .blue, label: NSLocalizedString("bmi.category.underweight", comment: ""))
-            legendItem(color: .green, label: NSLocalizedString("bmi.category.normal", comment: ""))
-            legendItem(color: .orange, label: NSLocalizedString("bmi.category.overweight", comment: ""))
-            legendItem(color: .red, label: NSLocalizedString("bmi.category.obese", comment: ""))
-        }
-        .font(.caption2)
-    }
-
-    private func legendItem(color: Color, label: String) -> some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(color)
-                .frame(width: 8, height: 8)
-            Text(label)
-                .foregroundColor(.secondaryText)
         }
     }
 

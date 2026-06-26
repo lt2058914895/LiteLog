@@ -12,7 +12,7 @@ struct WaistCircumferenceView: View {
 
     private var unit: WeightUnit { settingsManager.weightUnit }
 
-    private var chartData: [WaistCircumferenceChartView.ChartDataPoint] {
+    private var chartData: [(Date, Double)] {
         let filtered = records.filter { $0.waistCircumferenceValue != nil }
         let calendar = Calendar.current
 
@@ -22,11 +22,11 @@ struct WaistCircumferenceView: View {
 
         return grouped.compactMap { key, values in
             if let record = values.max(by: { $0.date < $1.date }), let waist = record.waistCircumferenceValue {
-                return WaistCircumferenceChartView.ChartDataPoint(date: key, waist: waist)
+                return (key, waist)
             }
             return nil
         }
-        .sorted { $0.date < $1.date }
+        .sorted { $0.0 < $1.0 }
     }
 
     private var waistRecords: [WeightRecord] {
@@ -44,7 +44,7 @@ struct WaistCircumferenceView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
-                    WaistCircumferenceChartView(data: chartData)
+                    ModernTrendChartView(data: chartData, color: .primaryBlue, unit: "cm", title: NSLocalizedString("home.trend", comment: ""))
 
                     historySection
                 }
