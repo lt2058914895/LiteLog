@@ -55,7 +55,6 @@ struct RecordFormView: View {
 
     let recordData: RecordFormData?
     @Binding var isPresented: Bool
-    var onDelete: ((String) -> Void)?
     
     private func dismiss() {
         isPresented = false
@@ -71,7 +70,6 @@ struct RecordFormView: View {
     @State private var chestString: String
     @State private var thighString: String
     @State private var note: String
-    @State private var showingDeleteAlert = false
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var showingDuplicateAlert = false
@@ -122,10 +120,9 @@ struct RecordFormView: View {
         return value
     }
 
-    init(recordData: RecordFormData? = nil, isPresented: Binding<Bool>, onDelete: ((String) -> Void)? = nil) {
+    init(recordData: RecordFormData? = nil, isPresented: Binding<Bool>) {
         self.recordData = recordData
         self._isPresented = isPresented
-        self.onDelete = onDelete
         
         if let recordData = recordData {
             self._date = State(initialValue: recordData.date)
@@ -291,32 +288,10 @@ struct RecordFormView: View {
                 Section(NSLocalizedString("record.note", comment: "")) {
                     noteEditorView
                 }
-
-                Section {
-                    Button(action: {
-                        saveRecord()
-                    }) {
-                        HStack {
-                            Spacer()
-                            Text(NSLocalizedString("action.save", comment: ""))
-                                .foregroundColor(.white)
-                            Spacer()
-                        }
-                    }
-                    .disabled(!isValidWeight)
-                    .listRowBackground(isValidWeight ? Color.primaryBlue : Color.gray)
-                }
-                .listRowBackground(Color.clear)
             }
             .navigationTitle(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(leading: backButton, trailing: isEditMode ? deleteButton : nil)
-            .alert(NSLocalizedString("record.delete.confirm", comment: ""), isPresented: $showingDeleteAlert) {
-                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-                Button(NSLocalizedString("action.delete", comment: ""), role: .destructive) {
-                    deleteRecord()
-                }
-            }
+            .navigationBarItems(leading: backButton, trailing: saveButton)
             .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
                 Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
             } message: {
@@ -448,15 +423,6 @@ struct RecordFormView: View {
 
         dismiss()
     }
-
-    private func deleteRecord() {
-        guard let recordData = recordData else {
-            dismiss()
-            return
-        }
-        
-        onDelete?(recordData.id)
-    }
     
     private var backButton: some View {
         Button(action: { dismiss() }) {
@@ -466,12 +432,14 @@ struct RecordFormView: View {
         }
     }
     
-    private var deleteButton: some View {
-        Button(role: .destructive, action: {
-            showingDeleteAlert = true
+    private var saveButton: some View {
+        Button(action: {
+            saveRecord()
         }) {
-            Text(NSLocalizedString("record.delete", comment: ""))
+            Text(NSLocalizedString("action.save", comment: ""))
+                .foregroundColor(isValidWeight ? .primaryBlue : .gray)
         }
+        .disabled(!isValidWeight)
     }
     
     private var noteEditorView: some View {

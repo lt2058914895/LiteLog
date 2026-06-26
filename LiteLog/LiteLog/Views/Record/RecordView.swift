@@ -10,7 +10,6 @@ struct RecordView: View {
 
     @State private var selectedDate: Date?
     @State private var recordToEditData: RecordFormData?
-    @State private var recordToDeleteId: String?
     @State private var viewMode: ViewMode = .list
     @State private var showingAddSheet = false
     @State private var showingEditSheet = false
@@ -59,25 +58,13 @@ struct RecordView: View {
         }
         .fullScreenCover(isPresented: $showingEditSheet) {
             if let data = recordToEditData {
-                RecordFormView(recordData: data, isPresented: $showingEditSheet, onDelete: { recordId in
-                    recordToDeleteId = recordId
-                })
-                .id(data.id)
+                RecordFormView(recordData: data, isPresented: $showingEditSheet)
+                    .id(data.id)
             }
         }
         .onChange(of: recordToEditData) { newValue in
             if newValue != nil {
                 showingEditSheet = true
-            }
-        }
-        .onChange(of: recordToDeleteId) { newValue in
-            if let recordId = newValue {
-                showingEditSheet = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    performDelete(recordId: recordId)
-                    recordToDeleteId = nil
-                    recordToEditData = nil
-                }
             }
         }
     }
@@ -245,16 +232,6 @@ struct RecordView: View {
         // 同步删除到云数据库
         Task {
             await DataSyncManager.shared.syncDeletedRecords(recordIds: [recordId])
-        }
-    }
-    
-    private func performDelete(recordId: String) {
-        if let uuid = UUID(uuidString: recordId) {
-            let fetchRequest = WeightRecord.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "id == %@", uuid as CVarArg)
-            if let record = try? context.fetch(fetchRequest).first {
-                deleteRecord(record)
-            }
         }
     }
     
