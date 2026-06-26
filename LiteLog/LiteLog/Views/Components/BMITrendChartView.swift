@@ -3,19 +3,20 @@ import SwiftUI
 struct BMITrendChartView: View {
     let data: [(Date, Double)]
     
-    private let yAxisWidth: CGFloat = 24
+    private let yAxisWidth: CGFloat = 20
     private let xAxisHeight: CGFloat = 26
     private let chartHeight: CGFloat = 160
     private let lineWidth: CGFloat = 2.5
     private let gridLineWidth: CGFloat = 0.5
-    private let gridLineCount = 5
     private let pointSize: CGFloat = 6
     private let chartPadding: CGFloat = 8
     
+    private let bmiCriticalPoints: [Double] = [18.5, 24.0, 28.0]
+    
     private let bmiRanges: [(range: ClosedRange<Double>, color: Color, name: String)] = [
-        (0...18.4, Color(hex: "60A5FA"), NSLocalizedString("bmi.underweight", comment: "")),
-        (18.5...23.9, Color(hex: "34D399"), NSLocalizedString("bmi.normal", comment: "")),
-        (24.0...27.9, Color(hex: "FBBF24"), NSLocalizedString("bmi.overweight", comment: "")),
+        (0...18.5, Color(hex: "60A5FA"), NSLocalizedString("bmi.underweight", comment: "")),
+        (18.5...24.0, Color(hex: "34D399"), NSLocalizedString("bmi.normal", comment: "")),
+        (24.0...28.0, Color(hex: "FBBF24"), NSLocalizedString("bmi.overweight", comment: "")),
         (28.0...Double.infinity, Color(hex: "F87171"), NSLocalizedString("bmi.obese", comment: ""))
     ]
     
@@ -79,27 +80,56 @@ struct BMITrendChartView: View {
     }
     
     private var yAxisLabels: some View {
-        VStack(spacing: 0) {
-            ForEach(0..<gridLineCount, id: \.self) { index in
-                let value = yAxisValue(at: index)
-                Text("\(Int(value))")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondaryText)
-                    .frame(height: (chartHeight - xAxisHeight) / CGFloat(gridLineCount - 1), alignment: .center)
+        GeometryReader { geometry in
+            let chartAreaHeight = geometry.size.height
+            let innerHeight = chartAreaHeight - chartPadding * 2
+            
+            let values = data.map { $0.1 }
+            let maxValue = values.max() ?? 30
+            let minValue = values.min() ?? 18.5
+            let range = maxValue - minValue
+            let margin = range * 0.1
+            let displayMax = max(maxValue + margin, 35)
+            let displayMin = min(minValue - margin, 15)
+            let displayRange = displayMax - displayMin
+            
+            ZStack(alignment: .trailing) {
+                ForEach(bmiCriticalPoints.indices, id: \.self) { index in
+                    let value = bmiCriticalPoints[index]
+                    let normalizedY = (value - displayMin) / displayRange
+                    let y = chartPadding + innerHeight - normalizedY * innerHeight
+                    
+                    Text(value == Double(Int(value)) ? "\(Int(value))" : String(format: "%.1f", value))
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondaryText)
+                        .position(x: yAxisWidth - 6, y: y)
+                }
             }
         }
-        .frame(width: yAxisWidth, alignment: .trailing)
-        .padding(.trailing, 4)
+        .frame(width: yAxisWidth)
     }
     
     private var gridLines: some View {
         GeometryReader { geometry in
             let chartAreaHeight = geometry.size.height
             let chartAreaWidth = geometry.size.width
+            let innerHeight = chartAreaHeight - chartPadding * 2
             
-            VStack(spacing: 0) {
-                ForEach(0..<gridLineCount, id: \.self) { index in
-                    let y = chartPadding + CGFloat(index) * (chartAreaHeight - chartPadding * 2) / CGFloat(gridLineCount - 1)
+            let values = data.map { $0.1 }
+            let maxValue = values.max() ?? 30
+            let minValue = values.min() ?? 18.5
+            let range = maxValue - minValue
+            let margin = range * 0.1
+            let displayMax = max(maxValue + margin, 35)
+            let displayMin = min(minValue - margin, 15)
+            let displayRange = displayMax - displayMin
+            
+            ZStack {
+                ForEach(bmiCriticalPoints.indices, id: \.self) { index in
+                    let value = bmiCriticalPoints[index]
+                    let normalizedY = (value - displayMin) / displayRange
+                    let y = chartPadding + innerHeight - normalizedY * innerHeight
+                    
                     Path { path in
                         path.move(to: CGPoint(x: chartPadding, y: y))
                         path.addLine(to: CGPoint(x: chartAreaWidth - chartPadding, y: y))
@@ -140,47 +170,49 @@ struct BMITrendChartView: View {
             
             let values = data.map { $0.1 }
             let maxValue = values.max() ?? 30
-            let minValue = values.min() ?? 15
+            let minValue = values.min() ?? 18.5
             let range = maxValue - minValue
-            
             let margin = range * 0.1
             let displayMax = max(maxValue + margin, 35)
-            let displayMin = max(minValue - margin, 10)
+            let displayMin = min(minValue - margin, 15)
             let displayRange = displayMax - displayMin
             
-            let segments = bmiRanges.compactMap { rangeItem -> (color: Color, height: CGFloat)? in
-                let rangeStart = max(rangeItem.range.lowerBound, displayMin)
-                let rangeEnd = min(rangeItem.range.upperBound, displayMax)
-                
-                if rangeEnd > rangeStart {
-                    let percentage = (rangeEnd - rangeStart) / displayRange
-                    let bgHeight = innerHeight * CGFloat(percentage)
-                    return (color: rangeItem.color.opacity(0.18), height: bgHeight)
+            ZStack {
+                ForEach(bmiRanges.indices, id: \.self) { index in
+                    let rangeItem = bmiRanges[index]
+                    let rangeStart = max(rangeItem.range.lowerBound, displayMin)
+                    let rangeEnd = min(rangeItem.range.upperBound, displayMax)
+                    
+                    if rangeEnd > rangeStart {
+                        let startY = (rangeStart - displayMin) / displayRange
+                        let endY = (rangeEnd - displayMin) / displayRange
+                        let startPixel = innerHeight - endY * innerHeight
+                        let endPixel = innerHeight - startY * innerHeight
+                        let bgHeight = endPixel - startPixel
+                        
+                        rangeItem.color.opacity(0.18)
+                            .frame(width: innerWidth, height: bgHeight)
+                            .position(x: innerWidth / 2, y: startPixel + bgHeight / 2)
+                    }
                 }
-                return nil
             }
-            
-            return VStack(spacing: 0) {
-                ForEach(segments.reversed().indices, id: \.self) { index in
-                    segments.reversed()[index].color
-                        .frame(height: segments.reversed()[index].height)
-                }
-            }
-            .frame(width: innerWidth)
             .offset(x: chartPadding, y: chartPadding)
         }
     }
     
     private var xAxisLabels: some View {
-        HStack(spacing: 0) {
-            Spacer().frame(width: yAxisWidth)
+        GeometryReader { geometry in
+            let chartAreaWidth = geometry.size.width - yAxisWidth
+            let innerWidth = chartAreaWidth - chartPadding * 2
             
-            HStack(spacing: 0) {
+            ZStack(alignment: .bottom) {
                 ForEach(calculateXAxisLabelIndices(), id: \.self) { dataIndex in
+                    let x = yAxisWidth + chartPadding + CGFloat(dataIndex) * innerWidth / CGFloat(max(data.count - 1, 1))
+                    
                     Text(formatDate(data[dataIndex].0))
                         .font(.system(size: 10))
                         .foregroundColor(.secondaryText)
-                        .frame(maxWidth: .infinity)
+                        .position(x: x, y: xAxisHeight / 2)
                 }
             }
         }
@@ -248,12 +280,11 @@ struct BMITrendChartView: View {
         
         let values = data.map { $0.1 }
         let maxValue = values.max() ?? 30
-        let minValue = values.min() ?? 15
+        let minValue = values.min() ?? 18.5
         let range = maxValue - minValue
-        
         let margin = range * 0.1
         let displayMax = max(maxValue + margin, 35)
-        let displayMin = max(minValue - margin, 10)
+        let displayMin = min(minValue - margin, 15)
         let displayRange = displayMax - displayMin
         
         return data.enumerated().map { index, point in
@@ -264,28 +295,16 @@ struct BMITrendChartView: View {
         }
     }
     
-    private func yAxisValue(at index: Int) -> Double {
-        let values = data.map { $0.1 }
-        let maxValue = values.max() ?? 30
-        let minValue = values.min() ?? 15
-        let range = maxValue - minValue
-        
-        let margin = range * 0.1
-        let displayMax = max(maxValue + margin, 35)
-        let displayMin = max(minValue - margin, 10)
-        let displayRange = displayMax - displayMin
-        
-        return displayMax - Double(index) * displayRange / Double(gridLineCount - 1)
-    }
-    
     private func calculateXAxisLabelIndices() -> [Int] {
         guard data.count > 0 else { return [] }
         
         let count = data.count
-        let labelCount: Int
         if count <= 7 {
-            labelCount = count
-        } else if count <= 14 {
+            return (0..<count).map { $0 }
+        }
+        
+        let labelCount: Int
+        if count <= 14 {
             labelCount = 5
         } else if count <= 30 {
             labelCount = 6
@@ -293,9 +312,22 @@ struct BMITrendChartView: View {
             labelCount = 8
         }
         
-        return (0..<labelCount).map { i in
-            count == 1 ? 0 : Int(Double(i) * Double(count - 1) / Double(labelCount - 1))
+        var indices = [Int]()
+        for i in 0..<labelCount {
+            let index = Int(Double(i) * Double(count - 1) / Double(labelCount - 1))
+            if !indices.contains(index) {
+                indices.append(index)
+            }
         }
+        
+        if !indices.contains(0) {
+            indices.insert(0, at: 0)
+        }
+        if !indices.contains(count - 1) {
+            indices.append(count - 1)
+        }
+        
+        return indices.sorted()
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -306,11 +338,11 @@ struct BMITrendChartView: View {
     }
     
     private func bmiColor(for bmi: Double) -> Color {
-        if bmi <= 18.4 {
+        if bmi <= 18.5 {
             return Color(hex: "60A5FA")
-        } else if bmi <= 23.9 {
+        } else if bmi <= 24.0 {
             return Color(hex: "34D399")
-        } else if bmi <= 27.9 {
+        } else if bmi <= 28.0 {
             return Color(hex: "FBBF24")
         } else {
             return Color(hex: "F87171")

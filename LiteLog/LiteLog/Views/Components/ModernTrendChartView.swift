@@ -6,7 +6,7 @@ struct ModernTrendChartView: View {
     let unit: String
     let title: String
     
-    private let yAxisWidth: CGFloat = 24
+    private let yAxisWidth: CGFloat = 20
     private let xAxisHeight: CGFloat = 26
     private let chartHeight: CGFloat = 180
     private let lineWidth: CGFloat = 2.5
@@ -85,7 +85,6 @@ struct ModernTrendChartView: View {
             }
         }
         .frame(width: yAxisWidth, alignment: .trailing)
-        .padding(.trailing, 4)
     }
     
     private var gridLines: some View {
@@ -128,15 +127,18 @@ struct ModernTrendChartView: View {
     }
     
     private var xAxisLabels: some View {
-        HStack(spacing: 0) {
-            Spacer().frame(width: yAxisWidth)
+        GeometryReader { geometry in
+            let chartAreaWidth = geometry.size.width - yAxisWidth
+            let innerWidth = chartAreaWidth - chartPadding * 2
             
-            HStack(spacing: 0) {
+            ZStack(alignment: .bottom) {
                 ForEach(calculateXAxisLabelIndices(), id: \.self) { dataIndex in
+                    let x = yAxisWidth + chartPadding + CGFloat(dataIndex) * innerWidth / CGFloat(max(data.count - 1, 1))
+                    
                     Text(formatDate(data[dataIndex].0))
                         .font(.system(size: 10))
                         .foregroundColor(.secondaryText)
-                        .frame(maxWidth: .infinity)
+                        .position(x: x, y: xAxisHeight / 2)
                 }
             }
         }
@@ -287,10 +289,12 @@ struct ModernTrendChartView: View {
         guard data.count > 0 else { return [] }
         
         let count = data.count
-        let labelCount: Int
         if count <= 7 {
-            labelCount = count
-        } else if count <= 14 {
+            return (0..<count).map { $0 }
+        }
+        
+        let labelCount: Int
+        if count <= 14 {
             labelCount = 5
         } else if count <= 30 {
             labelCount = 6
@@ -298,9 +302,22 @@ struct ModernTrendChartView: View {
             labelCount = 8
         }
         
-        return (0..<labelCount).map { i in
-            count == 1 ? 0 : Int(Double(i) * Double(count - 1) / Double(labelCount - 1))
+        var indices = [Int]()
+        for i in 0..<labelCount {
+            let index = Int(Double(i) * Double(count - 1) / Double(labelCount - 1))
+            if !indices.contains(index) {
+                indices.append(index)
+            }
         }
+        
+        if !indices.contains(0) {
+            indices.insert(0, at: 0)
+        }
+        if !indices.contains(count - 1) {
+            indices.append(count - 1)
+        }
+        
+        return indices.sorted()
     }
     
     private func formatDate(_ date: Date) -> String {
