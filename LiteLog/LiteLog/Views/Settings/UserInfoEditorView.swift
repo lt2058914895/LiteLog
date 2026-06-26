@@ -31,6 +31,8 @@ struct UserInfoEditorView: View {
             }
             .navigationTitle(NSLocalizedString("profile.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .navigationBarItems(leading: backButton)
             .sheet(isPresented: $showImagePicker) {
                 imagePicker
             }
@@ -38,6 +40,16 @@ struct UserInfoEditorView: View {
             .onTapGesture {
                 hideKeyboard()
             }
+        }
+    }
+    
+    private var backButton: some View {
+        Button(action: {
+            dismiss()
+        }) {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 20, weight: .medium))
+                .foregroundColor(.primaryBlue)
         }
     }
     
