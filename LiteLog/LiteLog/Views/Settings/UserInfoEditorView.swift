@@ -29,6 +29,8 @@ struct UserInfoEditorView: View {
                 }
                 .padding()
             }
+            .ignoresSafeArea(.keyboard)
+            .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("profile.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
