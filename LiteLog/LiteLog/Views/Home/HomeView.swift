@@ -8,7 +8,7 @@ struct HomeView: View {
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) 
     private var userProfile: FetchedResults<UserProfile>
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) 
-    private var allRecords: FetchedResults<WeightRecord>
+    private var records: FetchedResults<WeightRecord>
 
     @State private var weightInput = ""
     @State private var showingAddSheet = false
@@ -23,16 +23,16 @@ struct HomeView: View {
     private var unit: WeightUnit { settingsManager.weightUnit }
 
     private var latestWeight: Double? {
-        allRecords.first?.weight
+        records.first?.weight
     }
 
     private var todayRecord: WeightRecord? {
         let today = Date().startOfDay
-        return allRecords.first { Calendar.current.isDate($0.date, inSameDayAs: today) }
+        return records.first { Calendar.current.isDate($0.date, inSameDayAs: today) }
     }
 
     private var latestBodyFatRecord: WeightRecord? {
-        allRecords.first { $0.bodyFatPercentage != 0 }
+        records.first { $0.bodyFatPercentage != 0 }
     }
 
     private var latestBodyFat: Double? {
@@ -40,7 +40,7 @@ struct HomeView: View {
     }
 
     private var latestWaistRecord: WeightRecord? {
-        allRecords.first { $0.waistCircumference != 0 }
+        records.first { $0.waistCircumference != 0 }
     }
 
     private var latestWaist: Double? {
@@ -48,7 +48,7 @@ struct HomeView: View {
     }
 
     private var latestHipRecord: WeightRecord? {
-        allRecords.first { $0.hipCircumference != 0 }
+        records.first { $0.hipCircumference != 0 }
     }
 
     private var latestHip: Double? {
@@ -56,7 +56,7 @@ struct HomeView: View {
     }
 
     private var latestChestRecord: WeightRecord? {
-        allRecords.first { $0.chestCircumference != 0 }
+        records.first { $0.chestCircumference != 0 }
     }
 
     private var latestChest: Double? {
@@ -64,7 +64,7 @@ struct HomeView: View {
     }
 
     private var latestThighRecord: WeightRecord? {
-        allRecords.first { $0.thighCircumference != 0 }
+        records.first { $0.thighCircumference != 0 }
     }
 
     private var latestThigh: Double? {
