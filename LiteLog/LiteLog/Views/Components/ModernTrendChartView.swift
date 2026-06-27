@@ -129,10 +129,7 @@ struct ModernTrendChartView: View {
                     curvePath(width: innerWidth, height: innerHeight)
                     dataPoints(width: innerWidth, height: innerHeight)
                 } else if let point = data.first {
-                    Text(String(format: "%.1f%@", point.1, unit))
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(color)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    singlePointView(width: innerWidth, height: innerHeight, value: point.1)
                 }
             }
         }
@@ -240,6 +237,17 @@ struct ModernTrendChartView: View {
                 .frame(width: pointSize, height: pointSize)
                 .position(x: chartPadding + points[index].x, y: chartPadding + points[index].y)
         }
+    }
+    
+    private func singlePointView(width: CGFloat, height: CGFloat, value: Double) -> some View {
+        let normalizedY = chartData.normalizedY(for: value)
+        let pointY = height - normalizedY * height
+        let pointX = CGFloat(0) * width / CGFloat(max(data.count - 1, 1))
+        
+        return Circle()
+            .fill(color)
+            .frame(width: pointSize, height: pointSize)
+            .position(x: chartPadding + pointX, y: chartPadding + pointY)
     }
     
     private func calculatePoints(width: CGFloat, height: CGFloat) -> [CGPoint] {
