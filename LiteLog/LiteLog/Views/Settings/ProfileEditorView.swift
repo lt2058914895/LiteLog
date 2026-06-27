@@ -33,7 +33,11 @@ struct ProfileEditorView: View {
     }
 
     var body: some View {
-        ScrollView {
+        ZStack {
+            Color(.systemGroupedBackground)
+                .edgesIgnoringSafeArea(.all)
+            
+            ScrollView {
                 VStack(spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(NSLocalizedString("settings.height", comment: ""))
@@ -194,25 +198,23 @@ struct ProfileEditorView: View {
                 }
                 .padding()
             }
-            .background(
-                Color(.systemGroupedBackground)
-                    .onTapGesture {
-                        hideKeyboard()
-                    }
-            )
-            .navigationTitle(NSLocalizedString("settings.profile", comment: ""))
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarBackButtonHidden(true)
-            .navigationBarItems(leading: backButton)
-            .tabBarHidden(true)
-            .alert(NSLocalizedString("settings.error", comment: ""), isPresented: $showingValidationAlert) {
-                Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
-            } message: {
-                Text(validationErrorMessage)
-            }
-            .onAppear {
-                loadExistingProfile()
-            }
+        }
+        .onTapGesture {
+            hideKeyboard()
+        }
+        .navigationTitle(NSLocalizedString("settings.profile", comment: ""))
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .navigationBarItems(leading: backButton)
+        .tabBarHidden(true)
+        .alert(NSLocalizedString("settings.error", comment: ""), isPresented: $showingValidationAlert) {
+            Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
+        } message: {
+            Text(validationErrorMessage)
+        }
+        .onAppear {
+            loadExistingProfile()
+        }
     }
 
     private func loadExistingProfile() {
