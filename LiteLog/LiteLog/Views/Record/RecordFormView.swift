@@ -368,14 +368,13 @@ struct RecordFormView: View {
 
         do {
             try context.save()
-            // 触发同步到云数据库
-            DataSyncManager.shared.triggerWeightRecordSync(context: context)
         } catch {
             errorMessage = NSLocalizedString("error.save.failed", comment: "")
             showingError = true
             return
         }
 
+        DataSyncManager.shared.triggerWeightRecordSync(context: context)
         dismiss()
     }
 
@@ -404,18 +403,17 @@ struct RecordFormView: View {
         record.imageUrl = imageUrl
         record.selectedImage = selectedImage
         record.updatedAt = Date()
-        record.syncStatusEnum = .pending  // 标记为待同步
+        record.syncStatusEnum = .pending
         
         do {
             try context.save()
-            // 触发同步到云数据库
-            DataSyncManager.shared.triggerWeightRecordSync(context: context)
         } catch {
             errorMessage = NSLocalizedString("error.save.failed", comment: "")
             showingError = true
             return
         }
 
+        DataSyncManager.shared.triggerWeightRecordSync(context: context)
         dismiss()
     }
     

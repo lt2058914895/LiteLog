@@ -44,8 +44,7 @@ final class WeightRecord: NSManagedObject, Identifiable {
     @NSManaged var createdAt: Date
     @NSManaged var updatedAt: Date
     @NSManaged var syncStatus: Int16
-
-    var selectedImage: UIImage?
+    @NSManaged var selectedImage: UIImage?
 
     @objc(SyncStatus)
     enum SyncStatus: Int16 {
