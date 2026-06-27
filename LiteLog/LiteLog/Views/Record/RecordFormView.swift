@@ -285,7 +285,6 @@ struct RecordFormView: View {
                     noteEditorView
                 }
             }
-            .ignoresSafeArea(.keyboard)
             .background(Color(.systemGroupedBackground))
             .navigationTitle(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
