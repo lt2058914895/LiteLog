@@ -23,6 +23,60 @@ extension View {
     func adaptiveSheet<Content>(isPresented: Binding<Bool>, onDismiss: (() -> Void)? = nil, content: @escaping () -> Content) -> some View where Content: View {
         self.sheet(isPresented: isPresented, onDismiss: onDismiss, content: content)
     }
+    
+    func tabBarHidden(_ hidden: Bool) -> some View {
+        self.modifier(TabBarHiddenModifier(hidden: hidden))
+    }
+}
+
+struct TabBarHiddenModifier: ViewModifier {
+    let hidden: Bool
+    
+    func body(content: Content) -> some View {
+        content
+            .onAppear {
+                if hidden {
+                    DispatchQueue.main.async {
+                        UITabBar.appearance().isHidden = true
+                        findTabBarController()?.tabBar.isHidden = true
+                    }
+                }
+            }
+            .onDisappear {
+                if hidden {
+                    DispatchQueue.main.async {
+                        UITabBar.appearance().isHidden = false
+                        findTabBarController()?.tabBar.isHidden = false
+                    }
+                }
+            }
+    }
+    
+    private func findTabBarController() -> UITabBarController? {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootViewController = windowScene.windows.first?.rootViewController {
+            return findTabBarController(in: rootViewController)
+        }
+        return nil
+    }
+    
+    private func findTabBarController(in viewController: UIViewController) -> UITabBarController? {
+        if let tabBarController = viewController as? UITabBarController {
+            return tabBarController
+        }
+        
+        for child in viewController.children {
+            if let found = findTabBarController(in: child) {
+                return found
+            }
+        }
+        
+        if let presented = viewController.presentedViewController {
+            return findTabBarController(in: presented)
+        }
+        
+        return nil
+    }
 }
 
 extension Color {

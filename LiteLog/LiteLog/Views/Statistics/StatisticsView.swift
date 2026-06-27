@@ -11,6 +11,7 @@ struct StatisticsView: View {
 
     @State private var selectedPeriod: Period = .week
     @State private var selectedMetric: Metric = .weight
+    @State private var cachedFilteredRecords: [WeightRecord] = []
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -65,15 +66,7 @@ struct StatisticsView: View {
     }
 
     private var filteredRecords: [WeightRecord] {
-        let filtered = records.filter { $0.date >= startDate }
-        let calendar = Calendar.current
-        
-        let grouped = Dictionary(grouping: filtered) { record in
-            calendar.startOfDay(for: record.date)
-        }
-        
-        return grouped.compactMap { $0.value.max(by: { $0.date < $1.date }) }
-            .sorted { $0.date < $1.date }
+        cachedFilteredRecords
     }
 
     private var averageWeight: Double {
@@ -106,6 +99,18 @@ struct StatisticsView: View {
     }
 
     // MARK: - Metric Data
+    
+    private func computeFilteredRecords() {
+        let filtered = records.filter { $0.date >= startDate }
+        let calendar = Calendar.current
+        
+        let grouped = Dictionary(grouping: filtered) { record in
+            calendar.startOfDay(for: record.date)
+        }
+        
+        cachedFilteredRecords = grouped.compactMap { $0.value.max(by: { $0.date < $1.date }) }
+            .sorted { $0.date < $1.date }
+    }
     
     private func metricData(for metric: Metric) -> [(Date, Double)] {
         filteredRecords.compactMap { record in
@@ -191,6 +196,15 @@ struct StatisticsView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            computeFilteredRecords()
+        }
+        .onChange(of: selectedPeriod) { _ in
+            computeFilteredRecords()
+        }
+        .onChange(of: records.count) { _ in
+            computeFilteredRecords()
+        }
     }
     
     @ViewBuilder

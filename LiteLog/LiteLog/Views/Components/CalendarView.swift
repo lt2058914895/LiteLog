@@ -8,7 +8,20 @@ struct CalendarView: View {
 
     @State private var currentMonth = Date()
 
-    private var calendar: Calendar { Calendar.current }
+    private let calendar: Calendar = Calendar.current
+    private let recordDates: Set<Date>
+    private let recordsByDate: [Date: WeightRecord]
+
+    init(records: [WeightRecord], unit: WeightUnit, selectedDate: Binding<Date?>, onDateSelected: @escaping (Date) -> Void) {
+        self.records = records
+        self.unit = unit
+        self._selectedDate = selectedDate
+        self.onDateSelected = onDateSelected
+        
+        let cal = Calendar.current
+        self.recordDates = Set(records.map { cal.startOfDay(for: $0.date) })
+        self.recordsByDate = Dictionary(uniqueKeysWithValues: records.map { (cal.startOfDay(for: $0.date), $0) })
+    }
 
     private var daysInMonth: [Date] {
         guard let range = calendar.range(of: .day, in: .month, for: currentMonth) else { return [] }
@@ -17,14 +30,6 @@ struct CalendarView: View {
         return range.compactMap { day -> Date? in
             calendar.date(byAdding: .day, value: day - 1, to: firstDayOfMonth)
         }
-    }
-
-    private var recordDates: Set<Date> {
-        Set(records.map { calendar.startOfDay(for: $0.date) })
-    }
-
-    private var recordsByDate: [Date: WeightRecord] {
-        Dictionary(uniqueKeysWithValues: records.map { (calendar.startOfDay(for: $0.date), $0) })
     }
 
     private var firstWeekdayOfMonth: Int {

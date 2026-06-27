@@ -18,105 +18,104 @@ struct HomeView: View {
     @State private var errorMessage = ""
     @State private var showingProfileEditor = false
     @State private var showingBMIInfo = false
+    
+    @State private var latestWeight: Double?
+    @State private var todayRecord: WeightRecord?
+    @State private var latestBodyFat: Double?
+    @State private var latestWaist: Double?
+    @State private var latestHip: Double?
+    @State private var latestChest: Double?
+    @State private var latestThigh: Double?
+    @State private var bodyFatProgress: Double = 0
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
-
-    private var latestWeight: Double? {
-        records.first?.weight
-    }
-
-    private var todayRecord: WeightRecord? {
+    
+    private func computeCachedData() {
+        latestWeight = records.first?.weight
+        
         let today = Date().startOfDay
-        return records.first { Calendar.current.isDate($0.date, inSameDayAs: today) }
-    }
-
-    private var latestBodyFatRecord: WeightRecord? {
-        records.first { $0.bodyFatPercentage != 0 }
-    }
-
-    private var latestBodyFat: Double? {
-        latestBodyFatRecord?.bodyFatPercentageValue
-    }
-
-    private var latestWaistRecord: WeightRecord? {
-        records.first { $0.waistCircumference != 0 }
-    }
-
-    private var latestWaist: Double? {
-        latestWaistRecord?.waistCircumferenceValue
-    }
-
-    private var latestHipRecord: WeightRecord? {
-        records.first { $0.hipCircumference != 0 }
-    }
-
-    private var latestHip: Double? {
-        latestHipRecord?.hipCircumferenceValue
-    }
-
-    private var latestChestRecord: WeightRecord? {
-        records.first { $0.chestCircumference != 0 }
-    }
-
-    private var latestChest: Double? {
-        latestChestRecord?.chestCircumferenceValue
-    }
-
-    private var latestThighRecord: WeightRecord? {
-        records.first { $0.thighCircumference != 0 }
-    }
-
-    private var latestThigh: Double? {
-        latestThighRecord?.thighCircumferenceValue
-    }
-
-    private var bodyFatProgress: Double {
-        guard let current = latestBodyFat else { return 0 }
-        return min(current / 50.0 * 100, 100)
+        todayRecord = records.first { Calendar.current.isDate($0.date, inSameDayAs: today) }
+        
+        let bodyFatRecord = records.first { $0.bodyFatPercentage != 0 }
+        latestBodyFat = bodyFatRecord?.bodyFatPercentageValue
+        
+        let waistRecord = records.first { $0.waistCircumference != 0 }
+        latestWaist = waistRecord?.waistCircumferenceValue
+        
+        let hipRecord = records.first { $0.hipCircumference != 0 }
+        latestHip = hipRecord?.hipCircumferenceValue
+        
+        let chestRecord = records.first { $0.chestCircumference != 0 }
+        latestChest = chestRecord?.chestCircumferenceValue
+        
+        let thighRecord = records.first { $0.thighCircumference != 0 }
+        latestThigh = thighRecord?.thighCircumferenceValue
+        
+        bodyFatProgress = latestBodyFat.map { min($0 / 50.0 * 100, 100) } ?? 0
     }
 
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                todayWeightCard
+        NavigationView {
+            ZStack {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        todayWeightCard
 
-                bmiProgressSection
+                        bmiProgressSection
 
-                goalWeightCard
+                        goalWeightCard
+                        
+                        goalBodyFatCard
+                        
+                        goalMeasurementsCard
+                    }
+                    .padding()
+                }
+                .background(Color(.systemGroupedBackground))
                 
-                goalBodyFatCard
-                
-                goalMeasurementsCard
+                linksView
             }
-            .padding()
-        }
-        .background(Color(.systemGroupedBackground))
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                HStack(spacing: 12) {
-                    avatarImageView
-                    Text(NSLocalizedString("tab.home", comment: ""))
-                        .font(.headline)
-                        .foregroundColor(.primary)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    HStack(spacing: 12) {
+                        avatarImageView
+                        Text(NSLocalizedString("tab.home", comment: ""))
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                    }
                 }
             }
+            .navigationBarTitleDisplayMode(.inline)
+            .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
+                Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
+            } message: {
+                Text(errorMessage)
+            }
+            .onAppear {
+                computeCachedData()
+            }
+            .onChange(of: records.count) { _ in
+                computeCachedData()
+            }
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .fullScreenCover(isPresented: $showingAddSheet) {
-            RecordFormView(isPresented: $showingAddSheet)
-        }
-        .fullScreenCover(isPresented: $showingProfileEditor) {
-            ProfileEditorView()
-        }
-        .fullScreenCover(isPresented: $showingBMIInfo) {
-            BMIInfoView(isPresented: $showingBMIInfo)
-        }
-        .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
-            Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
-        } message: {
-            Text(errorMessage)
+        .navigationViewStyle(.stack)
+    }
+    
+    private var linksView: some View {
+        Group {
+            NavigationLink(isActive: $showingAddSheet) {
+                RecordFormView(isPresented: $showingAddSheet)
+            } label: { EmptyView() }
+            
+            NavigationLink(isActive: $showingProfileEditor) {
+                ProfileEditorView()
+            } label: { EmptyView() }
+            
+            NavigationLink(isActive: $showingBMIInfo) {
+                BMIInfoView(isPresented: $showingBMIInfo)
+            } label: { EmptyView() }
         }
     }
 

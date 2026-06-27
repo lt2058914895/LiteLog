@@ -4,7 +4,6 @@ struct ContactView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
             List {
                 Section {
                     HStack {
@@ -29,13 +28,16 @@ struct ContactView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("settings.contact", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(leading: Button(action: {
-                dismiss()
-            }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.primaryBlue)
-            })
+            .navigationBarBackButtonHidden(true)
+            .navigationBarItems(leading: backButton)
+            .tabBarHidden(true)
+    }
+    
+    private var backButton: some View {
+        Button(action: { dismiss() }) {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(.primaryBlue)
         }
     }
 }

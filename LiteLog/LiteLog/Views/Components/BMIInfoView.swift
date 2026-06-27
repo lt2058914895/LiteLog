@@ -3,6 +3,7 @@ import CoreData
 
 struct BMIInfoView: View {
     @Environment(\.managedObjectContext) private var context
+    @Environment(\.dismiss) private var dismiss
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) private var userProfile: FetchedResults<UserProfile>
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var allRecords: FetchedResults<WeightRecord>
     
@@ -100,8 +101,7 @@ struct BMIInfoView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 20) {
                     if let profile = profile {
                         currentStatusCard
@@ -122,13 +122,16 @@ struct BMIInfoView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("bmi.info.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(leading: Button(action: {
-                isPresented = false
-            }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.primaryBlue)
-            })
+            .navigationBarBackButtonHidden(true)
+            .navigationBarItems(leading: backButton)
+            .tabBarHidden(true)
+    }
+    
+    private var backButton: some View {
+        Button(action: { dismiss() }) {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(.primaryBlue)
         }
     }
     

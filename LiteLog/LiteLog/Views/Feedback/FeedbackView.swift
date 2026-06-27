@@ -41,7 +41,6 @@ struct FeedbackView: View {
     }
 
     var body: some View {
-        NavigationView {
             ZStack {
                 Color.cardBackground
                     .ignoresSafeArea()
@@ -173,13 +172,9 @@ struct FeedbackView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("feedback.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(leading: Button(action: {
-                dismiss()
-            }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.primaryBlue)
-            })
+            .navigationBarBackButtonHidden(true)
+            .navigationBarItems(leading: backButton)
+            .tabBarHidden(true)
             .sheet(isPresented: $showingSuccess, onDismiss: {
                 dismiss()
             }) {
@@ -193,7 +188,6 @@ struct FeedbackView: View {
             .onTapGesture {
                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             }
-        }
     }
 
     private func submitFeedback() {
@@ -222,6 +216,14 @@ struct FeedbackView: View {
                     self.showingError = true
                 }
             }
+        }
+    }
+    
+    private var backButton: some View {
+        Button(action: { dismiss() }) {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(.primaryBlue)
         }
     }
 }

@@ -18,8 +18,7 @@ struct UserInfoEditorView: View {
     @StateObject private var errorAlertManager = ErrorAlertManager()
     
     var body: some View {
-        NavigationView {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 32) {
                     avatarSection
                     
@@ -40,19 +39,17 @@ struct UserInfoEditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .navigationBarItems(leading: backButton)
+            .tabBarHidden(true)
             .sheet(isPresented: $showImagePicker) {
                 imagePicker
             }
             .errorAlert(manager: errorAlertManager)
-        }
     }
     
     private var backButton: some View {
-        Button(action: {
-            dismiss()
-        }) {
+        Button(action: { dismiss() }) {
             Image(systemName: "chevron.left")
-                .font(.system(size: 20, weight: .medium))
+                .font(.system(size: 18, weight: .medium))
                 .foregroundColor(.primaryBlue)
         }
     }

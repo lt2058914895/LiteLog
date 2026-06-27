@@ -13,6 +13,7 @@ struct RecordView: View {
     @State private var viewMode: ViewMode = .list
     @State private var showingAddSheet = false
     @State private var showingEditSheet = false
+    @State private var cachedGroupedRecords: [Date: [WeightRecord]] = [:]
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -25,47 +26,68 @@ struct RecordView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            viewModePicker
+        NavigationView {
+            ZStack {
+                VStack(spacing: 0) {
+                    viewModePicker
 
-            switch viewMode {
-            case .list:
-                listView
-            case .calendar:
-                calendarView
+                    switch viewMode {
+                    case .list:
+                        listView
+                    case .calendar:
+                        calendarView
+                    }
+                }
+                .background(Color(.systemGroupedBackground))
+                
+                linksView
             }
-        }
-        .background(Color(.systemGroupedBackground))
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                HStack(spacing: 12) {
-                    avatarImageView
-                    Text(NSLocalizedString("tab.record", comment: ""))
-                        .font(.headline)
-                        .foregroundColor(.primary)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    HStack(spacing: 12) {
+                        avatarImageView
+                        Text(NSLocalizedString("tab.record", comment: ""))
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showingAddSheet = true }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.primaryBlue)
+                    }
                 }
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showingAddSheet = true }) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.primaryBlue)
+            .onChange(of: recordToEditData) { newValue in
+                if newValue != nil {
+                    showingEditSheet = true
                 }
             }
-        }
-        .fullScreenCover(isPresented: $showingAddSheet) {
-            RecordFormView(isPresented: $showingAddSheet)
-        }
-        .fullScreenCover(isPresented: $showingEditSheet) {
-            if let data = recordToEditData {
-                RecordFormView(recordData: data, isPresented: $showingEditSheet)
-                    .id(data.id)
+            .onAppear {
+                computeGroupedRecords()
+            }
+            .onChange(of: records.count) { _ in
+                computeGroupedRecords()
             }
         }
-        .onChange(of: recordToEditData) { newValue in
-            if newValue != nil {
-                showingEditSheet = true
-            }
+        .navigationViewStyle(.stack)
+    }
+    
+    private var linksView: some View {
+        Group {
+            NavigationLink(isActive: $showingAddSheet) {
+                RecordFormView(isPresented: $showingAddSheet)
+            } label: { EmptyView() }
+            
+            NavigationLink(isActive: $showingEditSheet) {
+                if let data = recordToEditData {
+                    RecordFormView(recordData: data, isPresented: $showingEditSheet)
+                        .id(data.id)
+                } else {
+                    EmptyView()
+                }
+            } label: { EmptyView() }
         }
     }
 
@@ -215,7 +237,11 @@ struct RecordView: View {
     }
 
     private var groupedRecords: [Date: [WeightRecord]] {
-        Dictionary(grouping: records) { record in
+        cachedGroupedRecords
+    }
+    
+    private func computeGroupedRecords() {
+        cachedGroupedRecords = Dictionary(grouping: records) { record in
             let calendar = Calendar.current
             let components = calendar.dateComponents([.year, .month], from: record.date)
             return calendar.date(from: components) ?? record.date

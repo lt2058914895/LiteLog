@@ -100,6 +100,19 @@ final class UserProfile: NSManagedObject {
         case normal
         case overweight
         case obese
+        
+        static func from(bmi: Double) -> BMICategory {
+            switch bmi {
+            case ..<18.5:
+                return .underweight
+            case 18.5..<24:
+                return .normal
+            case 24..<28:
+                return .overweight
+            default:
+                return .obese
+            }
+        }
 
         var localizedKey: String {
             switch self {

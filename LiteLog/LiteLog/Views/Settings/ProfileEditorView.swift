@@ -33,8 +33,7 @@ struct ProfileEditorView: View {
     }
 
     var body: some View {
-        NavigationView {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(NSLocalizedString("settings.height", comment: ""))
@@ -203,11 +202,9 @@ struct ProfileEditorView: View {
             )
             .navigationTitle(NSLocalizedString("settings.profile", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(leading: Button(action: { dismiss() }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.primaryBlue)
-            })
+            .navigationBarBackButtonHidden(true)
+            .navigationBarItems(leading: backButton)
+            .tabBarHidden(true)
             .alert(NSLocalizedString("settings.error", comment: ""), isPresented: $showingValidationAlert) {
                 Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
             } message: {
@@ -216,7 +213,6 @@ struct ProfileEditorView: View {
             .onAppear {
                 loadExistingProfile()
             }
-        }
     }
 
     private func loadExistingProfile() {
@@ -331,5 +327,13 @@ struct ProfileEditorView: View {
         }
 
         dismiss()
+    }
+    
+    private var backButton: some View {
+        Button(action: { dismiss() }) {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(.primaryBlue)
+        }
     }
 }

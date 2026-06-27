@@ -23,46 +23,61 @@ struct SettingsView: View {
     private var unit: WeightUnit { settingsManager.weightUnit }
 
     var body: some View {
-        List {
-            userHeaderSection
-            
-            profileSection
+        NavigationView {
+            ZStack {
+                List {
+                    userHeaderSection
+                    
+                    profileSection
 
-            syncNotificationSection
+                    syncNotificationSection
 
-            actionSection
-            
-            dataSection
+                    actionSection
+                    
+                    dataSection
 
-            aboutSection
-        }
-        .navigationBarHidden(true)
-        .onReceive(NotificationCenter.default.publisher(for: .showProfileEditor)) { _ in
-            showingProfileEditor = true
-        }
-        .fullScreenCover(isPresented: $showingProfileEditor) {
-            ProfileEditorView()
-        }
-        .fullScreenCover(isPresented: $showingUserInfoEditor) {
-            UserInfoEditorView()
-        }
-        .adaptiveSheet(item: $exportURL) { url in
-            ShareSheet(items: [url.url])
-        }
-        .alert(NSLocalizedString("settings.delete.confirm", comment: ""), isPresented: $showingDeleteAlert) {
-            Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-            Button(NSLocalizedString("action.delete", comment: ""), role: .destructive) {
-                deleteAllData()
+                    aboutSection
+                }
+                .navigationBarHidden(true)
+                .onReceive(NotificationCenter.default.publisher(for: .showProfileEditor)) { _ in
+                    showingProfileEditor = true
+                }
+                .adaptiveSheet(item: $exportURL) { url in
+                    ShareSheet(items: [url.url])
+                }
+                .alert(NSLocalizedString("settings.delete.confirm", comment: ""), isPresented: $showingDeleteAlert) {
+                    Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+                    Button(NSLocalizedString("action.delete", comment: ""), role: .destructive) {
+                        deleteAllData()
+                    }
+                }
+                .alert(NSLocalizedString("settings.export.error", comment: ""), isPresented: $showingExportError) {
+                    Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
+                }
+                
+                linksView
             }
         }
-        .alert(NSLocalizedString("settings.export.error", comment: ""), isPresented: $showingExportError) {
-            Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
-        }
-        .fullScreenCover(isPresented: $showingFeedback) {
-            FeedbackView()
-        }
-        .fullScreenCover(isPresented: $showingContact) {
-            ContactView()
+        .navigationViewStyle(.stack)
+    }
+    
+    private var linksView: some View {
+        Group {
+            NavigationLink(isActive: $showingProfileEditor) {
+                ProfileEditorView()
+            } label: { EmptyView() }
+            
+            NavigationLink(isActive: $showingUserInfoEditor) {
+                UserInfoEditorView()
+            } label: { EmptyView() }
+            
+            NavigationLink(isActive: $showingFeedback) {
+                FeedbackView()
+            } label: { EmptyView() }
+            
+            NavigationLink(isActive: $showingContact) {
+                ContactView()
+            } label: { EmptyView() }
         }
     }
 

@@ -15,8 +15,14 @@ struct ModernTrendChartView: View {
     private let pointSize: CGFloat = 6
     private let chartPadding: CGFloat = 8
     
-    private var chartData: ChartData {
-        ChartData(data: data)
+    private let chartData: ChartData
+    
+    init(data: [(Date, Double)], color: Color, unit: String, title: String) {
+        self.data = data
+        self.color = color
+        self.unit = unit
+        self.title = title
+        self.chartData = ChartData(data: data)
     }
     
     struct ChartData {

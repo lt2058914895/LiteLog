@@ -51,14 +51,11 @@ extension UIApplication {
 
 struct RecordFormView: View {
     @Environment(\.managedObjectContext) private var context
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var settingsManager: SettingsManager
 
     let recordData: RecordFormData?
     @Binding var isPresented: Bool
-    
-    private func dismiss() {
-        isPresented = false
-    }
 
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var records: FetchedResults<WeightRecord>
 
@@ -150,8 +147,7 @@ struct RecordFormView: View {
     }
 
     var body: some View {
-        NavigationView {
-            Form {
+        Form {
                 Section(NSLocalizedString("record.date", comment: "")) {
                     DatePicker(
                         "Date",
@@ -293,7 +289,9 @@ struct RecordFormView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
             .navigationBarItems(leading: backButton, trailing: saveButton)
+            .tabBarHidden(true)
             .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
                 Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
             } message: {
@@ -324,7 +322,6 @@ struct RecordFormView: View {
                     .background(Color.black)
             }
             .dismissKeyboardOnTapOutside()
-        }
     }
 
     private func saveRecord() {
@@ -426,7 +423,7 @@ struct RecordFormView: View {
     private var backButton: some View {
         Button(action: { dismiss() }) {
             Image(systemName: "chevron.left")
-                .font(.system(size: 20, weight: .medium))
+                .font(.system(size: 18, weight: .medium))
                 .foregroundColor(.primaryBlue)
         }
     }

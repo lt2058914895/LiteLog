@@ -6,28 +6,19 @@ struct BMIProgressView: View {
     let height: Double
     var onInfoTapped: (() -> Void)? = nil
 
-    private var currentBMI: Double {
+    private let currentBMI: Double
+    private let bmiCategory: UserProfile.BMICategory
+    private let bmiCategoryColor: Color
+
+    init(currentWeight: Double, height: Double, onInfoTapped: (() -> Void)? = nil) {
+        self.currentWeight = currentWeight
+        self.height = height
+        self.onInfoTapped = onInfoTapped
+        
         let heightInMeters = height / 100.0
-        return currentWeight / (heightInMeters * heightInMeters)
-    }
-
-    private var bmiCategory: UserProfile.BMICategory {
-        let profile = UserProfile.create(in: PersistenceController.shared.viewContext)
-        profile.height = height
-        return profile.bmiCategory(bmi: currentBMI)
-    }
-
-    private var bmiCategoryColor: Color {
-        switch bmiCategory {
-        case .underweight:
-            return .blue
-        case .normal:
-            return .green
-        case .overweight:
-            return .orange
-        case .obese:
-            return .red
-        }
+        self.currentBMI = currentWeight / (heightInMeters * heightInMeters)
+        self.bmiCategory = UserProfile.BMICategory.from(bmi: self.currentBMI)
+        self.bmiCategoryColor = bmiCategory.color
     }
 
     var body: some View {

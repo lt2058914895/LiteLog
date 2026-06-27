@@ -10,24 +10,13 @@ struct WaistCircumferenceView: View {
     @State private var showingAddSheet = false
     @State private var recordToEditData: RecordFormData?
     @State private var showingEditSheet = false
+    @State private var cachedChartData: [(Date, Double)] = []
+    @State private var cachedGroupedRecords: [Date: [WeightRecord]] = [:]
 
     private var unit: WeightUnit { settingsManager.weightUnit }
 
     private var chartData: [(Date, Double)] {
-        let filtered = records.filter { $0.waistCircumferenceValue != nil }
-        let calendar = Calendar.current
-
-        let grouped = Dictionary(grouping: filtered) { record in
-            calendar.startOfDay(for: record.date)
-        }
-
-        return grouped.compactMap { key, values in
-            if let record = values.max(by: { $0.date < $1.date }), let waist = record.waistCircumferenceValue {
-                return (key, waist)
-            }
-            return nil
-        }
-        .sorted { $0.0 < $1.0 }
+        cachedChartData
     }
 
     private var waistRecords: [WeightRecord] {
@@ -35,7 +24,25 @@ struct WaistCircumferenceView: View {
     }
 
     private var groupedRecords: [Date: [WeightRecord]] {
-        Dictionary(grouping: waistRecords) { record in
+        cachedGroupedRecords
+    }
+    
+    private func computeCachedData() {
+        let filtered = records.filter { $0.waistCircumferenceValue != nil }
+        let calendar = Calendar.current
+
+        let chartGrouped = Dictionary(grouping: filtered) { record in
+            calendar.startOfDay(for: record.date)
+        }
+        cachedChartData = chartGrouped.compactMap { key, values in
+            if let record = values.max(by: { $0.date < $1.date }), let waist = record.waistCircumferenceValue {
+                return (key, waist)
+            }
+            return nil
+        }
+        .sorted { $0.0 < $1.0 }
+        
+        cachedGroupedRecords = Dictionary(grouping: waistRecords) { record in
             let components = Calendar.current.dateComponents([.year, .month], from: record.date)
             return Calendar.current.date(from: components) ?? record.date
         }
@@ -43,15 +50,19 @@ struct WaistCircumferenceView: View {
 
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    ModernTrendChartView(data: chartData, color: .primaryBlue, unit: "cm", title: NSLocalizedString("home.trend", comment: ""))
+            ZStack {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        ModernTrendChartView(data: chartData, color: .primaryBlue, unit: "cm", title: NSLocalizedString("home.trend", comment: ""))
 
-                    historySection
+                        historySection
+                    }
+                    .padding()
                 }
-                .padding()
+                .background(Color(.systemGroupedBackground))
+                
+                linksView
             }
-            .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("home.waist.circumference", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -63,20 +74,35 @@ struct WaistCircumferenceView: View {
                     }
                 }
             }
-            .fullScreenCover(isPresented: $showingAddSheet) {
-                RecordFormView(isPresented: $showingAddSheet)
-            }
-            .fullScreenCover(isPresented: $showingEditSheet) {
-                if let data = recordToEditData {
-                    RecordFormView(recordData: data, isPresented: $showingEditSheet)
-                        .id(data.id)
-                }
-            }
             .onChange(of: recordToEditData) { newValue in
                 if newValue != nil {
                     showingEditSheet = true
                 }
             }
+            .onAppear {
+                computeCachedData()
+            }
+            .onChange(of: records.count) { _ in
+                computeCachedData()
+            }
+        }
+        .navigationViewStyle(.stack)
+    }
+    
+    private var linksView: some View {
+        Group {
+            NavigationLink(isActive: $showingAddSheet) {
+                RecordFormView(isPresented: $showingAddSheet)
+            } label: { EmptyView() }
+            
+            NavigationLink(isActive: $showingEditSheet) {
+                if let data = recordToEditData {
+                    RecordFormView(recordData: data, isPresented: $showingEditSheet)
+                        .id(data.id)
+                } else {
+                    EmptyView()
+                }
+            } label: { EmptyView() }
         }
     }
 
