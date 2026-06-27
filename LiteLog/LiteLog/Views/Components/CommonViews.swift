@@ -14,11 +14,22 @@ struct NumericTextField: View {
     }
     
     var body: some View {
-        TextField(placeholder, text: $text)
-            .keyboardType(keyboardType)
-            .onChange(of: text) { newValue in
-                text = formatNumericInput(newValue)
+        ZStack(alignment: .trailing) {
+            TextField(placeholder, text: $text)
+                .keyboardType(keyboardType)
+                .padding(.trailing, 24)
+                .onChange(of: text) { newValue in
+                    text = formatNumericInput(newValue)
+                }
+            
+            if !text.isEmpty {
+                Button(action: { text = "" }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(Color(.systemGray4))
+                }
+                .padding(.trailing, 4)
             }
+        }
     }
     
     private func formatNumericInput(_ input: String) -> String {

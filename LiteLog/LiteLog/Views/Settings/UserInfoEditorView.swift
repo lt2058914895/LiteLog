@@ -30,7 +30,12 @@ struct UserInfoEditorView: View {
                 .padding()
             }
             .ignoresSafeArea(.keyboard)
-            .background(Color(.systemGroupedBackground))
+            .background(
+                Color(.systemGroupedBackground)
+                    .onTapGesture {
+                        hideKeyboard()
+                    }
+            )
             .navigationTitle(NSLocalizedString("profile.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
@@ -39,9 +44,6 @@ struct UserInfoEditorView: View {
                 imagePicker
             }
             .errorAlert(manager: errorAlertManager)
-            .onTapGesture {
-                hideKeyboard()
-            }
         }
     }
     

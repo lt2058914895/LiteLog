@@ -195,10 +195,12 @@ struct ProfileEditorView: View {
                 }
                 .padding()
             }
-            .onTapGesture {
-                hideKeyboard()
-            }
-            .background(Color(.systemGroupedBackground))
+            .background(
+                Color(.systemGroupedBackground)
+                    .onTapGesture {
+                        hideKeyboard()
+                    }
+            )
             .navigationTitle(NSLocalizedString("settings.profile", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(leading: Button(action: { dismiss() }) {
