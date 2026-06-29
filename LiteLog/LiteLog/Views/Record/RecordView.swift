@@ -145,26 +145,6 @@ struct RecordView: View {
                                             Label(NSLocalizedString("action.delete", comment: ""), systemImage: "trash")
                                         }
                                     }
-                                    .swipeActions(edge: .leading) {
-                                        Button {
-                                            recordToEditData = RecordFormData(
-                                                id: record.id.uuidString,
-                                                date: record.date,
-                                                weightString: unit.convertFromKg(record.weight).smartFormatted,
-                                                bodyFatString: record.bodyFatPercentageValue?.smartFormatted ?? "",
-                                                waistString: record.waistCircumferenceValue?.smartFormatted ?? "",
-                                                hipString: record.hipCircumferenceValue?.smartFormatted ?? "",
-                                                chestString: record.chestCircumferenceValue?.smartFormatted ?? "",
-                                                thighString: record.thighCircumferenceValue?.smartFormatted ?? "",
-                                                note: record.note ?? "",
-                                                imageUrl: record.imageUrl,
-                                                measurementTimePeriod: record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random
-                                            )
-                                        } label: {
-                                            Label(NSLocalizedString("action.edit", comment: ""), systemImage: "pencil")
-                                        }
-                                        .tint(.primaryBlue)
-                                    }
                             }
                         }
                     }

@@ -158,7 +158,6 @@ struct RecordFormView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                headerSection
                 
                 weightCard
                 
@@ -220,16 +219,6 @@ struct RecordFormView: View {
                 .background(Color.black)
         }
         .dismissKeyboardOnTapOutside()
-    }
-    
-    private var headerSection: some View {
-        HStack {
-            Text(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundColor(.primaryText)
-            Spacer()
-        }
     }
     
     private var weightCard: some View {

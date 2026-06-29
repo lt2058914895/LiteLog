@@ -17,32 +17,25 @@ struct RecordRowView: View {
     let unit: WeightUnit
     let showDate: Bool
     
-    private let dayString: String
-    private let monthDayString: String
-    private let weightString: String
-    private let bodyFatString: String?
-    private let waistString: String?
-    private let hipString: String?
-    private let chestString: String?
-    private let thighString: String?
-    private let hasSecondaryInfo: Bool
+    private var dayString: String { dayFormatter.string(from: record.date) }
+    private var monthDayString: String { monthFormatter.string(from: record.date) }
+    private var weightString: String { unit.convertFromKg(record.weight).smartFormatted }
+    private var bodyFatString: String? { record.bodyFatPercentageValue?.smartFormatted }
+    private var waistString: String? { record.waistCircumferenceValue?.smartFormatted }
+    private var hipString: String? { record.hipCircumferenceValue?.smartFormatted }
+    private var chestString: String? { record.chestCircumferenceValue?.smartFormatted }
+    private var thighString: String? { record.thighCircumferenceValue?.smartFormatted }
+    private var hasSecondaryInfo: Bool {
+        record.waistCircumferenceValue != nil ||
+        record.hipCircumferenceValue != nil ||
+        record.chestCircumferenceValue != nil ||
+        record.thighCircumferenceValue != nil
+    }
     
     init(record: WeightRecord, unit: WeightUnit, showDate: Bool = true) {
         self.record = record
         self.unit = unit
         self.showDate = showDate
-        self.dayString = dayFormatter.string(from: record.date)
-        self.monthDayString = monthFormatter.string(from: record.date)
-        self.weightString = unit.convertFromKg(record.weight).smartFormatted
-        self.bodyFatString = record.bodyFatPercentageValue?.smartFormatted
-        self.waistString = record.waistCircumferenceValue?.smartFormatted
-        self.hipString = record.hipCircumferenceValue?.smartFormatted
-        self.chestString = record.chestCircumferenceValue?.smartFormatted
-        self.thighString = record.thighCircumferenceValue?.smartFormatted
-        self.hasSecondaryInfo = record.waistCircumferenceValue != nil ||
-                               record.hipCircumferenceValue != nil ||
-                               record.chestCircumferenceValue != nil ||
-                               record.thighCircumferenceValue != nil
     }
     
     var body: some View {
