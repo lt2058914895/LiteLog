@@ -90,8 +90,6 @@ struct RecordRowView: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color(.separator).opacity(0.3), lineWidth: 1)
         )
-        .scaleEffect(1)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: UUID())
     }
     
     private var dateBadgeView: some View {
