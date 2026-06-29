@@ -115,7 +115,7 @@ struct BodyFatView: View {
                     ForEach(viewModel.sortedFilteredBodyFatRecords, id: \.0) { date, monthRecords in
                         Section {
                             ForEach(monthRecords, id: \.record.objectID) { item in
-                                RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
+                                EquatableView(content: RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange))
                                     .contentShape(Rectangle())
                                     .onTapGesture {
                                         recordToEditData = RecordFormData(

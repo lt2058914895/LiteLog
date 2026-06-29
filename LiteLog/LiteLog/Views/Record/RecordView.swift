@@ -121,7 +121,7 @@ struct RecordView: View {
                     ForEach(viewModel.sortedGroupedRecords, id: \.0) { date, monthRecords in
                         Section(header: monthHeaderView(date, count: monthRecords.count)) {
                             ForEach(monthRecords, id: \.record.objectID) { item in
-                                RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
+                                EquatableView(content: RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange))
                                     .listRowInsets(EdgeInsets())
                                     .listRowBackground(Color.clear)
                                     .listRowSeparator(.hidden)
@@ -193,7 +193,7 @@ struct RecordView: View {
                     .padding()
             } else {
                 ForEach(dayRecordsWithChange, id: \.record.objectID) { item in
-                    RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
+                    EquatableView(content: RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange))
                         .onTapGesture {
                             recordToEditData = RecordFormData(
                                 id: item.record.id.uuidString,
@@ -262,20 +262,16 @@ struct RecordView: View {
     
     @ViewBuilder
     private var avatarImageView: some View {
-        if !settingsManager.avatarUrl.isEmpty {
-            if let cachedImage = settingsManager.cachedAvatarImage {
-                Image(uiImage: cachedImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 36, height: 36)
-                    .clipShape(Circle())
-                    .id(settingsManager.avatarCacheUpdated)
-            } else {
-                Image(systemName: "person.circle.fill")
-                    .resizable()
-                    .frame(width: 36, height: 36)
-                    .foregroundColor(.primaryBlue)
-            }
+        if let avatarUrl = URL(string: settingsManager.avatarUrl), !settingsManager.avatarUrl.isEmpty {
+            AsyncImageView(
+                url: avatarUrl,
+                placeholder: { AnyView(Image(systemName: "person.circle.fill").resizable().foregroundColor(.primaryBlue)) },
+                errorPlaceholder: { AnyView(Image(systemName: "person.circle.fill").resizable().foregroundColor(.gray)) },
+                contentMode: .fill,
+                cacheKey: settingsManager.avatarUrl
+            )
+            .frame(width: 36, height: 36)
+            .clipShape(Circle())
         } else {
             Image(systemName: "person.circle.fill")
                 .resizable()

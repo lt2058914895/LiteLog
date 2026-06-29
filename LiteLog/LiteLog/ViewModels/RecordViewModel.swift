@@ -21,6 +21,20 @@ class RecordViewModel: ObservableObject {
     func loadRecords() {
         let request = WeightRecord.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]
+        request.fetchBatchSize = 20
+        request.propertiesToFetch = [
+            #keyPath(WeightRecord.date),
+            #keyPath(WeightRecord.weight),
+            #keyPath(WeightRecord.bodyFatPercentage),
+            #keyPath(WeightRecord.waistCircumference),
+            #keyPath(WeightRecord.hipCircumference),
+            #keyPath(WeightRecord.chestCircumference),
+            #keyPath(WeightRecord.thighCircumference),
+            #keyPath(WeightRecord.note),
+            #keyPath(WeightRecord.imageUrl),
+            #keyPath(WeightRecord.measurementTimePeriod)
+        ]
+        request.returnsObjectsAsFaults = false
         
         do {
             records = try context.fetch(request)

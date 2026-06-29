@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreData
 
 private let dayFormatter: DateFormatter = {
     let formatter = DateFormatter()
@@ -19,11 +20,18 @@ private let weekdayFormatter: DateFormatter = {
     return formatter
 }()
 
-struct RecordRowView: View {
+struct RecordRowView: View, Equatable {
     let record: WeightRecord
     let unit: WeightUnit
     let showDate: Bool
     let weightChange: Double?
+    
+    static func == (lhs: RecordRowView, rhs: RecordRowView) -> Bool {
+        lhs.record.objectID == rhs.record.objectID &&
+        lhs.unit == rhs.unit &&
+        lhs.showDate == rhs.showDate &&
+        lhs.weightChange == rhs.weightChange
+    }
     
     @Environment(\.colorScheme) private var colorScheme
     
@@ -242,7 +250,7 @@ struct RecordListView: View {
     var body: some View {
         LazyVStack(spacing: 12) {
             ForEach(records.computeWeightChanges(), id: \.record.objectID) { item in
-                RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
+                EquatableView(content: RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange))
                     .contextMenu {
                         Button(action: { onEdit(item.record) }) {
                             Label(NSLocalizedString("action.edit", comment: ""), systemImage: "pencil")
