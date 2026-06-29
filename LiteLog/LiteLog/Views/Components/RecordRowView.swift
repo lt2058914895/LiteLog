@@ -25,6 +25,8 @@ struct RecordRowView: View {
     let showDate: Bool
     let weightChange: Double?
     
+    @Environment(\.colorScheme) private var colorScheme
+    
     private var dayString: String { dayFormatter.string(from: record.date) }
     private var monthDayString: String { monthFormatter.string(from: record.date) }
     private var weekdayString: String { weekdayFormatter.string(from: record.date) }
@@ -81,7 +83,7 @@ struct RecordRowView: View {
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 16)
-        .background(Color(.systemBackground))
+        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.white)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 4)
         .overlay(
@@ -199,7 +201,7 @@ struct RecordRowView: View {
         .frame(maxWidth: .infinity, minHeight: 48)
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-        .background(Color(.secondarySystemBackground))
+        .background(colorScheme == .dark ? Color(.tertiarySystemBackground) : Color(.secondarySystemBackground))
         .cornerRadius(10)
     }
     
