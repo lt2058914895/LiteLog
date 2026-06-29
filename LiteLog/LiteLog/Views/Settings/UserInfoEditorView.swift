@@ -18,7 +18,14 @@ struct UserInfoEditorView: View {
     @StateObject private var errorAlertManager = ErrorAlertManager()
     
     var body: some View {
-        ScrollView {
+        ZStack {
+            Color(.systemGroupedBackground)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    hideKeyboard()
+                }
+            
+            ScrollView {
                 VStack(spacing: 32) {
                     avatarSection
                     
@@ -29,12 +36,7 @@ struct UserInfoEditorView: View {
                 .padding()
             }
             .ignoresSafeArea(.keyboard)
-            .background(
-                Color(.systemGroupedBackground)
-                    .onTapGesture {
-                        hideKeyboard()
-                    }
-            )
+        }
             .navigationTitle(NSLocalizedString("profile.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
