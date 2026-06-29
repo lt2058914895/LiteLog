@@ -497,21 +497,6 @@ struct HomeView: View {
         }
     }
     
-    private func iconForMeasurement(_ title: String) -> String {
-        switch title {
-        case "腰围":
-            return "goal.waist"
-        case "臀围":
-            return "goal.hip"
-        case "胸围":
-            return "goal.chest"
-        case "大腿围":
-            return "goal.thigh"
-        default:
-            return "ruler"
-        }
-    }
-
     private var bmiCard: some View {
         if let profile = profile {
             if let latest = latestWeight {

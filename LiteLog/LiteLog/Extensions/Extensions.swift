@@ -5,16 +5,6 @@ extension Notification.Name {
     static let showProfileEditor = Notification.Name("showProfileEditor")
 }
 
-extension UIDevice {
-    static var isPad: Bool {
-        current.userInterfaceIdiom == .pad
-    }
-    
-    static var isPhone: Bool {
-        current.userInterfaceIdiom == .phone
-    }
-}
-
 extension View {
     func adaptiveSheet<Item, Content>(item: Binding<Item?>, onDismiss: (() -> Void)? = nil, content: @escaping (Item) -> Content) -> some View where Item: Identifiable, Content: View {
         self.sheet(item: item, onDismiss: onDismiss, content: content)
