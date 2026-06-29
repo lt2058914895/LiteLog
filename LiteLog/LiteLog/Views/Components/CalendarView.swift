@@ -20,7 +20,16 @@ struct CalendarView: View {
         
         let cal = Calendar.current
         self.recordDates = Set(records.map { cal.startOfDay(for: $0.date) })
-        self.recordsByDate = Dictionary(uniqueKeysWithValues: records.map { (cal.startOfDay(for: $0.date), $0) })
+        self.recordsByDate = records.reduce(into: [Date: WeightRecord]()) { dict, record in
+            let key = cal.startOfDay(for: record.date)
+            if let existing = dict[key] {
+                if record.date > existing.date {
+                    dict[key] = record
+                }
+            } else {
+                dict[key] = record
+            }
+        }
     }
 
     private var daysInMonth: [Date] {
