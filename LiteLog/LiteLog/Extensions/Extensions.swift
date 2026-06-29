@@ -166,6 +166,19 @@ extension Date {
         Calendar.current.startOfDay(for: self)
     }
 
+    var endOfDay: Date {
+        var components = DateComponents()
+        components.day = 1
+        components.second = -1
+        return Calendar.current.date(byAdding: components, to: startOfDay) ?? self
+    }
+
+    var startOfYear: Date {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year], from: self)
+        return calendar.date(from: components) ?? self
+    }
+
     var startOfWeek: Date {
         let calendar = Calendar.current
         let components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: self)
@@ -220,6 +233,13 @@ extension Date {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         return formatter.string(from: self)
+    }
+}
+
+extension Array where Element == Double {
+    var average: Double? {
+        guard !isEmpty else { return nil }
+        return reduce(0, +) / Double(count)
     }
 }
 

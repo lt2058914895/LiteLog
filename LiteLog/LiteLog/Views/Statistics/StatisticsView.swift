@@ -12,6 +12,11 @@ struct StatisticsView: View {
     @State private var selectedPeriod: Period = .week
     @State private var selectedMetric: Metric = .weight
     @State private var cachedFilteredRecords: [WeightRecord] = []
+    @State private var selectedYear: Int = Calendar.current.component(.year, from: Date())
+    @State private var showYearPicker: Bool = false
+    
+    private let minYear = 2000
+    private let maxYear = Calendar.current.component(.year, from: Date())
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -20,6 +25,7 @@ struct StatisticsView: View {
         case week = "stats.week"
         case month = "stats.month"
         case quarter = "stats.quarter"
+        case year = "stats.year"
 
         var localizedKey: String { rawValue }
     }
@@ -62,6 +68,26 @@ struct StatisticsView: View {
             return (calendar.date(byAdding: .month, value: -1, to: Date()) ?? Date()).startOfDay
         case .quarter:
             return (calendar.date(byAdding: .month, value: -3, to: Date()) ?? Date()).startOfDay
+        case .year:
+            var components = DateComponents()
+            components.year = selectedYear
+            components.month = 1
+            components.day = 1
+            return calendar.date(from: components) ?? Date()
+        }
+    }
+
+    private var endDate: Date {
+        let calendar = Calendar.current
+        switch selectedPeriod {
+        case .week, .month, .quarter:
+            return Date().endOfDay
+        case .year:
+            var components = DateComponents()
+            components.year = selectedYear
+            components.month = 12
+            components.day = 31
+            return calendar.date(from: components)?.endOfDay ?? Date()
         }
     }
 
@@ -101,15 +127,37 @@ struct StatisticsView: View {
     // MARK: - Metric Data
     
     private func computeFilteredRecords() {
-        let filtered = records.filter { $0.date >= startDate }
+        let filtered = records.filter { $0.date >= startDate && $0.date <= endDate }
         let calendar = Calendar.current
         
-        let grouped = Dictionary(grouping: filtered) { record in
-            calendar.startOfDay(for: record.date)
-        }
-        
-        cachedFilteredRecords = grouped.compactMap { $0.value.max(by: { $0.date < $1.date }) }
+        if selectedPeriod == .year {
+            let grouped = Dictionary(grouping: filtered) { record in
+                record.date.startOfWeek
+            }
+            
+            cachedFilteredRecords = grouped.compactMap { weekStart, weekRecords in
+                let avgWeight = weekRecords.reduce(0) { $0 + $1.weight } / Double(weekRecords.count)
+                let representativeRecord = weekRecords.max(by: { $0.date < $1.date })!
+                let newRecord = WeightRecord(context: context)
+                newRecord.date = weekStart
+                newRecord.weight = avgWeight
+                newRecord.bodyFatPercentage = weekRecords.compactMap { $0.bodyFatPercentage }.average ?? 0
+                newRecord.waistCircumference = weekRecords.compactMap { $0.waistCircumference }.average ?? 0
+                newRecord.hipCircumference = weekRecords.compactMap { $0.hipCircumference }.average ?? 0
+                newRecord.chestCircumference = weekRecords.compactMap { $0.chestCircumference }.average ?? 0
+                newRecord.thighCircumference = weekRecords.compactMap { $0.thighCircumference }.average ?? 0
+                newRecord.id = representativeRecord.id
+                return newRecord
+            }
             .sorted { $0.date < $1.date }
+        } else {
+            let grouped = Dictionary(grouping: filtered) { record in
+                calendar.startOfDay(for: record.date)
+            }
+            
+            cachedFilteredRecords = grouped.compactMap { $0.value.max(by: { $0.date < $1.date }) }
+                .sorted { $0.date < $1.date }
+        }
     }
     
     private func metricData(for metric: Metric) -> [(Date, Double)] {
@@ -199,11 +247,20 @@ struct StatisticsView: View {
         .onAppear {
             computeFilteredRecords()
         }
-        .onChange(of: selectedPeriod) { _ in
+        .onChange(of: selectedPeriod) { newValue in
+            if newValue != .year {
+                selectedYear = maxYear
+            }
+            computeFilteredRecords()
+        }
+        .onChange(of: selectedYear) { _ in
             computeFilteredRecords()
         }
         .onChange(of: records.count) { _ in
             computeFilteredRecords()
+        }
+        .sheet(isPresented: $showYearPicker) {
+            yearPickerSheet
         }
     }
     
@@ -232,13 +289,84 @@ struct StatisticsView: View {
     }
     
     private var periodPicker: some View {
-        Picker("Period", selection: $selectedPeriod) {
-            ForEach(Period.allCases, id: \.self) { period in
-                Text(NSLocalizedString(period.localizedKey, comment: ""))
-                    .tag(period)
+        VStack(spacing: 12) {
+            Picker("Period", selection: $selectedPeriod) {
+                ForEach(Period.allCases, id: \.self) { period in
+                    Text(NSLocalizedString(period.localizedKey, comment: ""))
+                        .tag(period)
+                }
+            }
+            .pickerStyle(.segmented)
+            
+            if selectedPeriod == .year {
+                yearPicker
             }
         }
-        .pickerStyle(.segmented)
+    }
+
+    private var yearPicker: some View {
+        HStack(spacing: 12) {
+            Button(action: {
+                selectedYear -= 1
+            }) {
+                Image(systemName: "chevron.left")
+                    .foregroundColor(selectedYear <= minYear ? .gray : .primaryBlue)
+                    .frame(width: 32, height: 32)
+                    .background(selectedYear <= minYear ? Color.gray.opacity(0.1) : Color.primaryBlue.opacity(0.1))
+                    .cornerRadius(8)
+            }
+            .disabled(selectedYear <= minYear)
+            
+            Button(action: {
+                showYearPicker = true
+            }) {
+                Text("\(selectedYear)")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primaryText)
+                    .frame(maxWidth: .infinity)
+            }
+            
+            Button(action: {
+                selectedYear += 1
+            }) {
+                Image(systemName: "chevron.right")
+                    .foregroundColor(selectedYear >= maxYear ? .gray : .primaryBlue)
+                    .frame(width: 32, height: 32)
+                    .background(selectedYear >= maxYear ? Color.gray.opacity(0.1) : Color.primaryBlue.opacity(0.1))
+                    .cornerRadius(8)
+            }
+            .disabled(selectedYear >= maxYear)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : .white)
+        .cornerRadius(12)
+    }
+    
+    private var yearPickerSheet: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                Picker(NSLocalizedString("stats.year", comment: ""), selection: $selectedYear) {
+                    ForEach(minYear...maxYear, id: \.self) { year in
+                        Text("\(year)").tag(year)
+                    }
+                }
+                .pickerStyle(.wheel)
+                .padding()
+                
+                Button(NSLocalizedString("action.done", comment: "")) {
+                    showYearPicker = false
+                }
+                .primaryButtonStyle()
+                .padding()
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationBarTitle(NSLocalizedString("stats.year", comment: ""), displayMode: .inline)
+            .navigationBarItems(leading: Button(NSLocalizedString("action.cancel", comment: "")) {
+                showYearPicker = false
+            })
+        }
     }
 
     private var metricPicker: some View {
@@ -306,7 +434,8 @@ struct StatisticsView: View {
                     data: currentMetricData,
                     color: selectedMetric.color,
                     unit: selectedMetric.unit,
-                    title: ""
+                    title: "",
+                    period: selectedPeriod
                 )
             }
         }

@@ -5,6 +5,17 @@ struct ModernTrendChartView: View {
     let color: Color
     let unit: String
     let title: String
+    let period: StatisticsView.Period?
+    private let chartData: ChartData
+    
+    init(data: [(Date, Double)], color: Color, unit: String, title: String, period: StatisticsView.Period? = nil) {
+        self.data = data
+        self.color = color
+        self.unit = unit
+        self.title = title
+        self.period = period
+        self.chartData = ChartData(data: data)
+    }
     
     private let yAxisWidth: CGFloat = 20
     private let xAxisHeight: CGFloat = 26
@@ -14,16 +25,6 @@ struct ModernTrendChartView: View {
     private let gridLineCount = 5
     private let pointSize: CGFloat = 6
     private let chartPadding: CGFloat = 8
-    
-    private let chartData: ChartData
-    
-    init(data: [(Date, Double)], color: Color, unit: String, title: String) {
-        self.data = data
-        self.color = color
-        self.unit = unit
-        self.title = title
-        self.chartData = ChartData(data: data)
-    }
     
     struct ChartData {
         let values: [Double]
@@ -326,8 +327,15 @@ struct ModernTrendChartView: View {
     
     private func formatDate(_ date: Date) -> String {
         let calendar = Calendar.current
-        let month = calendar.component(.month, from: date)
-        let day = calendar.component(.day, from: date)
-        return "\(month)/\(day)"
+        
+        if period == .year {
+            let month = calendar.component(.month, from: date)
+            let monthNames = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
+            return monthNames[month - 1]
+        } else {
+            let month = calendar.component(.month, from: date)
+            let day = calendar.component(.day, from: date)
+            return "\(month)/\(day)"
+        }
     }
 }

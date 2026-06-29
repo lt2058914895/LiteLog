@@ -139,6 +139,7 @@
 "stats.week" = "周";
 "stats.month" = "月";
 "stats.quarter" = "季度";
+"stats.year" = "年";
 "stats.no.data" = "暂无数据";
 "stats.average" = "平均";
 "stats.change" = "变化";
