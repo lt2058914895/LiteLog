@@ -337,4 +337,13 @@
 "record.select.source" = "选择图片来源";
 "record.photo.attached" = "已添加照片";
 "record.change.photo" = "更换照片";
+"record.add.photo" = "添加照片";
 "record.accessibility.camera" = "添加照片";
+"record.more.measurements" = "更多测量数据";
+"record.has.data" = "已有数据";
+"record.body.fat.placeholder" = "体脂率";
+"record.waist.placeholder" = "腰围";
+"record.hip.placeholder" = "臀围";
+"record.chest.placeholder" = "胸围";
+"record.thigh.placeholder" = "大腿围";
+"record.input.placeholder" = "请输入";

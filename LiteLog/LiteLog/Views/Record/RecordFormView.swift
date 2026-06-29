@@ -72,7 +72,9 @@ struct RecordFormView: View {
     @State private var showingDuplicateAlert = false
     @State private var selectedTimePeriod: MeasurementTimePeriod = .random
     
-    // 图片相关状态
+    @State private var showAdvancedFields = false
+    @State private var showPhotoSection = false
+    
     @State private var selectedImage: UIImage?
     @State private var imageUrl: String?
     @State private var showingImagePicker = false
@@ -80,7 +82,6 @@ struct RecordFormView: View {
     @State private var imageSourceType: UIImagePickerController.SourceType = .camera
 
     private var unit: WeightUnit { settingsManager.weightUnit }
-
     private var isEditMode: Bool { recordData != nil }
 
     private var isValidWeight: Bool {
@@ -116,6 +117,10 @@ struct RecordFormView: View {
         guard !thighString.isEmpty, let value = Double(thighString) else { return nil }
         return value
     }
+    
+    private var hasAdvancedData: Bool {
+        !bodyFatString.isEmpty || !waistString.isEmpty || !hipString.isEmpty || !chestString.isEmpty || !thighString.isEmpty
+    }
 
     init(recordData: RecordFormData? = nil, isPresented: Binding<Bool>) {
         self.recordData = recordData
@@ -132,6 +137,8 @@ struct RecordFormView: View {
             self._note = State(initialValue: recordData.note)
             self._imageUrl = State(initialValue: recordData.imageUrl)
             self._selectedTimePeriod = State(initialValue: recordData.measurementTimePeriod)
+            self._showAdvancedFields = State(initialValue: true)
+            self._showPhotoSection = State(initialValue: recordData.imageUrl != nil)
         } else {
             self._date = State(initialValue: Date())
             self._weightString = State(initialValue: "")
@@ -143,184 +150,355 @@ struct RecordFormView: View {
             self._note = State(initialValue: "")
             self._imageUrl = State(initialValue: nil)
             self._selectedTimePeriod = State(initialValue: .random)
+            self._showAdvancedFields = State(initialValue: false)
+            self._showPhotoSection = State(initialValue: false)
         }
     }
 
     var body: some View {
-        Form {
-                Section(NSLocalizedString("record.date", comment: "")) {
-                    DatePicker(
-                        "Date",
-                        selection: $date,
-                        in: ...Date(),
-                        displayedComponents: [.date]
-                    )
-                    .datePickerStyle(.graphical)
-                    .disabled(isEditMode)
+        ScrollView {
+            VStack(spacing: 16) {
+                headerSection
+                
+                weightCard
+                
+                dateAndPeriodSection
+                
+                if showPhotoSection || selectedImage != nil || imageUrl != nil {
+                    photoSection
                 }
                 
-                Section(NSLocalizedString("record.measurement_period", comment: "")) {
-                    MeasurementPeriodSelector(selectedPeriod: $selectedTimePeriod)
+                VStack {
+                    advancedSectionHeader
+                    
+                    if showAdvancedFields {
+                        advancedFieldsSection
+                    }
                 }
                 
-                // 照片区域
-                if selectedImage != nil || imageUrl != nil {
-                    Section {
-                        HStack(alignment: .top, spacing: 12) {
-                            if let image = selectedImage {
-                                Image(uiImage: image)
+                noteSection
+                
+                saveButtonSection
+                
+                Spacer(minLength: 20)
+            }
+            .padding()
+        }
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .navigationBarItems(leading: backButton)
+        .tabBarHidden(true)
+        .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
+            Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
+        } message: {
+            Text(errorMessage)
+        }
+        .alert(NSLocalizedString("record.duplicate.title", comment: ""), isPresented: $showingDuplicateAlert) {
+            Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+            Button(NSLocalizedString("action.confirm", comment: "")) {
+                confirmSaveRecord()
+            }
+        } message: {
+            Text(NSLocalizedString("record.duplicate.message", comment: ""))
+        }
+        .confirmationDialog(NSLocalizedString("record.select.source", comment: ""), isPresented: $showingImageSourcePicker) {
+            Button(NSLocalizedString("record.take.photo", comment: "")) {
+                imageSourceType = .camera
+                showingImagePicker = true
+            }
+            Button(NSLocalizedString("record.upload.image", comment: "")) {
+                imageSourceType = .photoLibrary
+                showingImagePicker = true
+            }
+            Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+        }
+        .fullScreenCover(isPresented: $showingImagePicker) {
+            ImagePicker(image: $selectedImage, isPresented: $showingImagePicker, sourceType: imageSourceType)
+                .ignoresSafeArea(.all)
+                .background(Color.black)
+        }
+        .dismissKeyboardOnTapOutside()
+    }
+    
+    private var headerSection: some View {
+        HStack {
+            Text(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundColor(.primaryText)
+            Spacer()
+        }
+    }
+    
+    private var weightCard: some View {
+        VStack(spacing: 12) {
+            Text(NSLocalizedString("record.weight", comment: ""))
+                .font(.subheadline)
+                .foregroundColor(.secondaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            HStack(alignment: .center, spacing: 8) {
+                TextField(NSLocalizedString("record.input.placeholder", comment: ""), text: $weightString)
+                    .keyboardType(.decimalPad)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.primaryBlue)
+                    .frame(maxWidth: .infinity)
+                    .onChange(of: weightString) { newValue in
+                        weightString = formatNumericInput(newValue)
+                    }
+                
+                Text(unit.shortName)
+                    .font(.title)
+                    .foregroundColor(.secondaryText)
+                    .padding(.bottom, 8)
+                
+                if !weightString.isEmpty {
+                    Button(action: { weightString = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(Color(.systemGray4))
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .background(Color.white)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+    }
+    
+    private var dateAndPeriodSection: some View {
+        VStack(spacing: 16) {
+            HStack(spacing: 12) {
+                Image(systemName: "calendar")
+                    .foregroundColor(.primaryBlue)
+                    .font(.headline)
+                
+                DatePicker(
+                    "",
+                    selection: $date,
+                    in: ...Date(),
+                    displayedComponents: [.date]
+                )
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                .disabled(isEditMode)
+                
+                Spacer()
+                
+                if isEditMode {
+                    Image(systemName: "lock")
+                        .foregroundColor(.secondaryText)
+                        .font(.caption)
+                }
+            }
+            
+            HStack(spacing: 8) {
+                Image(systemName: "clock")
+                    .foregroundColor(.primaryBlue)
+                    .font(.headline)
+                
+                MeasurementPeriodSelector(selectedPeriod: $selectedTimePeriod)
+            }
+        }
+        .padding(16)
+        .background(Color.white)
+        .cornerRadius(12)
+    }
+    
+    private var photoSection: some View {
+        VStack(spacing: 12) {
+            if selectedImage != nil || imageUrl != nil {
+                HStack(alignment: .top, spacing: 12) {
+                    if let image = selectedImage {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 80, height: 80)
+                            .cornerRadius(8)
+                    } else if let url = imageUrl, let imageUrl = URL(string: url) {
+                        AsyncImage(url: imageUrl) { phase in
+                            if let image = phase.image {
+                                image
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 80, height: 80)
                                     .cornerRadius(8)
-                            } else if let url = imageUrl, let imageUrl = URL(string: url) {
-                                AsyncImage(url: imageUrl) { phase in
-                                    if let image = phase.image {
-                                        image
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 80, height: 80)
-                                            .cornerRadius(8)
-                                    } else {
-                                        Image(systemName: "photo")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 80, height: 80)
-                                            .foregroundColor(.secondaryText)
-                                    }
-                                }
+                            } else {
+                                Image(systemName: "photo")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 80, height: 80)
+                                    .foregroundColor(.secondaryText)
                             }
-                            
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text(NSLocalizedString("record.photo.attached", comment: ""))
-                                    .font(.subheadline)
-                                Button(NSLocalizedString("record.change.photo", comment: "")) {
-                                    showingImageSourcePicker = true
-                                }
-                                .font(.caption)
-                                .foregroundColor(.primaryBlue)
-                            }
-                            
-                            Spacer()
-                            
-                            Button(role: .destructive) {
-                                selectedImage = nil
-                                imageUrl = nil
-                            } label: {
-                                Image(systemName: "x.circle.fill")
-                                    .foregroundColor(.red)
-                                    .frame(width: 24, height: 24)
-                            }
-                            .buttonStyle(.plain)
-                            .offset(x: 10, y: -5)
-                            .highPriorityGesture(TapGesture().onEnded {
-                                selectedImage = nil
-                                imageUrl = nil
-                            })
                         }
                     }
-                } else {
-                    // 相机按钮
-                    Section {
-                        CameraButtonView(action: { showingImageSourcePicker = true })
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(NSLocalizedString("record.photo.attached", comment: ""))
+                            .font(.subheadline)
+                        Button(NSLocalizedString("record.change.photo", comment: "")) {
+                            showingImageSourcePicker = true
+                        }
+                        .font(.caption)
+                        .foregroundColor(.primaryBlue)
                     }
-                    .listRowBackground(Color.clear)
-                }
-
-                Section(NSLocalizedString("record.weight", comment: "")) {
-                    HStack {
-                        NumericTextField(NSLocalizedString("record.weight", comment: ""), text: $weightString)
-
-                        Text(unit.shortName)
-                            .foregroundColor(.secondaryText)
+                    
+                    Spacer()
+                    
+                    Button(role: .destructive) {
+                        selectedImage = nil
+                        imageUrl = nil
+                        showPhotoSection = false
+                    } label: {
+                        Image(systemName: "x.circle.fill")
+                            .foregroundColor(.red)
+                            .frame(width: 24, height: 24)
                     }
-                }
-
-                Section(NSLocalizedString("record.body.fat.optional", comment: "")) {
-                    HStack {
-                        NumericTextField(NSLocalizedString("record.body.fat", comment: ""), text: $bodyFatString)
-
-                        Text("%")
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-
-                Section(NSLocalizedString("record.waist.circumference.optional", comment: "")) {
-                    HStack {
-                        NumericTextField(NSLocalizedString("record.waist.circumference", comment: ""), text: $waistString)
-
-                        Text("cm")
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-
-                Section(NSLocalizedString("record.hip.circumference.optional", comment: "")) {
-                    HStack {
-                        NumericTextField(NSLocalizedString("record.hip.circumference", comment: ""), text: $hipString)
-
-                        Text("cm")
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-
-                Section(NSLocalizedString("record.chest.circumference.optional", comment: "")) {
-                    HStack {
-                        NumericTextField(NSLocalizedString("record.chest.circumference", comment: ""), text: $chestString)
-
-                        Text("cm")
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-
-                Section(NSLocalizedString("record.thigh.circumference.optional", comment: "")) {
-                    HStack {
-                        NumericTextField(NSLocalizedString("record.thigh.circumference", comment: ""), text: $thighString)
-
-                        Text("cm")
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-
-                Section(NSLocalizedString("record.note", comment: "")) {
-                    noteEditorView
+                    .buttonStyle(.plain)
                 }
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarBackButtonHidden(true)
-            .navigationBarItems(leading: backButton, trailing: saveButton)
-            .tabBarHidden(true)
-            .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
-                Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
-            } message: {
-                Text(errorMessage)
-            }
-            .alert(NSLocalizedString("record.duplicate.title", comment: ""), isPresented: $showingDuplicateAlert) {
-                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-                Button(NSLocalizedString("action.confirm", comment: "")) {
-                    confirmSaveRecord()
+            
+            Button(action: { showingImageSourcePicker = true }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "camera")
+                        .foregroundColor(.primaryBlue)
+                    Text(NSLocalizedString("record.add.photo", comment: ""))
+                        .font(.subheadline)
+                        .foregroundColor(.primaryBlue)
                 }
-            } message: {
-                Text(NSLocalizedString("record.duplicate.message", comment: ""))
+                .frame(maxWidth: .infinity)
+                .padding(12)
+                .background(Color.primaryBlue.opacity(0.05))
+                .cornerRadius(8)
             }
-            .confirmationDialog(NSLocalizedString("record.select.source", comment: ""), isPresented: $showingImageSourcePicker) {
-                Button(NSLocalizedString("record.take.photo", comment: "")) {
-                    imageSourceType = .camera
-                    showingImagePicker = true
+        }
+        .padding(16)
+        .background(Color.white)
+        .cornerRadius(12)
+    }
+    
+    private var advancedSectionHeader: some View {
+        Button(action: {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                showAdvancedFields.toggle()
+            }
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: "layers")
+                    .foregroundColor(.primaryBlue)
+                
+                Text(NSLocalizedString("record.more.measurements", comment: ""))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primaryText)
+                
+                Spacer()
+                
+                if hasAdvancedData {
+                    Text(NSLocalizedString("record.has.data", comment: ""))
+                        .font(.caption)
+                        .foregroundColor(.primaryBlue)
                 }
-                Button(NSLocalizedString("record.upload.image", comment: "")) {
-                    imageSourceType = .photoLibrary
-                    showingImagePicker = true
-                }
-                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+                
+                Image(systemName: showAdvancedFields ? "chevron.up" : "chevron.down")
+                    .foregroundColor(.secondaryText)
+                    .font(.caption)
             }
-            .fullScreenCover(isPresented: $showingImagePicker) {
-                ImagePicker(image: $selectedImage, isPresented: $showingImagePicker, sourceType: imageSourceType)
-                    .ignoresSafeArea(.all)
-                    .background(Color.black)
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(12)
+        }
+    }
+    
+    private var advancedFieldsSection: some View {
+        VStack(spacing: 0) {
+            MeasurementRow(
+                label: NSLocalizedString("record.body.fat", comment: ""),
+                placeholder: NSLocalizedString("record.input.placeholder", comment: ""),
+                text: $bodyFatString,
+                unit: "%"
+            )
+            
+            Divider()
+            
+            MeasurementRow(
+                label: NSLocalizedString("record.waist.circumference", comment: ""),
+                placeholder: NSLocalizedString("record.input.placeholder", comment: ""),
+                text: $waistString,
+                unit: "cm"
+            )
+            
+            Divider()
+            
+            MeasurementRow(
+                label: NSLocalizedString("record.hip.circumference", comment: ""),
+                placeholder: NSLocalizedString("record.input.placeholder", comment: ""),
+                text: $hipString,
+                unit: "cm"
+            )
+            
+            Divider()
+            
+            MeasurementRow(
+                label: NSLocalizedString("record.chest.circumference", comment: ""),
+                placeholder: NSLocalizedString("record.input.placeholder", comment: ""),
+                text: $chestString,
+                unit: "cm"
+            )
+            
+            Divider()
+            
+            MeasurementRow(
+                label: NSLocalizedString("record.thigh.circumference", comment: ""),
+                placeholder: NSLocalizedString("record.input.placeholder", comment: ""),
+                text: $thighString,
+                unit: "cm"
+            )
+        }
+        .background(Color.white)
+        .cornerRadius(12)
+        .padding(.top, 4)
+    }
+    
+    private var noteSection: some View {
+        VStack(spacing: 8) {
+            Text(NSLocalizedString("record.note", comment: ""))
+                .font(.subheadline)
+                .foregroundColor(.secondaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            ZStack(alignment: .topLeading) {
+                Text(note.isEmpty ? NSLocalizedString("record.note.placeholder", comment: "") : "")
+                    .font(.body)
+                    .foregroundColor(.secondaryText)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .opacity(note.isEmpty ? 1 : 0)
+                
+                TextEditor(text: $note)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .padding(4)
             }
-            .dismissKeyboardOnTapOutside()
+            .frame(minHeight: 80)
+        }
+    }
+    
+    private var saveButtonSection: some View {
+        Button(action: {
+            saveRecord()
+        }) {
+            Text(NSLocalizedString("action.save", comment: ""))
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(16)
+                .background(isValidWeight ? Color.primaryBlue : Color.gray)
+                .cornerRadius(12)
+        }
+        .disabled(!isValidWeight)
     }
 
     private func saveRecord() {
@@ -425,29 +603,20 @@ struct RecordFormView: View {
         }
     }
     
-    private var saveButton: some View {
-        Button(action: {
-            saveRecord()
-        }) {
-            Text(NSLocalizedString("action.save", comment: ""))
-                .foregroundColor(isValidWeight ? .primaryBlue : .gray)
+    private func formatNumericInput(_ input: String) -> String {
+        let filtered = input.filter { "0123456789.".contains($0) }
+        let parts = filtered.components(separatedBy: ".")
+        if parts.count > 2 {
+            let integerPart = parts.first ?? ""
+            let decimalPart = parts.dropFirst().joined().prefix(2)
+            return "\(integerPart).\(decimalPart)"
+        } else if parts.count == 2 {
+            let integerPart = parts[0]
+            let decimalPart = parts[1].prefix(2)
+            return "\(integerPart).\(decimalPart)"
+        } else {
+            return filtered
         }
-        .disabled(!isValidWeight)
-    }
-    
-    private var noteEditorView: some View {
-        ZStack(alignment: .topLeading) {
-            Text(note.isEmpty ? NSLocalizedString("record.note.placeholder", comment: "") : "")
-                .font(.body)
-                .foregroundColor(.secondaryText)
-                .padding(.horizontal, 4)
-                .padding(.vertical, 8)
-                .opacity(note.isEmpty ? 1 : 0)
-            
-            TextEditor(text: $note)
-                .background(Color.clear)
-        }
-        .frame(minHeight: 100)
     }
 
     private func deleteRecordsForSelectedDate() {
@@ -459,7 +628,6 @@ struct RecordFormView: View {
         
         do {
             try context.save()
-            // 同步删除到云数据库
             Task {
                 await DataSyncManager.shared.syncDeletedRecords(recordIds: recordIds)
             }
@@ -467,48 +635,79 @@ struct RecordFormView: View {
             print("Failed to delete records for selected date: \(error)")
         }
     }
+}
 
+struct MeasurementRow: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+    let unit: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(label)
+                .font(.subheadline)
+                .foregroundColor(.primaryText)
+                .frame(width: 60, alignment: .leading)
+            
+            TextField(placeholder, text: $text)
+                .keyboardType(.decimalPad)
+                .font(.body)
+                .foregroundColor(.primaryText)
+                .onChange(of: text) { newValue in
+                    text = formatNumericInput(newValue)
+                }
+            
+            Text(unit)
+                .font(.subheadline)
+                .foregroundColor(.secondaryText)
+            
+            if !text.isEmpty {
+                Button(action: { text = "" }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(Color(.systemGray4))
+                }
+            }
+        }
+        .padding(12)
+    }
+    
+    private func formatNumericInput(_ input: String) -> String {
+        let filtered = input.filter { "0123456789.".contains($0) }
+        let parts = filtered.components(separatedBy: ".")
+        if parts.count > 2 {
+            let integerPart = parts.first ?? ""
+            let decimalPart = parts.dropFirst().joined().prefix(2)
+            return "\(integerPart).\(decimalPart)"
+        } else if parts.count == 2 {
+            let integerPart = parts[0]
+            let decimalPart = parts[1].prefix(2)
+            return "\(integerPart).\(decimalPart)"
+        } else {
+            return filtered
+        }
+    }
 }
 
 struct MeasurementPeriodSelector: View {
     @Binding var selectedPeriod: MeasurementTimePeriod
     
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             ForEach(MeasurementTimePeriod.allCases, id: \.self) { period in
                 Button(action: {
                     selectedPeriod = period
                 }) {
                     Text(period.displayName)
                         .font(.caption)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(selectedPeriod == period ? Color.primaryBlue : Color(.secondarySystemGroupedBackground))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(selectedPeriod == period ? Color.primaryBlue : Color(.secondarySystemBackground))
                         .foregroundColor(selectedPeriod == period ? .white : .primaryText)
-                        .cornerRadius(20)
+                        .cornerRadius(12)
                 }
                 .buttonStyle(.plain)
             }
-        }
-    }
-}
-
-struct CameraButtonView: View {
-    let action: () -> Void
-    
-    var body: some View {
-        HStack {
-            Spacer()
-            Button(action: action) {
-                Image(systemName: "camera")
-                    .font(.system(size: 20))
-                    .foregroundColor(.primaryBlue)
-            }
-            .padding(8)
-            .background(Color.primaryBlue.opacity(0.1))
-            .cornerRadius(8)
-            .accessibilityLabel(NSLocalizedString("record.accessibility.camera", comment: ""))
-            Spacer()
         }
     }
 }
