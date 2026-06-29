@@ -241,23 +241,19 @@ struct RecordListView: View {
     
     var body: some View {
         LazyVStack(spacing: 12) {
-            ForEach(records.indices, id: \.self) { index in
-                let record = records[index]
-                let weightChange = index < records.count - 1 ?
-                    record.weight - records[index + 1].weight : nil
-                
-                RecordRowView(record: record, unit: unit, weightChange: weightChange)
+            ForEach(records.computeWeightChanges(), id: \.record.objectID) { item in
+                RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
                     .contextMenu {
-                        Button(action: { onEdit(record) }) {
+                        Button(action: { onEdit(item.record) }) {
                             Label(NSLocalizedString("action.edit", comment: ""), systemImage: "pencil")
                         }
                         
-                        Button(role: .destructive, action: { onDelete(record) }) {
+                        Button(role: .destructive, action: { onDelete(item.record) }) {
                             Label(NSLocalizedString("action.delete", comment: ""), systemImage: "trash")
                         }
                     }
                     .onTapGesture {
-                        onEdit(record)
+                        onEdit(item.record)
                     }
             }
         }

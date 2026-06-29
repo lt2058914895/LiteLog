@@ -83,6 +83,33 @@ final class WeightRecord: NSManagedObject, Identifiable {
     }
 }
 
+struct WeightChangeRecord {
+    let record: WeightRecord
+    let weightChange: Double?
+}
+
+extension Array where Element == WeightRecord {
+    func computeWeightChanges() -> [WeightChangeRecord] {
+        return enumerated().map { index, record in
+            let weightChange = index < count - 1 ? record.weight - self[index + 1].weight : nil
+            return WeightChangeRecord(record: record, weightChange: weightChange)
+        }
+    }
+    
+    func groupedByMonth() -> [Date: [WeightRecord]] {
+        let calendar = Calendar.current
+        return Dictionary(grouping: self) { record in
+            let components = calendar.dateComponents([.year, .month], from: record.date)
+            return calendar.date(from: components) ?? record.date
+        }
+    }
+    
+    func groupedByMonthWithWeightChanges() -> [Date: [WeightChangeRecord]] {
+        let grouped = groupedByMonth()
+        return grouped.mapValues { $0.computeWeightChanges() }
+    }
+}
+
 extension WeightRecord {
     static func create(in context: NSManagedObjectContext, weight: Double) -> WeightRecord {
         let record = WeightRecord(context: context)

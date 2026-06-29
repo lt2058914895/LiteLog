@@ -5,18 +5,25 @@ struct RecordView: View {
     @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var settingsManager: SettingsManager
 
-    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var records: FetchedResults<WeightRecord>
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) private var userProfile: FetchedResults<UserProfile>
 
     @State private var selectedDate: Date?
     @State private var recordToEditData: RecordFormData?
     @State private var viewMode: ViewMode = .list
-    @State private var showingAddSheet = false
-    @State private var showingEditSheet = false
-    @State private var cachedGroupedRecords: [Date: [(record: WeightRecord, weightChange: Double?)]] = [:]
+    @State private var isPresentingAddSheet = false
+    @State private var isPresentingEditSheet = false
+    
+    @StateObject private var viewModel: RecordViewModel
 
     private var profile: UserProfile? { userProfile.first }
-    private var unit: WeightUnit { settingsManager.weightUnit }
+    private var unit: WeightUnit { viewModel.unit }
+    
+    init() {
+        self._viewModel = StateObject(wrappedValue: RecordViewModel(
+            context: PersistenceController.shared.viewContext,
+            settingsManager: SettingsManager.shared
+        ))
+    }
 
     enum ViewMode: String, CaseIterable {
         case list = "home.history"
@@ -52,7 +59,7 @@ struct RecordView: View {
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showingAddSheet = true }) {
+                    Button(action: { isPresentingAddSheet = true }) {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
                             .foregroundColor(.primaryBlue)
@@ -61,14 +68,11 @@ struct RecordView: View {
             }
             .onChange(of: recordToEditData) { newValue in
                 if newValue != nil {
-                    showingEditSheet = true
+                    isPresentingEditSheet = true
                 }
             }
             .onAppear {
-                computeGroupedRecords()
-            }
-            .onChange(of: records.count) { _ in
-                computeGroupedRecords()
+                viewModel.refresh()
             }
         }
         .navigationViewStyle(.stack)
@@ -76,13 +80,13 @@ struct RecordView: View {
     
     private var linksView: some View {
         Group {
-            NavigationLink(isActive: $showingAddSheet) {
-                RecordFormView(isPresented: $showingAddSheet)
+            NavigationLink(isActive: $isPresentingAddSheet) {
+                RecordFormView(isPresented: $isPresentingAddSheet)
             } label: { EmptyView() }
             
-            NavigationLink(isActive: $showingEditSheet) {
+            NavigationLink(isActive: $isPresentingEditSheet) {
                 if let data = recordToEditData {
-                    RecordFormView(recordData: data, isPresented: $showingEditSheet)
+                    RecordFormView(recordData: data, isPresented: $isPresentingEditSheet)
                         .id(data.id)
                 } else {
                     EmptyView()
@@ -104,21 +108,18 @@ struct RecordView: View {
 
     private var listView: some View {
         Group {
-            if records.isEmpty {
+            if viewModel.records.isEmpty {
                 EmptyStateView(
                     icon: "list.bullet.clipboard",
                     title: NSLocalizedString("home.no.records", comment: ""),
                     message: NSLocalizedString("home.start.record", comment: ""),
                     actionTitle: NSLocalizedString("record.add", comment: ""),
-                    action: { showingAddSheet = true }
+                    action: { isPresentingAddSheet = true }
                 )
             } else {
                 List {
-                    let sortedDates = groupedRecords.keys.sorted(by: >)
-                    
-                    ForEach(sortedDates, id: \.self) { date in
-                        let monthRecords = groupedRecords[date] ?? []
-                        Section(header: monthHeaderView(date)) {
+                    ForEach(viewModel.sortedGroupedRecords, id: \.0) { date, monthRecords in
+                        Section(header: monthHeaderView(date, count: monthRecords.count)) {
                             ForEach(monthRecords, id: \.record.objectID) { item in
                                 RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
                                     .listRowInsets(EdgeInsets())
@@ -161,7 +162,7 @@ struct RecordView: View {
         ScrollView {
             VStack(spacing: 20) {
                 CalendarView(
-                    records: Array(records),
+                    records: viewModel.records,
                     unit: unit,
                     selectedDate: $selectedDate,
                     onDateSelected: { _ in }
@@ -181,12 +182,8 @@ struct RecordView: View {
                 .font(.headline)
                 .foregroundColor(.primaryText)
 
-            let dayRecordsArray = Array(records.filter { Calendar.current.isDate($0.date, inSameDayAs: date) })
-            let dayRecordsWithChange = dayRecordsArray.enumerated().map { index, record in
-                let weightChange = index < dayRecordsArray.count - 1 ?
-                    record.weight - dayRecordsArray[index + 1].weight : nil
-                return (record: record, weightChange: weightChange)
-            }
+            let dayRecordsArray = viewModel.records.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
+            let dayRecordsWithChange = dayRecordsArray.computeWeightChanges()
 
             if dayRecordsWithChange.isEmpty {
                 Text(NSLocalizedString("home.no.records", comment: ""))
@@ -224,29 +221,7 @@ struct RecordView: View {
         }
     }
 
-    private var groupedRecords: [Date: [(record: WeightRecord, weightChange: Double?)]] {
-        cachedGroupedRecords
-    }
-    
-    private func computeGroupedRecords() {
-        let rawRecords = Array(records)
-        let rawGrouped = Dictionary(grouping: rawRecords) { record in
-            let calendar = Calendar.current
-            let components = calendar.dateComponents([.year, .month], from: record.date)
-            return calendar.date(from: components) ?? record.date
-        }
-        
-        cachedGroupedRecords = rawGrouped.mapValues { monthRecords in
-            monthRecords.enumerated().map { index, record in
-                let globalIndex = rawRecords.firstIndex(where: { $0.objectID == record.objectID }) ?? index
-                let weightChange = globalIndex < rawRecords.count - 1 ?
-                    record.weight - rawRecords[globalIndex + 1].weight : nil
-                return (record: record, weightChange: weightChange)
-            }
-        }
-    }
-
-    private func monthHeaderView(_ date: Date) -> some View {
+    private func monthHeaderView(_ date: Date, count: Int) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "calendar")
                 .font(.caption)
@@ -259,7 +234,6 @@ struct RecordView: View {
             
             Spacer()
             
-            let count = groupedRecords[date]?.count ?? 0
             Text("\(count) 条记录")
                 .font(.caption)
                 .foregroundColor(.secondaryText)
@@ -279,7 +253,8 @@ struct RecordView: View {
             try? context.save()
         }
         
-        // 同步删除到云数据库
+        viewModel.refresh()
+        
         Task {
             await DataSyncManager.shared.syncDeletedRecords(recordIds: [recordId])
         }
