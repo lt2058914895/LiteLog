@@ -11,7 +11,7 @@ struct BodyFatView: View {
     @State private var recordToEditData: RecordFormData?
     @State private var showingEditSheet = false
     @State private var cachedChartData: [(Date, Double)] = []
-    @State private var cachedGroupedRecords: [Date: [WeightRecord]] = [:]
+    @State private var cachedGroupedRecords: [Date: [(record: WeightRecord, weightChange: Double?)]] = [:]
 
     private var unit: WeightUnit { settingsManager.weightUnit }
 
@@ -23,7 +23,7 @@ struct BodyFatView: View {
         records.filter { $0.bodyFatPercentageValue != nil }
     }
 
-    private var groupedRecords: [Date: [WeightRecord]] {
+    private var groupedRecords: [Date: [(record: WeightRecord, weightChange: Double?)]] {
         cachedGroupedRecords
     }
     
@@ -42,9 +42,17 @@ struct BodyFatView: View {
         }
         .sorted { $0.0 < $1.0 }
         
-        cachedGroupedRecords = Dictionary(grouping: bodyFatRecords) { record in
+        let rawGrouped = Dictionary(grouping: bodyFatRecords) { record in
             let components = Calendar.current.dateComponents([.year, .month], from: record.date)
             return Calendar.current.date(from: components) ?? record.date
+        }
+        
+        cachedGroupedRecords = rawGrouped.mapValues { records in
+            records.enumerated().map { index, record in
+                let weightChange = index < records.count - 1 ?
+                    record.weight - records[index + 1].weight : nil
+                return (record: record, weightChange: weightChange)
+            }
         }
     }
 
@@ -121,39 +129,63 @@ struct BodyFatView: View {
                     action: { showingAddSheet = true }
                 )
             } else {
-                LazyVStack(spacing: 8) {
-                    ForEach(groupedRecords.keys.sorted(by: >), id: \.self) { date in
+                LazyVStack(spacing: 12) {
+                    let sortedDates = groupedRecords.keys.sorted(by: >)
+                    
+                    ForEach(sortedDates, id: \.self) { date in
+                        let monthRecords = groupedRecords[date] ?? []
                         Section {
-                            ForEach(groupedRecords[date] ?? [], id: \.objectID) { record in
-                                RecordRowView(record: record, unit: unit)
+                            ForEach(monthRecords, id: \.record.objectID) { item in
+                                RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
                                         recordToEditData = RecordFormData(
-                                            id: record.id.uuidString,
-                                            date: record.date,
-                                            weightString: unit.convertFromKg(record.weight).smartFormatted,
-                                            bodyFatString: record.bodyFatPercentageValue?.smartFormatted ?? "",
-                                            waistString: record.waistCircumferenceValue?.smartFormatted ?? "",
-                                            hipString: record.hipCircumferenceValue?.smartFormatted ?? "",
-                                            chestString: record.chestCircumferenceValue?.smartFormatted ?? "",
-                                            thighString: record.thighCircumferenceValue?.smartFormatted ?? "",
-                                            note: record.note ?? "",
-                                            imageUrl: record.imageUrl,
-                                            measurementTimePeriod: record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random
+                                            id: item.record.id.uuidString,
+                                            date: item.record.date,
+                                            weightString: unit.convertFromKg(item.record.weight).smartFormatted,
+                                            bodyFatString: item.record.bodyFatPercentageValue?.smartFormatted ?? "",
+                                            waistString: item.record.waistCircumferenceValue?.smartFormatted ?? "",
+                                            hipString: item.record.hipCircumferenceValue?.smartFormatted ?? "",
+                                            chestString: item.record.chestCircumferenceValue?.smartFormatted ?? "",
+                                            thighString: item.record.thighCircumferenceValue?.smartFormatted ?? "",
+                                            note: item.record.note ?? "",
+                                            imageUrl: item.record.imageUrl,
+                                            measurementTimePeriod: item.record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random
                                         )
                                     }
                             }
                         } header: {
-                            Text(date.monthYearString)
-                                .font(.subheadline)
-                                .foregroundColor(.secondaryText)
-                                .padding(.top, 16)
-                                .padding(.bottom, 8)
+                            monthHeaderView(date, count: monthRecords.count)
                         }
                     }
                 }
             }
         }
+    }
+
+    private func monthHeaderView(_ date: Date, count: Int) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "calendar")
+                .font(.caption)
+                .foregroundColor(.primaryBlue)
+            
+            Text(date.monthYearString)
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.primaryText)
+            
+            Spacer()
+            
+            Text("\(count) 条记录")
+                .font(.caption)
+                .foregroundColor(.secondaryText)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .background(Color.primaryBlue.opacity(0.1))
+                .cornerRadius(4)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
     }
 }
 
