@@ -262,21 +262,45 @@ struct RecordView: View {
     
     @ViewBuilder
     private var avatarImageView: some View {
-        if let avatarUrl = URL(string: settingsManager.avatarUrl), !settingsManager.avatarUrl.isEmpty {
-            AsyncImageView(
-                url: avatarUrl,
-                placeholder: { AnyView(Image(systemName: "person.circle.fill").resizable().foregroundColor(.primaryBlue)) },
-                errorPlaceholder: { AnyView(Image(systemName: "person.circle.fill").resizable().foregroundColor(.gray)) },
-                contentMode: .fill,
-                cacheKey: settingsManager.avatarUrl
-            )
-            .frame(width: 36, height: 36)
-            .clipShape(Circle())
+        if !settingsManager.avatarUrl.isEmpty {
+            if let cachedImage = settingsManager.cachedAvatarImage {
+                Image(uiImage: cachedImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 36, height: 36)
+                    .clipShape(Circle())
+            } else if let avatarUrl = resolveAvatarUrl() {
+                AsyncImageView(
+                    url: avatarUrl,
+                    placeholder: { AnyView(Image(systemName: "person.circle.fill").resizable().foregroundColor(.primaryBlue)) },
+                    errorPlaceholder: { AnyView(Image(systemName: "person.circle.fill").resizable().foregroundColor(.gray)) },
+                    contentMode: .fill,
+                    cacheKey: settingsManager.avatarUrl
+                )
+                .frame(width: 36, height: 36)
+                .clipShape(Circle())
+            } else {
+                Image(systemName: "person.circle.fill")
+                    .resizable()
+                    .frame(width: 36, height: 36)
+                    .foregroundColor(.gray)
+            }
         } else {
             Image(systemName: "person.circle.fill")
                 .resizable()
                 .frame(width: 36, height: 36)
                 .foregroundColor(.gray)
         }
+    }
+    
+    private func resolveAvatarUrl() -> URL? {
+        let avatarUrlString = settingsManager.avatarUrl
+        guard !avatarUrlString.isEmpty else { return nil }
+        
+        if let url = URL(string: avatarUrlString), url.scheme != nil {
+            return url
+        }
+        
+        return APIService.shared.baseURL.appendingPathComponent(avatarUrlString)
     }
 }

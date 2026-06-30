@@ -118,8 +118,15 @@ struct UserInfoEditorView: View {
         }
         
         Task {
-            if let url = URL(string: avatarUrl), let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
-                settingsManager.updateCachedAvatar(with: image)
+            if let url = URL(string: avatarUrl) {
+                do {
+                    let (data, _) = try await URLSession.shared.data(from: url)
+                    if let image = UIImage(data: data) {
+                        settingsManager.updateCachedAvatar(with: image)
+                    }
+                } catch {
+                    print("DEBUG: Failed to load avatar: \(error)")
+                }
             }
         }
     }
