@@ -198,8 +198,9 @@
 "settings.notification" = "提醒通知";
 "settings.notification.desc" = "每日提醒记录体重";
 "settings.notification.time" = "提醒时间";
-"settings.export" = "数据";
+"settings.export" = "导出数据";
 "settings.export.csv" = "导出CSV";
+"settings.export.json" = "导出JSON";
 "settings.export.error" = "导出失败，请确保有记录后再试";
 "settings.delete.all" = "删除全部数据";
 "settings.delete.confirm" = "确定要删除所有数据吗？此操作不可撤销。";

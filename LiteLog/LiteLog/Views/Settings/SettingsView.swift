@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var showingUserInfoEditor = false
     @State private var showingExportSheet = false
     @State private var showingDeleteAlert = false
+    @State private var showExportFormatPicker = false
     @State private var exportURL: IdentifiableURL?
     @State private var showingExportError = false
     @State private var notificationTime = SettingsManager.defaultNotificationTime()
@@ -303,12 +304,22 @@ struct SettingsView: View {
 
     private var dataSection: some View {
         Section {
-            Button(action: exportData) {
+            Menu {
+                Button(action: { exportData(format: .csv) }) {
+                    Label(NSLocalizedString("settings.export.csv", comment: ""), systemImage: "filetype.csv")
+                }
+                Button(action: { exportData(format: .json) }) {
+                    Label(NSLocalizedString("settings.export.json", comment: ""), systemImage: "filetype.json")
+                }
+            } label: {
                 HStack {
                     Image(systemName: "square.and.arrow.up.fill")
                         .foregroundColor(.primaryBlue)
-                    Text(NSLocalizedString("settings.export.csv", comment: ""))
+                    Text(NSLocalizedString("settings.export", comment: ""))
                         .foregroundColor(.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondaryText)
                 }
             }
 
@@ -402,13 +413,13 @@ struct SettingsView: View {
         }
     }
 
-    private func exportData() {
+    private func exportData(format: ExportManager.ExportFormat) {
         guard !records.isEmpty else {
             showingExportError = true
             return
         }
         
-        if let url = ExportManager.shared.exportToCSV(records: Array(records), unit: unit) {
+        if let url = ExportManager.shared.export(records: Array(records), unit: unit, format: format) {
             exportURL = IdentifiableURL(url)
         } else {
             showingExportError = true

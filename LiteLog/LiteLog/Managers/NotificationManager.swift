@@ -1,11 +1,13 @@
 import Foundation
 import UserNotifications
 import Combine
+import CoreData
 
 final class NotificationManager: ObservableObject {
     static let shared = NotificationManager()
 
     @Published var isAuthorized = false
+    @Published var streakDays: Int = 0
 
     private init() {}
 
@@ -70,5 +72,137 @@ final class NotificationManager: ObservableObject {
         )
 
         try await center.add(request)
+    }
+
+    func scheduleWeightLossCelebrationNotification(lossAmount: Double, currentWeight: Double) async throws {
+        let center = UNUserNotificationCenter.current()
+
+        let content = UNMutableNotificationContent()
+        content.title = NSLocalizedString("notification.weight.loss.title", comment: "")
+        content.body = String(format: NSLocalizedString("notification.weight.loss.body", comment: ""), lossAmount, currentWeight)
+        content.sound = .default
+        content.categoryIdentifier = "celebration"
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+
+        let request = UNNotificationRequest(
+            identifier: "weight_loss_celebration_\(Date().timeIntervalSince1970)",
+            content: content,
+            trigger: trigger
+        )
+
+        try await center.add(request)
+    }
+
+    func scheduleMilestoneNotification(milestone: String) async throws {
+        let center = UNUserNotificationCenter.current()
+
+        let content = UNMutableNotificationContent()
+        content.title = NSLocalizedString("notification.milestone.title", comment: "")
+        content.body = String(format: NSLocalizedString("notification.milestone.body", comment: ""), milestone)
+        content.sound = .default
+        content.categoryIdentifier = "milestone"
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+
+        let request = UNNotificationRequest(
+            identifier: "milestone_\(milestone.lowercased())_\(Date().timeIntervalSince1970)",
+            content: content,
+            trigger: trigger
+        )
+
+        try await center.add(request)
+    }
+
+    func calculateStreakDays(context: NSManagedObjectContext) -> Int {
+        let request = WeightRecord.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]
+        request.fetchLimit = 30
+
+        do {
+            let records = try context.fetch(request)
+            
+            var streak = 0
+            let calendar = Calendar.current
+            var currentDate = Date()
+            
+            for record in records {
+                let daysBetween = calendar.dateComponents([.day], from: record.date, to: currentDate).day ?? 0
+                
+                if daysBetween == 1 {
+                    streak += 1
+                    currentDate = record.date
+                } else if daysBetween == 0 {
+                    currentDate = record.date
+                } else {
+                    break
+                }
+            }
+            
+            if !records.isEmpty {
+                streak += 1
+            }
+            
+            DispatchQueue.main.async {
+                self.streakDays = streak
+            }
+            
+            return streak
+        } catch {
+            print("Error calculating streak: \(error)")
+            return 0
+        }
+    }
+
+    func scheduleStreakNotification(streak: Int) async throws {
+        let center = UNUserNotificationCenter.current()
+
+        let content = UNMutableNotificationContent()
+        content.title = NSLocalizedString("notification.streak.title", comment: "")
+        content.body = String(format: NSLocalizedString("notification.streak.body", comment: ""), streak)
+        content.sound = .default
+        content.categoryIdentifier = "streak"
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+
+        let request = UNNotificationRequest(
+            identifier: "streak_\(streak)_\(Date().timeIntervalSince1970)",
+            content: content,
+            trigger: trigger
+        )
+
+        try await center.add(request)
+    }
+
+    func suggestOptimalReminderTime(context: NSManagedObjectContext) -> Date? {
+        let request = WeightRecord.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]
+        request.fetchLimit = 20
+
+        do {
+            let records = try context.fetch(request)
+            
+            if records.isEmpty {
+                let calendar = Calendar.current
+                return calendar.date(bySettingHour: 9, minute: 0, second: 0, of: Date())
+            }
+
+            var hourCounts: [Int: Int] = [:]
+            let calendar = Calendar.current
+
+            for record in records {
+                let hour = calendar.component(.hour, from: record.date)
+                hourCounts[hour, default: 0] += 1
+            }
+
+            if let mostFrequentHour = hourCounts.max(by: { $0.value < $1.value })?.key {
+                return calendar.date(bySettingHour: mostFrequentHour, minute: 0, second: 0, of: Date())
+            }
+
+            return nil
+        } catch {
+            print("Error suggesting reminder time: \(error)")
+            return nil
+        }
     }
 }

@@ -6,6 +6,11 @@ final class ExportManager {
 
     private init() {}
 
+    enum ExportFormat {
+        case csv
+        case json
+    }
+
     func exportToCSV(records: [WeightRecord], unit: WeightUnit) -> URL? {
         var csvContent = "Date,Weight (\(unit.shortName)),Body Fat (%),Note\n"
 
@@ -73,5 +78,55 @@ final class ExportManager {
         }
 
         return summary
+    }
+
+    func exportToJSON(records: [WeightRecord], unit: WeightUnit) -> URL? {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+
+        let exportData = records.sorted(by: { $0.date > $1.date }).map { record in
+            [
+                "id": record.id.uuidString,
+                "date": dateFormatter.string(from: record.date),
+                "weight": String(format: "%.1f", unit.convertFromKg(record.weight)),
+                "weightUnit": unit.shortName,
+                "bodyFatPercentage": record.bodyFatPercentageValue != nil ? String(format: "%.1f", record.bodyFatPercentageValue!) : nil,
+                "waistCircumference": record.waistCircumferenceValue != nil ? String(format: "%.1f", record.waistCircumferenceValue!) : nil,
+                "hipCircumference": record.hipCircumferenceValue != nil ? String(format: "%.1f", record.hipCircumferenceValue!) : nil,
+                "chestCircumference": record.chestCircumferenceValue != nil ? String(format: "%.1f", record.chestCircumferenceValue!) : nil,
+                "thighCircumference": record.thighCircumferenceValue != nil ? String(format: "%.1f", record.thighCircumferenceValue!) : nil,
+                "note": record.note,
+                "measurementTimePeriod": record.measurementTimePeriod
+            ] as [String: Any?]
+        }
+
+        let jsonObject: [String: Any] = [
+            "exportDate": dateFormatter.string(from: Date()),
+            "totalRecords": records.count,
+            "unit": unit.shortName,
+            "records": exportData
+        ]
+
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: jsonObject, options: .prettyPrinted)
+            
+            let fileName = "LiteLog_Export_\(dateFormatter.string(from: Date())).json"
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+            
+            try jsonData.write(to: tempURL, options: .atomic)
+            return tempURL
+        } catch {
+            print("Error writing JSON: \(error)")
+            return nil
+        }
+    }
+
+    func export(records: [WeightRecord], unit: WeightUnit, format: ExportFormat) -> URL? {
+        switch format {
+        case .csv:
+            return exportToCSV(records: records, unit: unit)
+        case .json:
+            return exportToJSON(records: records, unit: unit)
+        }
     }
 }
