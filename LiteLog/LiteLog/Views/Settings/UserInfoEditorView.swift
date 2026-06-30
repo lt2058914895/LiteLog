@@ -46,6 +46,7 @@ struct UserInfoEditorView: View {
                 imagePicker
             }
             .errorAlert(manager: errorAlertManager)
+            .loadingOverlay(isLoading: isLoading, message: NSLocalizedString("profile.saving", comment: ""))
     }
     
     private var backButton: some View {
@@ -159,22 +160,17 @@ struct UserInfoEditorView: View {
                 await saveProfile()
             }
         }) {
-            if isLoading {
-                ProgressView()
-                    .foregroundColor(.white)
-            } else {
-                Text(NSLocalizedString("action.save", comment: ""))
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-            }
+            Text(NSLocalizedString("action.save", comment: ""))
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
+                .background(nickname.isEmpty ? Color.gray : Color.primaryBlue)
+                .cornerRadius(12)
+                .shadow(color: nickname.isEmpty ? .clear : Color.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 4)
         }
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity)
-        .background(nickname.isEmpty || isLoading ? Color.gray : Color.primaryBlue)
-        .cornerRadius(12)
-        .shadow(color: (nickname.isEmpty || isLoading) ? .clear : Color.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 4)
-        .disabled(nickname.isEmpty || isLoading)
+        .disabled(nickname.isEmpty)
     }
     
     private var imagePicker: some View {

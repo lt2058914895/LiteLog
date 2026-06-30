@@ -6,16 +6,36 @@ public struct UpdateProfileResponse: Sendable {
     public let message: String?
     public let nickname: String?
     public let avatarUrl: String?
+    public let height: Double?
+    public let gender: Int?
+    public let age: Int?
+    public let goalWeight: Double?
+    public let goalBodyFat: Double?
+    public let goalWaistCircumference: Double?
+    public let goalHipCircumference: Double?
+    public let goalChestCircumference: Double?
+    public let goalThighCircumference: Double?
+    public let weightUnit: String?
     
-    public init(success: Bool, message: String?, nickname: String?, avatarUrl: String?) {
+    public init(success: Bool, message: String?, nickname: String?, avatarUrl: String?, height: Double?, gender: Int?, age: Int?, goalWeight: Double?, goalBodyFat: Double?, goalWaistCircumference: Double?, goalHipCircumference: Double?, goalChestCircumference: Double?, goalThighCircumference: Double?, weightUnit: String?) {
         self.success = success
         self.message = message
         self.nickname = nickname
         self.avatarUrl = avatarUrl
+        self.height = height
+        self.gender = gender
+        self.age = age
+        self.goalWeight = goalWeight
+        self.goalBodyFat = goalBodyFat
+        self.goalWaistCircumference = goalWaistCircumference
+        self.goalHipCircumference = goalHipCircumference
+        self.goalChestCircumference = goalChestCircumference
+        self.goalThighCircumference = goalThighCircumference
+        self.weightUnit = weightUnit
     }
     
     private enum CodingKeys: String, CodingKey {
-        case success, message, nickname, avatarUrl
+        case success, message, nickname, avatarUrl, height, gender, age, goalWeight, goalBodyFat, goalWaistCircumference, goalHipCircumference, goalChestCircumference, goalThighCircumference, weightUnit
     }
 }
 
@@ -27,6 +47,16 @@ extension UpdateProfileResponse: Decodable {
         message = try container.decodeIfPresent(String.self, forKey: .message)
         nickname = try container.decodeIfPresent(String.self, forKey: .nickname)
         avatarUrl = try container.decodeIfPresent(String.self, forKey: .avatarUrl)
+        height = try container.decodeIfPresent(Double.self, forKey: .height)
+        gender = try container.decodeIfPresent(Int.self, forKey: .gender)
+        age = try container.decodeIfPresent(Int.self, forKey: .age)
+        goalWeight = try container.decodeIfPresent(Double.self, forKey: .goalWeight)
+        goalBodyFat = try container.decodeIfPresent(Double.self, forKey: .goalBodyFat)
+        goalWaistCircumference = try container.decodeIfPresent(Double.self, forKey: .goalWaistCircumference)
+        goalHipCircumference = try container.decodeIfPresent(Double.self, forKey: .goalHipCircumference)
+        goalChestCircumference = try container.decodeIfPresent(Double.self, forKey: .goalChestCircumference)
+        goalThighCircumference = try container.decodeIfPresent(Double.self, forKey: .goalThighCircumference)
+        weightUnit = try container.decodeIfPresent(String.self, forKey: .weightUnit)
     }
 }
 
@@ -38,6 +68,16 @@ extension UpdateProfileResponse: Encodable {
         try container.encodeIfPresent(message, forKey: .message)
         try container.encodeIfPresent(nickname, forKey: .nickname)
         try container.encodeIfPresent(avatarUrl, forKey: .avatarUrl)
+        try container.encodeIfPresent(height, forKey: .height)
+        try container.encodeIfPresent(gender, forKey: .gender)
+        try container.encodeIfPresent(age, forKey: .age)
+        try container.encodeIfPresent(goalWeight, forKey: .goalWeight)
+        try container.encodeIfPresent(goalBodyFat, forKey: .goalBodyFat)
+        try container.encodeIfPresent(goalWaistCircumference, forKey: .goalWaistCircumference)
+        try container.encodeIfPresent(goalHipCircumference, forKey: .goalHipCircumference)
+        try container.encodeIfPresent(goalChestCircumference, forKey: .goalChestCircumference)
+        try container.encodeIfPresent(goalThighCircumference, forKey: .goalThighCircumference)
+        try container.encodeIfPresent(weightUnit, forKey: .weightUnit)
     }
 }
 
@@ -266,5 +306,37 @@ extension WeightRecordSyncResponse: Encodable {
         try container.encodeIfPresent(message, forKey: .message)
         try container.encode(syncedCount, forKey: .syncedCount)
         try container.encodeIfPresent(syncedRecordIds, forKey: .syncedRecordIds)
+    }
+}
+
+public struct ErrorResponse: Sendable {
+    public let status: Int?
+    public let error: String?
+    public let message: String?
+    public let path: String?
+    public let timestamp: String?
+    
+    public init(status: Int?, error: String?, message: String?, path: String?, timestamp: String?) {
+        self.status = status
+        self.error = error
+        self.message = message
+        self.path = path
+        self.timestamp = timestamp
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case status, error, message, path, timestamp
+    }
+}
+
+extension ErrorResponse: Decodable {
+    nonisolated
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        status = try container.decodeIfPresent(Int.self, forKey: .status)
+        error = try container.decodeIfPresent(String.self, forKey: .error)
+        message = try container.decodeIfPresent(String.self, forKey: .message)
+        path = try container.decodeIfPresent(String.self, forKey: .path)
+        timestamp = try container.decodeIfPresent(String.self, forKey: .timestamp)
     }
 }

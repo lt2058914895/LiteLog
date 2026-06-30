@@ -5,19 +5,20 @@ class APIService {
     static let shared = APIService()
     
     #if DEBUG
-    private let baseURL = URL(string: "http://localhost:8080")!
+    private let baseURL = URL(string: "http://10.226.220.119:8080")!
     #else
     private let baseURL = URL(string: "https://litelog.com.cn")!
     #endif
     
     private init() {}
     
-    private var session: Session {
+    private let session: Session = {
         let configuration = URLSessionConfiguration.af.default
-        configuration.timeoutIntervalForRequest = 30
-        configuration.timeoutIntervalForResource = 60
+        configuration.timeoutIntervalForRequest = 5
+        configuration.timeoutIntervalForResource = 8
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         return Session(configuration: configuration)
-    }
+    }()
     
     func submitFeedback(_ feedback: UserFeedback) async throws {
         let endpoint = baseURL.appendingPathComponent("feedback/submit")
@@ -60,7 +61,7 @@ class APIService {
         let endpoint = baseURL.appendingPathComponent("user/avatar/upload")
 
         return try await withCheckedThrowingContinuation { continuation in
-            AF.upload(multipartFormData: { multipartFormData in
+            session.upload(multipartFormData: { multipartFormData in
                 if let imageData = image.jpegData(compressionQuality: 0.8) {
                     multipartFormData.append(imageData, withName: "file", fileName: "avatar.jpg", mimeType: "image/jpeg")
                 }
@@ -95,27 +96,47 @@ class APIService {
         }
         
         return try await withCheckedThrowingContinuation { continuation in
-            print("DEBUG: Sending updateProfile request to \(endpoint) with parameters: \(parameters)")
+            print("DEBUG: updateProfile - URL: \(endpoint)")
+            print("DEBUG: updateProfile - Parameters: \(parameters)")
+            
             session.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default)
-            .responseData { response in
-                switch response.result {
-                case .success(let data):
-                    if let responseString = String(data: data, encoding: .utf8) {
-                        print("DEBUG: Response data: \(responseString)")
+                .validate(statusCode: 200..<300)
+                .responseData { response in
+                    print("DEBUG: updateProfile - Response status code: \(response.response?.statusCode ?? -1)")
+                    print("DEBUG: updateProfile - Response headers: \(response.response?.headers ?? HTTPHeaders())")
+                    
+                    switch response.result {
+                    case .success(let data):
+                        if let responseString = String(data: data, encoding: .utf8) {
+                            print("DEBUG: updateProfile - Response data: \(responseString)")
+                        }
+                        do {
+                            let decoder = JSONDecoder()
+                            let profileResponse = try decoder.decode(UpdateProfileResponse.self, from: data)
+                            continuation.resume(returning: profileResponse)
+                        } catch {
+                            print("DEBUG: updateProfile - Decoding error: \(error)")
+                            continuation.resume(throwing: APIError.decodingError)
+                        }
+                    case .failure(let error):
+                        print("DEBUG: updateProfile - API Error: \(error)")
+                        
+                        if let data = response.data, let responseString = String(data: data, encoding: .utf8) {
+                            print("DEBUG: updateProfile - Error response data: \(responseString)")
+                            
+                            do {
+                                let decoder = JSONDecoder()
+                                let errorResponse = try decoder.decode(ErrorResponse.self, from: data)
+                                continuation.resume(throwing: APIError.serverErrorWithCode(errorResponse.status ?? -1, errorResponse.message ?? "未知错误"))
+                            } catch {
+                                print("DEBUG: updateProfile - Failed to decode ErrorResponse: \(error)")
+                                continuation.resume(throwing: APIError.serverError(responseString))
+                            }
+                        } else {
+                            continuation.resume(throwing: APIError.serverError("网络请求失败，请检查网络连接"))
+                        }
                     }
-                    do {
-                        let decoder = JSONDecoder()
-                        let profileResponse = try decoder.decode(UpdateProfileResponse.self, from: data)
-                        continuation.resume(returning: profileResponse)
-                    } catch {
-                        print("DEBUG: Decoding error: \(error)")
-                        continuation.resume(throwing: APIError.decodingError)
-                    }
-                case .failure(let error):
-                    print("DEBUG: API Error: \(error)")
-                    continuation.resume(throwing: APIError.invalidResponse)
                 }
-            }
         }
     }
     
@@ -131,7 +152,7 @@ class APIService {
         ]
         
         return try await withCheckedThrowingContinuation { continuation in
-            AF.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default)
+            session.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default)
                 .validate(statusCode: 200..<300)
             .responseData { response in
                 switch response.result {
@@ -207,7 +228,7 @@ class APIService {
         ]
         
         return try await withCheckedThrowingContinuation { continuation in
-            AF.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
+            session.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
                 .validate(statusCode: 200..<300)
             .responseData { response in
                 switch response.result {
@@ -240,7 +261,7 @@ class APIService {
                 return
             }
             
-            AF.upload(multipartFormData: { multipartFormData in
+            session.upload(multipartFormData: { multipartFormData in
                 if let jsonData = recordsJson.data(using: .utf8) {
                     multipartFormData.append(jsonData, withName: "records")
                 }

@@ -137,19 +137,10 @@ struct FeedbackView: View {
 
                         // 提交按钮
                         Button(action: submitFeedback) {
-                            if isSubmitting {
-                                HStack(spacing: 8) {
-                                    ProgressView()
-                                        .progressViewStyle(.circular)
-                                        .tint(.white)
-                                    Text(NSLocalizedString("action.submitting", comment: ""))
-                                }
-                            } else {
-                                Text(NSLocalizedString("action.submit", comment: ""))
-                            }
+                            Text(NSLocalizedString("action.submit", comment: ""))
                         }
                         .primaryButtonStyle()
-                        .disabled(message.trimmingCharacters(in: .whitespaces).isEmpty || isSubmitting)
+                        .disabled(message.trimmingCharacters(in: .whitespaces).isEmpty)
 
                         // 隐私提示
                         Text(NSLocalizedString("feedback.privacy.note", comment: ""))
@@ -188,6 +179,7 @@ struct FeedbackView: View {
             .onTapGesture {
                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             }
+            .loadingOverlay(isLoading: isSubmitting, message: NSLocalizedString("action.submitting", comment: ""))
     }
 
     private func submitFeedback() {

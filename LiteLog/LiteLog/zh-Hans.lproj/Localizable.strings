@@ -317,6 +317,7 @@
 "profile.edit.nickname.placeholder" = "请输入昵称";
 "profile.logout.confirm" = "确定要退出登录吗？";
 "action.logout" = "退出登录";
+"profile.saving" = "保存中...";
 
 // API错误码相关
 "error.invalid_response" = "无效的响应";
