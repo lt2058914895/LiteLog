@@ -17,6 +17,9 @@ struct RecordView: View {
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { viewModel.unit }
+    private var displayName: String {
+        !settingsManager.nickname.isEmpty ? settingsManager.nickname : NSLocalizedString("tab.record", comment: "")
+    }
     
     init() {
         self._viewModel = StateObject(wrappedValue: RecordViewModel(
@@ -53,7 +56,7 @@ struct RecordView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     HStack(spacing: 12) {
                         avatarImageView
-                        Text(NSLocalizedString("tab.record", comment: ""))
+                        Text(displayName)
                             .font(.headline)
                             .foregroundColor(.primary)
                     }

@@ -30,6 +30,9 @@ struct HomeView: View {
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
+    private var displayName: String {
+        !settingsManager.nickname.isEmpty ? settingsManager.nickname : NSLocalizedString("tab.home", comment: "")
+    }
     
     private func computeCachedData() {
         latestWeight = records.first?.weight
@@ -81,7 +84,7 @@ struct HomeView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     HStack(spacing: 12) {
                         avatarImageView
-                        Text(NSLocalizedString("tab.home", comment: ""))
+                        Text(displayName)
                             .font(.headline)
                             .foregroundColor(.primary)
                     }
