@@ -28,6 +28,14 @@ struct RecordRowView: View, Equatable {
     
     static func == (lhs: RecordRowView, rhs: RecordRowView) -> Bool {
         lhs.record.objectID == rhs.record.objectID &&
+        lhs.record.weight == rhs.record.weight &&
+        lhs.record.bodyFatPercentage == rhs.record.bodyFatPercentage &&
+        lhs.record.waistCircumference == rhs.record.waistCircumference &&
+        lhs.record.hipCircumference == rhs.record.hipCircumference &&
+        lhs.record.chestCircumference == rhs.record.chestCircumference &&
+        lhs.record.thighCircumference == rhs.record.thighCircumference &&
+        lhs.record.date == rhs.record.date &&
+        lhs.record.note == rhs.record.note &&
         lhs.unit == rhs.unit &&
         lhs.showDate == rhs.showDate &&
         lhs.weightChange == rhs.weightChange

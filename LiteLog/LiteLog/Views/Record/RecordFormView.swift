@@ -56,6 +56,7 @@ struct RecordFormView: View {
 
     let recordData: RecordFormData?
     @Binding var isPresented: Bool
+    var onSave: (() -> Void)?
 
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var records: FetchedResults<WeightRecord>
 
@@ -122,9 +123,10 @@ struct RecordFormView: View {
         !bodyFatString.isEmpty || !waistString.isEmpty || !hipString.isEmpty || !chestString.isEmpty || !thighString.isEmpty
     }
 
-    init(recordData: RecordFormData? = nil, isPresented: Binding<Bool>) {
+    init(recordData: RecordFormData? = nil, isPresented: Binding<Bool>, onSave: (() -> Void)? = nil) {
         self.recordData = recordData
         self._isPresented = isPresented
+        self.onSave = onSave
         
         if let recordData = recordData {
             self._date = State(initialValue: recordData.date)
@@ -542,6 +544,7 @@ struct RecordFormView: View {
         }
 
         DataSyncManager.shared.triggerWeightRecordSync(context: context)
+        onSave?()
         dismiss()
     }
 
@@ -581,6 +584,7 @@ struct RecordFormView: View {
         }
 
         DataSyncManager.shared.triggerWeightRecordSync(context: context)
+        onSave?()
         dismiss()
     }
     

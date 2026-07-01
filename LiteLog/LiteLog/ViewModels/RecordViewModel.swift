@@ -3,41 +3,41 @@ import CoreData
 import SwiftUI
 import Combine
 
-class RecordViewModel: ObservableObject {
+class RecordViewModel: NSObject, ObservableObject, NSFetchedResultsControllerDelegate {
     private let context: NSManagedObjectContext
     private let settingsManager: SettingsManager
     
     @Published var records: [WeightRecord] = []
     @Published var groupedRecords: [Date: [WeightChangeRecord]] = [:]
     
+    private var fetchedResultsController: NSFetchedResultsController<WeightRecord>?
+    
     var unit: WeightUnit { settingsManager.weightUnit }
     
     init(context: NSManagedObjectContext, settingsManager: SettingsManager) {
         self.context = context
         self.settingsManager = settingsManager
-        loadRecords()
+        super.init()
+        setupFetchedResultsController()
     }
     
-    func loadRecords() {
+    private func setupFetchedResultsController() {
         let request = WeightRecord.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]
         request.fetchBatchSize = 20
-        request.propertiesToFetch = [
-            #keyPath(WeightRecord.date),
-            #keyPath(WeightRecord.weight),
-            #keyPath(WeightRecord.bodyFatPercentage),
-            #keyPath(WeightRecord.waistCircumference),
-            #keyPath(WeightRecord.hipCircumference),
-            #keyPath(WeightRecord.chestCircumference),
-            #keyPath(WeightRecord.thighCircumference),
-            #keyPath(WeightRecord.note),
-            #keyPath(WeightRecord.imageUrl),
-            #keyPath(WeightRecord.measurementTimePeriod)
-        ]
-        request.returnsObjectsAsFaults = false
+        
+        fetchedResultsController = NSFetchedResultsController(
+            fetchRequest: request,
+            managedObjectContext: context,
+            sectionNameKeyPath: nil,
+            cacheName: nil
+        )
+        
+        fetchedResultsController?.delegate = self
         
         do {
-            records = try context.fetch(request)
+            try fetchedResultsController?.performFetch()
+            records = fetchedResultsController?.fetchedObjects ?? []
             updateGroupedRecords()
         } catch {
             print("Error fetching records: \(error)")
@@ -46,12 +46,30 @@ class RecordViewModel: ObservableObject {
         }
     }
     
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        print("FRC content changed, records count: \(controller.fetchedObjects?.count ?? 0)")
+        records = controller.fetchedObjects as? [WeightRecord] ?? []
+        updateGroupedRecords()
+    }
+    
     private func updateGroupedRecords() {
         groupedRecords = records.groupedByMonthWithWeightChanges()
     }
     
     func refresh() {
-        loadRecords()
+        context.refreshAllObjects()
+        do {
+            try fetchedResultsController?.performFetch()
+            records = fetchedResultsController?.fetchedObjects ?? []
+            updateGroupedRecords()
+        } catch {
+            print("Error refreshing records: \(error)")
+        }
+    }
+    
+    func forceRefresh() {
+        objectWillChange.send()
+        refresh()
     }
     
     var sortedGroupedRecords: [(Date, [WeightChangeRecord])] {

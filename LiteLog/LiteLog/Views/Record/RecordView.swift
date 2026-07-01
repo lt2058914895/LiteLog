@@ -74,6 +74,12 @@ struct RecordView: View {
                     isPresentingEditSheet = true
                 }
             }
+            .onChange(of: isPresentingEditSheet) { newValue in
+                if !newValue {
+                    recordToEditData = nil
+                    viewModel.forceRefresh()
+                }
+            }
             .onAppear {
                 viewModel.refresh()
             }
@@ -84,12 +90,17 @@ struct RecordView: View {
     private var linksView: some View {
         Group {
             NavigationLink(isActive: $isPresentingAddSheet) {
-                RecordFormView(isPresented: $isPresentingAddSheet)
+                RecordFormView(isPresented: $isPresentingAddSheet, onSave: {
+                    viewModel.forceRefresh()
+                })
             } label: { EmptyView() }
             
             NavigationLink(isActive: $isPresentingEditSheet) {
                 if let data = recordToEditData {
-                    RecordFormView(recordData: data, isPresented: $isPresentingEditSheet)
+                    RecordFormView(recordData: data, isPresented: $isPresentingEditSheet, onSave: {
+                        viewModel.forceRefresh()
+                        recordToEditData = nil
+                    })
                         .id(data.id)
                 } else {
                     EmptyView()
@@ -124,7 +135,8 @@ struct RecordView: View {
                     ForEach(viewModel.sortedGroupedRecords, id: \.0) { date, monthRecords in
                         Section(header: monthHeaderView(date, count: monthRecords.count)) {
                             ForEach(monthRecords, id: \.record.objectID) { item in
-                                EquatableView(content: RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange))
+                                RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
+                                    .id("\(item.record.objectID)-\(item.record.updatedAt.timeIntervalSince1970)")
                                     .listRowInsets(EdgeInsets())
                                     .listRowBackground(Color.clear)
                                     .listRowSeparator(.hidden)
@@ -196,7 +208,8 @@ struct RecordView: View {
                     .padding()
             } else {
                 ForEach(dayRecordsWithChange, id: \.record.objectID) { item in
-                    EquatableView(content: RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange))
+                    RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
+                        .id("\(item.record.objectID)-\(item.record.updatedAt.timeIntervalSince1970)")
                         .onTapGesture {
                             recordToEditData = RecordFormData(
                                 id: item.record.id.uuidString,
