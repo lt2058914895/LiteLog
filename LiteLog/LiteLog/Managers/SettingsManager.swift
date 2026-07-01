@@ -70,6 +70,40 @@ final class SettingsManager: ObservableObject {
     @Published var iCloudSyncEnabled: Bool {
         didSet {
             defaults.set(iCloudSyncEnabled, forKey: Keys.iCloudSyncEnabled)
+            if iCloudSyncEnabled && !oldValue {
+                Task { @MainActor in
+                    await handleCloudSyncEnabled()
+                }
+            }
+        }
+    }
+    
+    private func handleCloudSyncEnabled() async {
+        guard let context = context else { return }
+        
+        let maybeOldDeviceId = UserIdentifierManager.shared.checkForSyncedDeviceId()
+        if let oldDeviceId = maybeOldDeviceId,
+           oldDeviceId != UserIdentifierManager.shared.deviceId {
+            
+            do {
+                let response = try await APIService.shared.fetchAllData()
+                
+                if let syncContext = PersistenceController.shared.container.viewContext as? NSManagedObjectContext {
+                    if let profile = response.profile {
+                        try await DataSyncManager.shared.mergeProfileFromCloud(profile, context: syncContext)
+                    }
+                    if let records = response.records {
+                        try await DataSyncManager.shared.mergeRecordsFromCloud(records, context: syncContext)
+                    }
+                }
+                
+                UserIdentifierManager.shared.switchToDeviceId(oldDeviceId)
+                
+                await DataSyncManager.shared.syncLocalDataToCloud(context: context)
+                
+            } catch {
+                print("Failed to merge data from synced device: \(error)")
+            }
         }
     }
 
@@ -132,7 +166,7 @@ final class SettingsManager: ObservableObject {
         let savedHeightUnit = defaults.string(forKey: Keys.heightUnit) ?? HeightUnit.cm.rawValue
         self.heightUnit = HeightUnit(rawValue: savedHeightUnit) ?? .cm
 
-        self.iCloudSyncEnabled = defaults.bool(forKey: Keys.iCloudSyncEnabled)
+        self.iCloudSyncEnabled = defaults.bool(forKey: Keys.iCloudSyncEnabled) || defaults.object(forKey: Keys.iCloudSyncEnabled) == nil
         self.notificationsEnabled = defaults.bool(forKey: Keys.notificationsEnabled)
         self.notificationTime = defaults.object(forKey: Keys.notificationTime) as? Date ?? Self.defaultNotificationTime()
     }

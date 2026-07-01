@@ -20,6 +20,17 @@ class APIService {
         return Session(configuration: configuration)
     }()
     
+    private func defaultHeaders() -> HTTPHeaders {
+        let identifierHeaders = UserIdentifierManager.shared.getIdentifierHeader()
+        var headers: HTTPHeaders = [
+            "Content-Type": "application/json"
+        ]
+        for (key, value) in identifierHeaders {
+            headers.add(name: key, value: value)
+        }
+        return headers
+    }
+    
     func submitFeedback(_ feedback: UserFeedback) async throws {
         let endpoint = baseURL.appendingPathComponent("feedback/submit")
 
@@ -33,7 +44,7 @@ class APIService {
         
         return try await withCheckedThrowingContinuation { continuation in
             print("DEBUG: Sending request to \(endpoint)")
-            session.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
+            session.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: defaultHeaders())
                 .validate(statusCode: 200..<300)
                 .responseData { response in
                     switch response.result {
@@ -65,7 +76,7 @@ class APIService {
                 if let imageData = image.jpegData(compressionQuality: 0.8) {
                     multipartFormData.append(imageData, withName: "file", fileName: "avatar.jpg", mimeType: "image/jpeg")
                 }
-            }, to: endpoint)
+            }, to: endpoint, headers: defaultHeaders())
             .validate(statusCode: 200..<300)
             .responseData { response in
                 switch response.result {
@@ -99,7 +110,7 @@ class APIService {
             print("DEBUG: updateProfile - URL: \(endpoint)")
             print("DEBUG: updateProfile - Parameters: \(parameters)")
             
-            session.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default)
+            session.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default, headers: defaultHeaders())
                 .validate(statusCode: 200..<300)
                 .responseData { response in
                     print("DEBUG: updateProfile - Response status code: \(response.response?.statusCode ?? -1)")
@@ -152,7 +163,7 @@ class APIService {
         ]
         
         return try await withCheckedThrowingContinuation { continuation in
-            session.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default)
+            session.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default, headers: defaultHeaders())
                 .validate(statusCode: 200..<300)
             .responseData { response in
                 switch response.result {
@@ -228,7 +239,7 @@ class APIService {
         ]
         
         return try await withCheckedThrowingContinuation { continuation in
-            session.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default)
+            session.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: defaultHeaders())
                 .validate(statusCode: 200..<300)
             .responseData { response in
                 switch response.result {
@@ -272,7 +283,7 @@ class APIService {
                         multipartFormData.append(imageData, withName: "files", fileName: fileName, mimeType: "image/jpeg")
                     }
                 }
-            }, to: endpoint)
+            }, to: endpoint, headers: defaultHeaders())
             .validate(statusCode: 200..<300)
             .responseData { response in
                 switch response.result {
@@ -290,7 +301,31 @@ class APIService {
             }
         }
     }
-}
+    
+    func fetchAllData() async throws -> FetchAllDataResponse {
+        let endpoint = baseURL.appendingPathComponent("user/fetch-all-data")
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            session.request(endpoint, method: .get, headers: defaultHeaders())
+                .validate(statusCode: 200..<300)
+                .responseData { response in
+                    switch response.result {
+                    case .success(let data):
+                        do {
+                            let decoder = JSONDecoder()
+                            let fetchResponse = try decoder.decode(FetchAllDataResponse.self, from: data)
+                            continuation.resume(returning: fetchResponse)
+                        } catch {
+                            continuation.resume(throwing: APIError.decodingError)
+                        }
+                    case .failure(let error):
+                        continuation.resume(throwing: error)
+                    }
+                }
+        }
+    }
+    
+    }
 
 enum APIError: Error, LocalizedError, Equatable {
     case invalidResponse
@@ -329,5 +364,16 @@ enum APIError: Error, LocalizedError, Equatable {
         default:
             return NSLocalizedString("error.unknown", comment: "")
         }
+    }
+}
+
+public struct FetchAllDataResponse: Sendable, Decodable {
+    public let success: Bool
+    public let message: String?
+    public let profile: UpdateProfileResponse?
+    public let records: [WeightRecordRequest]?
+    
+    private enum CodingKeys: String, CodingKey {
+        case success, message, profile, records
     }
 }

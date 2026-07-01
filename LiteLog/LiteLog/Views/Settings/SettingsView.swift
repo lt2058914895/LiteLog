@@ -77,10 +77,10 @@ struct SettingsView: View {
             } label: { EmptyView() }
             
             NavigationLink(isActive: $showingContact) {
-                ContactView()
-            } label: { EmptyView() }
+                    ContactView()
+                } label: { EmptyView() }
+            }
         }
-    }
 
     private var userHeaderSection: some View {
             Section {

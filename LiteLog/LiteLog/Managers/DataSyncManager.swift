@@ -10,14 +10,153 @@ final class DataSyncManager {
     @MainActor
     func syncLocalDataToCloud(context: NSManagedObjectContext) async {
         do {
-            // 同步个人资料
             try await syncUserProfile(context: context)
-            
-            // 同步体重记录
             try await syncWeightRecords(context: context)
             
         } catch {
             print("数据同步失败: \(error)")
+        }
+    }
+    
+    @MainActor
+    func syncFromCloud(context: NSManagedObjectContext) async -> Bool {
+        do {
+            let response = try await APIService.shared.fetchAllData()
+            
+            if response.success, let profile = response.profile, let records = response.records {
+                try await mergeProfileFromCloud(profile, context: context)
+                try await mergeRecordsFromCloud(records, context: context)
+                print("从云端同步数据成功")
+                return true
+            } else {
+                print("从云端同步数据失败: \(response.message ?? "未知错误")")
+                return false
+            }
+        } catch {
+            print("从云端同步数据失败: \(error)")
+            return false
+        }
+    }
+    
+    @MainActor
+    func mergeProfileFromCloud(_ profile: UpdateProfileResponse, context: NSManagedObjectContext) async throws {
+        let request = UserProfile.fetchRequest()
+        let profiles = try context.fetch(request)
+        
+        let userProfile: UserProfile
+        if let existingProfile = profiles.first {
+            userProfile = existingProfile
+        } else {
+            userProfile = UserProfile.create(in: context)
+        }
+        
+        if let nickname = profile.nickname {
+            SettingsManager.shared.nickname = nickname
+        }
+        if let avatarUrl = profile.avatarUrl {
+            SettingsManager.shared.avatarUrl = avatarUrl
+        }
+        
+        if let height = profile.height {
+            userProfile.height = height
+        }
+        if let gender = profile.gender {
+            userProfile.gender = Int16(gender)
+        }
+        if let age = profile.age {
+            userProfile.age = Int16(age)
+        }
+        if let goalWeight = profile.goalWeight {
+            userProfile.goalWeight = goalWeight
+        }
+        if let goalBodyFat = profile.goalBodyFat {
+            userProfile.goalBodyFat = goalBodyFat
+        }
+        if let goalWaistCircumference = profile.goalWaistCircumference {
+            userProfile.goalWaistCircumference = goalWaistCircumference
+        }
+        if let goalHipCircumference = profile.goalHipCircumference {
+            userProfile.goalHipCircumference = goalHipCircumference
+        }
+        if let goalChestCircumference = profile.goalChestCircumference {
+            userProfile.goalChestCircumference = goalChestCircumference
+        }
+        if let goalThighCircumference = profile.goalThighCircumference {
+            userProfile.goalThighCircumference = goalThighCircumference
+        }
+        if let weightUnit = profile.weightUnit {
+            userProfile.weightUnit = weightUnit
+            if let unit = WeightUnit(rawValue: weightUnit) {
+                SettingsManager.shared.weightUnit = unit
+            }
+        }
+        
+        userProfile.updatedAt = Date()
+        userProfile.syncStatus = UserProfile.SyncStatus.synced.rawValue
+        
+        try context.save()
+        print("个人资料从云端合并成功")
+    }
+    
+    @MainActor
+    func mergeRecordsFromCloud(_ records: [WeightRecordRequest], context: NSManagedObjectContext) async throws {
+        let request = WeightRecord.fetchRequest()
+        let existingRecords = try context.fetch(request)
+        let existingRecordIds = Set(existingRecords.map { $0.id.uuidString })
+        
+        for recordRequest in records {
+            if existingRecordIds.contains(recordRequest.recordId) {
+                try updateRecordFromCloud(recordRequest, context: context)
+            } else {
+                try createRecordFromCloud(recordRequest, context: context)
+            }
+        }
+        
+        try context.save()
+        print("体重记录从云端合并成功，共 \(records.count) 条")
+    }
+    
+    private func createRecordFromCloud(_ request: WeightRecordRequest, context: NSManagedObjectContext) throws {
+        let record = WeightRecord(context: context)
+        record.id = UUID(uuidString: request.recordId) ?? UUID()
+        record.date = Date(timeIntervalSince1970: request.date)
+        record.weight = request.weight
+        record.bodyFatPercentage = request.bodyFatPercentage ?? 0
+        record.waistCircumference = request.waistCircumference ?? 0
+        record.hipCircumference = request.hipCircumference ?? 0
+        record.chestCircumference = request.chestCircumference ?? 0
+        record.thighCircumference = request.thighCircumference ?? 0
+        record.note = request.note
+        record.imageUrl = request.imageUrl
+        record.measurementTimePeriod = request.measurementTimePeriod
+        record.createdAt = Date(timeIntervalSince1970: request.createdAt)
+        record.updatedAt = Date(timeIntervalSince1970: request.updatedAt)
+        record.syncStatus = WeightRecord.SyncStatus.synced.rawValue
+    }
+    
+    private func updateRecordFromCloud(_ request: WeightRecordRequest, context: NSManagedObjectContext) throws {
+        let fetchRequest = WeightRecord.fetchRequest()
+        let uuid = UUID(uuidString: request.recordId) ?? UUID()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", uuid as CVarArg)
+        
+        if let existingRecord = try context.fetch(fetchRequest).first {
+            let localUpdatedAt = existingRecord.updatedAt.timeIntervalSince1970
+            let cloudUpdatedAt = request.updatedAt
+            
+            if cloudUpdatedAt > localUpdatedAt {
+                existingRecord.date = Date(timeIntervalSince1970: request.date)
+                existingRecord.weight = request.weight
+                existingRecord.bodyFatPercentage = request.bodyFatPercentage ?? 0
+                existingRecord.waistCircumference = request.waistCircumference ?? 0
+                existingRecord.hipCircumference = request.hipCircumference ?? 0
+                existingRecord.chestCircumference = request.chestCircumference ?? 0
+                existingRecord.thighCircumference = request.thighCircumference ?? 0
+                existingRecord.note = request.note
+                existingRecord.imageUrl = request.imageUrl
+                existingRecord.measurementTimePeriod = request.measurementTimePeriod
+                existingRecord.updatedAt = Date(timeIntervalSince1970: request.updatedAt)
+                existingRecord.syncStatus = WeightRecord.SyncStatus.synced.rawValue
+            }
         }
     }
     
@@ -29,8 +168,6 @@ final class DataSyncManager {
         
         if let profile = pendingProfiles.first {
             do {
-                // 将目标体重转换为当前单位后再同步到云数据库
-                // 例如：70kg 在 kg 单位下发送 70，在 lb 单位下发送 154.32
                 let unit = WeightUnit(rawValue: profile.weightUnit) ?? .kg
                 let goalWeightInCurrentUnit = unit.convertFromKg(profile.goalWeight)
                 
@@ -49,21 +186,18 @@ final class DataSyncManager {
                 }
             } catch {
                 print("个人资料同步失败: \(error)")
-                // 保持 pending 状态，下次冷启动会重试
             }
         }
     }
     
     @MainActor
     func triggerProfileSync(context: NSManagedObjectContext) {
-        // 将个人资料标记为待同步
         let request = UserProfile.fetchRequest()
         let profiles = try? context.fetch(request)
         if let profile = profiles?.first {
             profile.syncStatus = UserProfile.SyncStatus.pending.rawValue
             try? context.save()
             
-            // 异步触发同步
             Task {
                 await syncLocalDataToCloud(context: context)
             }
@@ -72,7 +206,6 @@ final class DataSyncManager {
     
     @MainActor
     func triggerWeightRecordSync(context: NSManagedObjectContext) {
-        // 异步触发同步（记录已经标记为 pending）
         Task {
             await syncLocalDataToCloud(context: context)
         }
@@ -100,11 +233,9 @@ final class DataSyncManager {
             return
         }
         
-        // 分离有图片和无图片的记录
         let recordsWithImages = pendingRecords.filter { $0.selectedImage != nil }
         let recordsWithoutImages = pendingRecords.filter { $0.selectedImage == nil }
         
-        // 先同步无图片的记录
         if !recordsWithoutImages.isEmpty {
             let requests = recordsWithoutImages.map { record in
                 WeightRecordRequest(
@@ -143,7 +274,6 @@ final class DataSyncManager {
             }
         }
         
-        // 同步有图片的记录
         if !recordsWithImages.isEmpty {
             let requests = recordsWithImages.map { record in
                 WeightRecordRequest(
@@ -177,7 +307,7 @@ final class DataSyncManager {
                     if let syncedIds = response.syncedRecordIds {
                         for record in recordsWithImages where syncedIds.contains(record.id.uuidString) {
                             record.syncStatus = WeightRecord.SyncStatus.synced.rawValue
-                            record.selectedImage = nil  // 清除临时图片
+                            record.selectedImage = nil
                         }
                     }
                     try context.save()
