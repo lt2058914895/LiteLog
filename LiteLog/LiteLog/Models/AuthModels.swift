@@ -274,16 +274,18 @@ public struct WeightRecordSyncResponse: Sendable {
     public let message: String?
     public let syncedCount: Int
     public let syncedRecordIds: [String]?
+    public let conflictRecordIds: [String]?
     
-    public init(success: Bool, message: String?, syncedCount: Int, syncedRecordIds: [String]?) {
+    public init(success: Bool, message: String?, syncedCount: Int, syncedRecordIds: [String]?, conflictRecordIds: [String]?) {
         self.success = success
         self.message = message
         self.syncedCount = syncedCount
         self.syncedRecordIds = syncedRecordIds
+        self.conflictRecordIds = conflictRecordIds
     }
     
     private enum CodingKeys: String, CodingKey {
-        case success, message, syncedCount, syncedRecordIds
+        case success, message, syncedCount, syncedRecordIds, conflictRecordIds
     }
 }
 
@@ -295,6 +297,7 @@ extension WeightRecordSyncResponse: Decodable {
         message = try container.decodeIfPresent(String.self, forKey: .message)
         syncedCount = try container.decode(Int.self, forKey: .syncedCount)
         syncedRecordIds = try container.decodeIfPresent([String].self, forKey: .syncedRecordIds)
+        conflictRecordIds = try container.decodeIfPresent([String].self, forKey: .conflictRecordIds)
     }
 }
 
@@ -306,6 +309,7 @@ extension WeightRecordSyncResponse: Encodable {
         try container.encodeIfPresent(message, forKey: .message)
         try container.encode(syncedCount, forKey: .syncedCount)
         try container.encodeIfPresent(syncedRecordIds, forKey: .syncedRecordIds)
+        try container.encodeIfPresent(conflictRecordIds, forKey: .conflictRecordIds)
     }
 }
 

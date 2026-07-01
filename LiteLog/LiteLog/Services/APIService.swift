@@ -374,8 +374,4 @@ public struct FetchAllDataResponse: Sendable, Decodable {
     public let message: String?
     public let profile: UpdateProfileResponse?
     public let records: [WeightRecordRequest]?
-    
-    private enum CodingKeys: String, CodingKey {
-        case success, message, profile, records
-    }
 }
