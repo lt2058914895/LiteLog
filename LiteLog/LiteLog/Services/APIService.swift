@@ -70,11 +70,13 @@ class APIService {
     
     func uploadAvatar(image: UIImage) async throws -> AvatarUploadResponse {
         let endpoint = baseURL.appendingPathComponent("user/avatar/upload")
-
+        let userId = UserIdentifierManager.shared.deviceId
+        let safeUserId = userId.replacingOccurrences(of: "-", with: "")
+        
         return try await withCheckedThrowingContinuation { continuation in
             session.upload(multipartFormData: { multipartFormData in
                 if let imageData = image.jpegData(compressionQuality: 0.8) {
-                    multipartFormData.append(imageData, withName: "file", fileName: "avatar.jpg", mimeType: "image/jpeg")
+                    multipartFormData.append(imageData, withName: "file", fileName: "\(safeUserId).jpg", mimeType: "image/jpeg")
                 }
             }, to: endpoint, headers: defaultHeaders())
             .validate(statusCode: 200..<300)
