@@ -16,6 +16,12 @@ struct BMIProgressView: View {
         self.onInfoTapped = onInfoTapped
         
         let heightInMeters = height / 100.0
+        guard heightInMeters > 0 else {
+            self.currentBMI = 0
+            self.bmiCategory = .normal
+            self.bmiCategoryColor = .green
+            return
+        }
         self.currentBMI = currentWeight / (heightInMeters * heightInMeters)
         self.bmiCategory = UserProfile.BMICategory.from(bmi: self.currentBMI)
         self.bmiCategoryColor = bmiCategory.color

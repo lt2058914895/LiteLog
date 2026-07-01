@@ -79,6 +79,9 @@ final class UserProfile: NSManagedObject {
 
     func calculateBMI(weight: Double) -> Double {
         let heightInMeters = height / 100.0
+        guard heightInMeters > 0 else {
+            return 0
+        }
         return weight / (heightInMeters * heightInMeters)
     }
 

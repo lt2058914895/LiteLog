@@ -1,6 +1,17 @@
 import SwiftUI
 import CoreData
 
+struct WeightData: Identifiable {
+    let id: UUID
+    let date: Date
+    let weight: Double
+    let bodyFatPercentage: Double?
+    let waistCircumference: Double?
+    let hipCircumference: Double?
+    let chestCircumference: Double?
+    let thighCircumference: Double?
+}
+
 struct StatisticsView: View {
     @Environment(\.managedObjectContext) private var context
     @Environment(\.colorScheme) private var colorScheme
@@ -11,7 +22,7 @@ struct StatisticsView: View {
 
     @State private var selectedPeriod: Period = .week
     @State private var selectedMetric: Metric = .weight
-    @State private var cachedFilteredRecords: [WeightRecord] = []
+    @State private var cachedFilteredRecords: [WeightData] = []
     @State private var selectedYear: Int = Calendar.current.component(.year, from: Date())
     @State private var showYearPicker: Bool = false
     
@@ -91,7 +102,7 @@ struct StatisticsView: View {
         }
     }
 
-    private var filteredRecords: [WeightRecord] {
+    private var filteredRecords: [WeightData] {
         cachedFilteredRecords
     }
 
@@ -138,16 +149,16 @@ struct StatisticsView: View {
             cachedFilteredRecords = grouped.compactMap { weekStart, weekRecords in
                 let avgWeight = weekRecords.reduce(0) { $0 + $1.weight } / Double(weekRecords.count)
                 let representativeRecord = weekRecords.max(by: { $0.date < $1.date })!
-                let newRecord = WeightRecord(context: context)
-                newRecord.date = weekStart
-                newRecord.weight = avgWeight
-                newRecord.bodyFatPercentage = weekRecords.compactMap { $0.bodyFatPercentage }.average ?? 0
-                newRecord.waistCircumference = weekRecords.compactMap { $0.waistCircumference }.average ?? 0
-                newRecord.hipCircumference = weekRecords.compactMap { $0.hipCircumference }.average ?? 0
-                newRecord.chestCircumference = weekRecords.compactMap { $0.chestCircumference }.average ?? 0
-                newRecord.thighCircumference = weekRecords.compactMap { $0.thighCircumference }.average ?? 0
-                newRecord.id = representativeRecord.id
-                return newRecord
+                return WeightData(
+                    id: representativeRecord.id ?? UUID(),
+                    date: weekStart,
+                    weight: avgWeight,
+                    bodyFatPercentage: weekRecords.compactMap { $0.bodyFatPercentage }.average ?? 0,
+                    waistCircumference: weekRecords.compactMap { $0.waistCircumference }.average ?? 0,
+                    hipCircumference: weekRecords.compactMap { $0.hipCircumference }.average ?? 0,
+                    chestCircumference: weekRecords.compactMap { $0.chestCircumference }.average ?? 0,
+                    thighCircumference: weekRecords.compactMap { $0.thighCircumference }.average ?? 0
+                )
             }
             .sorted { $0.date < $1.date }
         } else {
@@ -156,6 +167,18 @@ struct StatisticsView: View {
             }
             
             cachedFilteredRecords = grouped.compactMap { $0.value.max(by: { $0.date < $1.date }) }
+                .map { record in
+                    WeightData(
+                        id: record.id,
+                        date: record.date,
+                        weight: record.weight,
+                        bodyFatPercentage: record.bodyFatPercentage,
+                        waistCircumference: record.waistCircumference,
+                        hipCircumference: record.hipCircumference,
+                        chestCircumference: record.chestCircumference,
+                        thighCircumference: record.thighCircumference
+                    )
+                }
                 .sorted { $0.date < $1.date }
         }
     }
@@ -459,11 +482,30 @@ struct StatisticsView: View {
                     .padding()
                     .cardStyle()
                 } else {
-                    let bmiData = filteredRecords.map { record -> (Date, Double) in
-                        (record.date.startOfDay, profile.calculateBMI(weight: record.weight))
+                    let bmiData = filteredRecords.compactMap { record -> (Date, Double)? in
+                        guard profile.height > 0 else {
+                            return nil
+                        }
+                        return (record.date.startOfDay, profile.calculateBMI(weight: record.weight))
                     }
                     
-                    BMITrendChartView(data: bmiData)
+                    if bmiData.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(NSLocalizedString("stats.bmi.trend", comment: ""))
+                                .font(.headline)
+                                .foregroundColor(.primaryText)
+                            
+                            Text(NSLocalizedString("stats.bmi.no.data", comment: ""))
+                                .font(.subheadline)
+                                .foregroundColor(.secondaryText)
+                                .frame(height: 150)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .padding()
+                        .cardStyle()
+                    } else {
+                        BMITrendChartView(data: bmiData)
+                    }
                 }
             } else {
                 VStack(alignment: .leading, spacing: 12) {
