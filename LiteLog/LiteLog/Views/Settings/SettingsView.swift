@@ -90,10 +90,14 @@ struct SettingsView: View {
                     HStack(alignment: .center, spacing: 16) {
                         avatarImageView
                         
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(settingsManager.displayName)
                                 .font(.title3)
+                                .fontWeight(.semibold)
                                 .foregroundColor(.primary)
+                            Text(NSLocalizedString("settings.tap.to.edit", comment: ""))
+                                .font(.caption)
+                                .foregroundColor(.secondaryText)
                         }
                         
                         Spacer()
@@ -101,6 +105,7 @@ struct SettingsView: View {
                         Image(systemName: "chevron.right")
                             .foregroundColor(.secondaryText)
                     }
+                    .padding(.vertical, 8)
                 }
             }
         }
@@ -170,74 +175,141 @@ struct SettingsView: View {
         private var profileSection: some View {
         Section(NSLocalizedString("settings.profile", comment: "")) {
             if let profile = profile {
-                HStack {
-                    Text(NSLocalizedString("settings.height", comment: ""))
-                    Spacer()
-                    Text("\(settingsManager.heightUnit.convertFromCm(profile.height).smartFormatted) \(settingsManager.heightUnit.displayName)")
-                        .foregroundColor(.secondaryText)
-                }
-
-                HStack {
-                    Text(NSLocalizedString("settings.gender", comment: ""))
-                    Spacer()
-                    Text(UserProfile.Gender(rawValue: profile.gender)?.displayName ?? "")
-                        .foregroundColor(.secondaryText)
-                }
-
-                HStack {
-                    Text(NSLocalizedString("settings.age", comment: ""))
-                    Spacer()
-                    Text("\(profile.age)")
-                        .foregroundColor(.secondaryText)
-                }
-
-                HStack {
-                    Text(NSLocalizedString("settings.goal.weight", comment: ""))
-                    Spacer()
-                    Text("\(unit.convertFromKg(profile.goalWeight).smartFormatted) \(unit.shortName)")
-                        .foregroundColor(.secondaryText)
-                }
-
-                if let goalBodyFat = profile.goalBodyFatPercentage {
-                    HStack {
-                        Text(NSLocalizedString("settings.goal.body.fat", comment: ""))
-                        Spacer()
-                        Text("\(goalBodyFat.smartFormatted)%")
-                            .foregroundColor(.secondaryText)
+                Button(action: { showingProfileEditor = true }) {
+                    VStack(spacing: 12) {
+                        HStack(spacing: 16) {
+                            Text(UserProfile.Gender(rawValue: profile.gender)?.displayName ?? "")
+                                .font(.body)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primaryText)
+                            Text("\(profile.age) \(NSLocalizedString("settings.years", comment: ""))")
+                                .font(.body)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primaryText)
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .trailing, spacing: 4) {
+                                Text(NSLocalizedString("settings.height", comment: ""))
+                                    .font(.caption)
+                                    .foregroundColor(.secondaryText)
+                                Text("\(settingsManager.heightUnit.convertFromCm(profile.height).smartFormatted) \(settingsManager.heightUnit.displayName)")
+                                    .font(.body)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primaryText)
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        VStack(spacing: 10) {
+                            HStack(spacing: 16) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(NSLocalizedString("settings.goal.weight", comment: ""))
+                                        .font(.caption)
+                                        .foregroundColor(.secondaryText)
+                                    Text("\(unit.convertFromKg(profile.goalWeight).smartFormatted) \(unit.shortName)")
+                                        .font(.body)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.primaryBlue)
+                                }
+                                
+                                Spacer()
+                                
+                                if let goalBodyFat = profile.goalBodyFatPercentage {
+                                    VStack(alignment: .trailing, spacing: 4) {
+                                        Text(NSLocalizedString("settings.goal.body.fat", comment: ""))
+                                            .font(.caption)
+                                            .foregroundColor(.secondaryText)
+                                        Text("\(goalBodyFat.smartFormatted)%")
+                                            .font(.body)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.primaryText)
+                                    }
+                                }
+                            }
+                            
+                            if profile.hasGoalMeasurements {
+                                VStack(spacing: 8) {
+                                    Divider()
+                                    
+                                    HStack(spacing: 16) {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(NSLocalizedString("settings.goal.waist", comment: ""))
+                                                .font(.caption)
+                                                .foregroundColor(.secondaryText)
+                                            if let waist = profile.goalWaistCircumferenceValue {
+                                                Text("\(waist.smartFormatted) cm")
+                                                    .font(.body)
+                                                    .fontWeight(.medium)
+                                                    .foregroundColor(.primaryText)
+                                            }
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        VStack(alignment: .trailing, spacing: 4) {
+                                            Text(NSLocalizedString("settings.goal.hip", comment: ""))
+                                                .font(.caption)
+                                                .foregroundColor(.secondaryText)
+                                            if let hip = profile.goalHipCircumferenceValue {
+                                                Text("\(hip.smartFormatted) cm")
+                                                    .font(.body)
+                                                    .fontWeight(.medium)
+                                                    .foregroundColor(.primaryText)
+                                            }
+                                        }
+                                    }
+                                    
+                                    HStack(spacing: 16) {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(NSLocalizedString("settings.goal.chest", comment: ""))
+                                                .font(.caption)
+                                                .foregroundColor(.secondaryText)
+                                            if let chest = profile.goalChestCircumferenceValue {
+                                                Text("\(chest.smartFormatted) cm")
+                                                    .font(.body)
+                                                    .fontWeight(.medium)
+                                                    .foregroundColor(.primaryText)
+                                            }
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        VStack(alignment: .trailing, spacing: 4) {
+                                            Text(NSLocalizedString("settings.goal.thigh", comment: ""))
+                                                .font(.caption)
+                                                .foregroundColor(.secondaryText)
+                                            if let thigh = profile.goalThighCircumferenceValue {
+                                                Text("\(thigh.smartFormatted) cm")
+                                                    .font(.body)
+                                                    .fontWeight(.medium)
+                                                    .foregroundColor(.primaryText)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
-
-                if let goalWaistCircumference = profile.goalWaistCircumferenceValue {
-                    HStack {
-                        Text(NSLocalizedString("settings.goal.waist", comment: ""))
-                        Spacer()
-                        Text("\(goalWaistCircumference.smartFormatted) \(NSLocalizedString("settings.cm", comment: ""))")
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-
-                if let goalHipCircumference = profile.goalHipCircumferenceValue {
-                    HStack {
-                        Text(NSLocalizedString("settings.goal.hip", comment: ""))
-                        Spacer()
-                        Text("\(goalHipCircumference.smartFormatted) \(NSLocalizedString("settings.cm", comment: ""))")
-                            .foregroundColor(.secondaryText)
-                    }
-                }
-
-                if let goalChestCircumference = profile.goalChestCircumferenceValue {
-                    HStack {
-                        Text(NSLocalizedString("settings.goal.chest", comment: ""))
-                        Spacer()
-                        Text("\(goalChestCircumference.smartFormatted) \(NSLocalizedString("settings.cm", comment: ""))")
-                            .foregroundColor(.secondaryText)
-                    }
+                    .padding(.vertical, 12)
                 }
             }
-
+            
             Button(action: { showingProfileEditor = true }) {
-                Label(NSLocalizedString("action.edit", comment: ""), systemImage: "pencil")
-                    .foregroundColor(.primaryBlue)
+                HStack(spacing: 12) {
+                    Image(systemName: "pencil")
+                        .foregroundColor(.primaryBlue)
+                        .font(.title3)
+                    Text(NSLocalizedString("action.edit", comment: ""))
+                        .foregroundColor(.primaryBlue)
+                        .font(.body)
+                        .fontWeight(.medium)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondaryText)
+                }
+                .padding(.vertical, 8)
             }
         }
     }

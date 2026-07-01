@@ -20,6 +20,12 @@ struct ProfileEditorView: View {
     @State private var goalThighCircumferenceString: String = ""
     @State private var showingValidationAlert = false
     @State private var validationErrorMessage = ""
+    @State private var showingSuccessToast = false
+    @FocusState private var focusedField: FocusedField?
+    
+    enum FocusedField: Hashable {
+        case height, goalWeight, goalBodyFat, waist, hip, chest, thigh
+    }
 
     private var existingProfile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -30,6 +36,7 @@ struct ProfileEditorView: View {
     
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        focusedField = nil
     }
 
     var body: some View {
@@ -39,164 +46,17 @@ struct ProfileEditorView: View {
             
             ScrollView {
                 VStack(spacing: 20) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(NSLocalizedString("settings.height", comment: ""))
-                            .font(.headline)
-                            .foregroundColor(.primaryText)
-                        
-                        HStack {
-                            NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $heightString)
-                            
-                            Text(heightUnit.displayName)
-                                .foregroundColor(.secondaryText)
-                        }
-                        .frame(height: 50)
-                        .padding(.horizontal, 16)
-                        .background(inputBackgroundColor)
-                        .cornerRadius(12)
-                    }
+                    basicInfoCard
                     
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(NSLocalizedString("settings.gender", comment: ""))
-                            .font(.headline)
-                            .foregroundColor(.primaryText)
-                        
-                        Picker(NSLocalizedString("settings.gender", comment: ""), selection: $gender) {
-                            Text(NSLocalizedString("settings.male", comment: "")).tag(UserProfile.Gender.male)
-                            Text(NSLocalizedString("settings.female", comment: "")).tag(UserProfile.Gender.female)
-                        }
-                        .pickerStyle(.segmented)
-                    }
+                    goalsCard
                     
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(NSLocalizedString("settings.age", comment: ""))
-                            .font(.headline)
-                            .foregroundColor(.primaryText)
-                        
-                        HStack {
-                            Text("\(age)")
-                                .font(.headline)
-                                .foregroundColor(.primaryText)
-                            
-                            Spacer()
-                            
-                            Stepper("", value: $age, in: 1...120)
-                        }
-                        .padding()
-                        .background(inputBackgroundColor)
-                        .cornerRadius(12)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(NSLocalizedString("settings.goal.weight", comment: ""))
-                            .font(.headline)
-                            .foregroundColor(.primaryText)
-                        
-                        HStack {
-                            NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalWeightString)
-                            
-                            Text(unit.shortName)
-                                .foregroundColor(.secondaryText)
-                        }
-                        .frame(height: 50)
-                        .padding(.horizontal, 16)
-                        .background(inputBackgroundColor)
-                        .cornerRadius(12)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(NSLocalizedString("settings.goal.body.fat", comment: ""))
-                            .font(.headline)
-                            .foregroundColor(.primaryText)
-                        
-                        HStack {
-                            NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalBodyFatString)
-                            
-                            Text("%")
-                                .foregroundColor(.secondaryText)
-                        }
-                        .frame(height: 50)
-                        .padding(.horizontal, 16)
-                        .background(inputBackgroundColor)
-                        .cornerRadius(12)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(NSLocalizedString("settings.goal.measurements", comment: ""))
-                            .font(.headline)
-                            .foregroundColor(.primaryText)
-                        
-                        VStack(spacing: 12) {
-                            HStack {
-                                Text(NSLocalizedString("settings.goal.waist", comment: ""))
-                                    .foregroundColor(.secondaryText)
-                                Spacer()
-                                NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalWaistCircumferenceString)
-                                    .multilineTextAlignment(.trailing)
-                                Text(NSLocalizedString("settings.cm", comment: ""))
-                                    .foregroundColor(.secondaryText)
-                            }
-                            .frame(height: 50)
-                            .padding(.horizontal, 16)
-                            .background(inputBackgroundColor)
-                            .cornerRadius(12)
-                            
-                            HStack {
-                                Text(NSLocalizedString("settings.goal.hip", comment: ""))
-                                    .foregroundColor(.secondaryText)
-                                Spacer()
-                                NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalHipCircumferenceString)
-                                    .multilineTextAlignment(.trailing)
-                                Text(NSLocalizedString("settings.cm", comment: ""))
-                                    .foregroundColor(.secondaryText)
-                            }
-                            .frame(height: 50)
-                            .padding(.horizontal, 16)
-                            .background(inputBackgroundColor)
-                            .cornerRadius(12)
-                            
-                            HStack {
-                                Text(NSLocalizedString("settings.goal.chest", comment: ""))
-                                    .foregroundColor(.secondaryText)
-                                Spacer()
-                                NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalChestCircumferenceString)
-                                    .multilineTextAlignment(.trailing)
-                                Text(NSLocalizedString("settings.cm", comment: ""))
-                                    .foregroundColor(.secondaryText)
-                            }
-                            .frame(height: 50)
-                            .padding(.horizontal, 16)
-                            .background(inputBackgroundColor)
-                            .cornerRadius(12)
-                            
-                            HStack {
-                                Text(NSLocalizedString("settings.goal.thigh", comment: ""))
-                                    .foregroundColor(.secondaryText)
-                                Spacer()
-                                NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalThighCircumferenceString)
-                                    .multilineTextAlignment(.trailing)
-                                Text(NSLocalizedString("settings.cm", comment: ""))
-                                    .foregroundColor(.secondaryText)
-                            }
-                            .frame(height: 50)
-                            .padding(.horizontal, 16)
-                            .background(inputBackgroundColor)
-                            .cornerRadius(12)
-                        }
-                    }
-                    
-                    Button(action: saveProfile) {
-                        Text(NSLocalizedString("action.save", comment: ""))
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(Color.primaryBlue)
-                            .cornerRadius(25)
-                            .padding(.vertical, 20)
-                    }
+                    saveButton
                 }
                 .padding()
+            }
+            
+            if showingSuccessToast {
+                successToast
             }
         }
         .onTapGesture {
@@ -214,6 +74,275 @@ struct ProfileEditorView: View {
         }
         .onAppear {
             loadExistingProfile()
+        }
+    }
+    
+    private var successToast: some View {
+        VStack {
+            Spacer()
+            HStack(spacing: 12) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                    .font(.title)
+                Text(NSLocalizedString("action.save.success", comment: ""))
+                    .font(.body)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+            .background(Color.primaryBlue)
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+            .animation(.spring(), value: showingSuccessToast)
+            .padding(.bottom, 40)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .background(Color.black.opacity(0.3))
+        .edgesIgnoringSafeArea(.all)
+        .onTapGesture {
+            showingSuccessToast = false
+        }
+    }
+    
+    
+    
+    private var basicInfoCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(NSLocalizedString("settings.basic.info", comment: ""))
+                .font(.headline)
+                .foregroundColor(.primaryText)
+            
+            genderPicker
+            
+            ageStepper
+            
+            heightInput
+        }
+        .padding()
+        .background(inputBackgroundColor)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+    }
+    
+    private var genderPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(NSLocalizedString("settings.gender", comment: ""))
+                .font(.subheadline)
+                .foregroundColor(.secondaryText)
+            
+            Picker(NSLocalizedString("settings.gender", comment: ""), selection: $gender) {
+                Text(NSLocalizedString("settings.male", comment: "")).tag(UserProfile.Gender.male)
+                Text(NSLocalizedString("settings.female", comment: "")).tag(UserProfile.Gender.female)
+            }
+            .pickerStyle(.segmented)
+            .colorScheme(.light)
+        }
+    }
+    
+    private var ageStepper: some View {
+        HStack(spacing: 12) {
+            Text(NSLocalizedString("settings.age", comment: ""))
+                .font(.subheadline)
+                .foregroundColor(.secondaryText)
+            
+            Spacer()
+            
+            Button(action: { age = max(1, age - 1) }) {
+                Image(systemName: "minus.circle.fill")
+                    .foregroundColor(.primaryBlue)
+                    .frame(width: 40, height: 40)
+            }
+            
+            Text("\(age)")
+                .font(Font(UIFont.systemFont(ofSize: 22, weight: .semibold)))
+                .foregroundColor(.primaryText)
+                .frame(width: 60, alignment: .center)
+            
+            Button(action: { age = min(120, age + 1) }) {
+                Image(systemName: "plus.circle.fill")
+                    .foregroundColor(.primaryBlue)
+                    .frame(width: 40, height: 40)
+            }
+            
+            Text(NSLocalizedString("settings.years", comment: ""))
+                .font(.body)
+                .foregroundColor(.secondaryText)
+        }
+        .frame(height: 56)
+        .padding(.horizontal, 16)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+    }
+    
+    private var heightInput: some View {
+        HStack(spacing: 12) {
+            HStack(spacing: 2) {
+                Text(NSLocalizedString("settings.height", comment: ""))
+                    .font(.subheadline)
+                    .foregroundColor(.secondaryText)
+                Text("*")
+                    .font(.subheadline)
+                    .foregroundColor(.red)
+            }
+            
+            Spacer()
+            
+            NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $heightString)
+                .font(Font(UIFont.systemFont(ofSize: 22, weight: .semibold)))
+                .multilineTextAlignment(.center)
+                .focused($focusedField, equals: .height)
+            
+            Text(heightUnit.displayName)
+                .font(.body)
+                .foregroundColor(.secondaryText)
+        }
+        .frame(height: 56)
+        .padding(.horizontal, 16)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(focusedField == .height ? Color.primaryBlue : Color.clear, lineWidth: 2)
+                .animation(.easeInOut(duration: 0.2), value: focusedField)
+        )
+        .shadow(color: focusedField == .height ? Color.primaryBlue.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
+    }
+    
+    private var goalsCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(NSLocalizedString("settings.goals", comment: ""))
+                .font(.headline)
+                .foregroundColor(.primaryText)
+            
+            goalWeightInput
+            
+            goalBodyFatInput
+            
+            Divider()
+            
+            Text(NSLocalizedString("settings.goal.measurements", comment: ""))
+                .font(.subheadline)
+                .foregroundColor(.secondaryText)
+            
+            VStack(spacing: 10) {
+                circumferenceInput(label: NSLocalizedString("settings.goal.waist", comment: ""), text: $goalWaistCircumferenceString, field: .waist)
+                circumferenceInput(label: NSLocalizedString("settings.goal.hip", comment: ""), text: $goalHipCircumferenceString, field: .hip)
+                circumferenceInput(label: NSLocalizedString("settings.goal.chest", comment: ""), text: $goalChestCircumferenceString, field: .chest)
+                circumferenceInput(label: NSLocalizedString("settings.goal.thigh", comment: ""), text: $goalThighCircumferenceString, field: .thigh)
+            }
+        }
+        .padding()
+        .background(inputBackgroundColor)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+    }
+    
+    private var goalWeightInput: some View {
+        HStack(spacing: 12) {
+            HStack(spacing: 2) {
+                Text(NSLocalizedString("settings.goal.weight", comment: ""))
+                    .font(.subheadline)
+                    .foregroundColor(.secondaryText)
+                Text("*")
+                    .font(.subheadline)
+                    .foregroundColor(.red)
+            }
+            
+            Spacer()
+            
+            NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalWeightString)
+                .font(Font(UIFont.systemFont(ofSize: 22, weight: .semibold)))
+                .multilineTextAlignment(.center)
+                .focused($focusedField, equals: .goalWeight)
+            
+            Text(unit.shortName)
+                .font(.body)
+                .foregroundColor(.secondaryText)
+        }
+        .frame(height: 56)
+        .padding(.horizontal, 16)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(focusedField == .goalWeight ? Color.primaryBlue : Color.clear, lineWidth: 2)
+                .animation(.easeInOut(duration: 0.2), value: focusedField)
+        )
+        .shadow(color: focusedField == .goalWeight ? Color.primaryBlue.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
+    }
+    
+    private var goalBodyFatInput: some View {
+        HStack(spacing: 12) {
+            Text(NSLocalizedString("settings.goal.body.fat", comment: ""))
+                .font(.subheadline)
+                .foregroundColor(.secondaryText)
+            
+            Spacer()
+            
+            NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalBodyFatString)
+                .font(Font(UIFont.systemFont(ofSize: 22, weight: .semibold)))
+                .multilineTextAlignment(.center)
+                .focused($focusedField, equals: .goalBodyFat)
+            
+            Text("%")
+                .font(.body)
+                .foregroundColor(.secondaryText)
+        }
+        .frame(height: 56)
+        .padding(.horizontal, 16)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(focusedField == .goalBodyFat ? Color.primaryBlue : Color.clear, lineWidth: 2)
+                .animation(.easeInOut(duration: 0.2), value: focusedField)
+        )
+        .shadow(color: focusedField == .goalBodyFat ? Color.primaryBlue.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
+    }
+    
+    private func circumferenceInput(label: String, text: Binding<String>, field: FocusedField) -> some View {
+        HStack(spacing: 12) {
+            Text(label)
+                .font(.subheadline)
+                .foregroundColor(.secondaryText)
+            
+            Spacer()
+            
+            NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: text)
+                .font(Font(UIFont.systemFont(ofSize: 22, weight: .semibold)))
+                .multilineTextAlignment(.center)
+                .focused($focusedField, equals: field)
+            
+            Text(NSLocalizedString("settings.cm", comment: ""))
+                .font(.body)
+                .foregroundColor(.secondaryText)
+        }
+        .frame(height: 56)
+        .padding(.horizontal, 16)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(focusedField == field ? Color.primaryBlue : Color.clear, lineWidth: 2)
+                .animation(.easeInOut(duration: 0.2), value: focusedField)
+        )
+        .shadow(color: focusedField == field ? Color.primaryBlue.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
+    }
+    
+    private var saveButton: some View {
+        Button(action: saveProfile) {
+            Text(NSLocalizedString("action.save", comment: ""))
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(Color.primaryBlue)
+                .cornerRadius(26)
+                .shadow(color: Color.primaryBlue.opacity(0.3), radius: 8, x: 0, y: 4)
+                .padding(.vertical, 8)
         }
     }
 
@@ -324,11 +453,15 @@ struct ProfileEditorView: View {
         do {
             try context.save()
             DataSyncManager.shared.triggerProfileSync(context: context)
+            
+            showingSuccessToast = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                showingSuccessToast = false
+                dismiss()
+            }
         } catch {
             print("保存个人资料失败: \(error)")
         }
-
-        dismiss()
     }
     
     private var backButton: some View {

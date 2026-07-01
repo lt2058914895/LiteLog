@@ -193,6 +193,16 @@
 "settings.error" = "提示";
 "settings.prompt.enter" = "请输入";
 "settings.unit" = "单位";
+"settings.basic.info" = "基本信息";
+"settings.years" = "岁";
+"settings.body.data" = "身体数据";
+"settings.weight.unit" = "体重单位";
+"settings.goals" = "目标设置";
+"settings.bmi.preview" = "BMI预览";
+"settings.bmi.current" = "当前BMI";
+"settings.bmi.goal" = "目标BMI";
+"settings.bmi.change" = "差值";
+"settings.tap.to.edit" = "点击编辑个人信息";
 "settings.icloud" = "iCloud同步";
 "settings.icloud.desc" = "在设备间同步数据";
 "settings.notification" = "提醒通知";
@@ -275,6 +285,7 @@
 
 // 操作相关
 "action.save" = "保存";
+"action.save.success" = "保存成功";
 "action.cancel" = "取消";
 "action.edit" = "编辑";
 "action.delete" = "删除";
@@ -313,6 +324,7 @@
 // 用户信息编辑相关
 "profile.title" = "用户信息";
 "profile.edit.avatar.hint" = "点击更换头像";
+"profile.edit.avatar.remove" = "移除头像";
 "profile.edit.nickname" = "昵称";
 "profile.edit.nickname.placeholder" = "请输入昵称";
 "profile.logout.confirm" = "确定要退出登录吗？";

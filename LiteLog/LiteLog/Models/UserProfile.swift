@@ -66,6 +66,11 @@ final class UserProfile: NSManagedObject {
     var goalThighCircumferenceValue: Double? {
         goalThighCircumference == 0 ? nil : goalThighCircumference
     }
+    
+    var hasGoalMeasurements: Bool {
+        goalWaistCircumference > 0 || goalHipCircumference > 0 || 
+        goalChestCircumference > 0 || goalThighCircumference > 0
+    }
 
     var genderEnum: Gender {
         get { Gender(rawValue: gender) ?? .male }
