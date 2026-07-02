@@ -43,26 +43,51 @@ class APIService {
         ]
         
         return try await withCheckedThrowingContinuation { continuation in
-            print("DEBUG: Sending request to \(endpoint)")
+            print("DEBUG: submitFeedback - URL: \(endpoint)")
+            print("DEBUG: submitFeedback - Parameters: \(parameters)")
+            
             session.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: defaultHeaders())
                 .validate(statusCode: 200..<300)
                 .responseData { response in
+                    print("DEBUG: submitFeedback - Response status code: \(response.response?.statusCode ?? -1)")
+                    print("DEBUG: submitFeedback - Response headers: \(response.response?.headers ?? HTTPHeaders())")
+                    
                     switch response.result {
                     case .success(let data):
+                        if let responseString = String(data: data, encoding: .utf8) {
+                            print("DEBUG: submitFeedback - Response data: \(responseString)")
+                        }
                         do {
                             let decoder = JSONDecoder()
-                            let response = try decoder.decode(FeedbackSubmitResponse.self, from: data)
+                            let feedbackResponse = try decoder.decode(FeedbackSubmitResponse.self, from: data)
                             
-                            if !response.success {
-                                continuation.resume(throwing: APIError.serverErrorWithCode(response.code, response.message ?? "unknown_error"))
+                            if !feedbackResponse.success {
+                                print("DEBUG: submitFeedback - Response success is false")
+                                continuation.resume(throwing: APIError.serverErrorWithCode(feedbackResponse.code, feedbackResponse.message ?? "unknown_error"))
                             } else {
                                 continuation.resume()
                             }
                         } catch {
+                            print("DEBUG: submitFeedback - Decoding error: \(error)")
                             continuation.resume(throwing: APIError.decodingError)
                         }
                     case .failure(let error):
-                        continuation.resume(throwing: error)
+                        print("DEBUG: submitFeedback - API Error: \(error)")
+                        
+                        if let data = response.data, let responseString = String(data: data, encoding: .utf8) {
+                            print("DEBUG: submitFeedback - Error response data: \(responseString)")
+                            
+                            do {
+                                let decoder = JSONDecoder()
+                                let errorResponse = try decoder.decode(ErrorResponse.self, from: data)
+                                continuation.resume(throwing: APIError.serverErrorWithCode(errorResponse.status ?? -1, errorResponse.message ?? "未知错误"))
+                            } catch {
+                                print("DEBUG: submitFeedback - Failed to decode ErrorResponse: \(error)")
+                                continuation.resume(throwing: APIError.serverError(responseString))
+                            }
+                        } else {
+                            continuation.resume(throwing: APIError.serverError("网络请求失败，请检查网络连接"))
+                        }
                     }
                 }
         }
@@ -74,6 +99,8 @@ class APIService {
         let safeUserId = userId.replacingOccurrences(of: "-", with: "")
         
         return try await withCheckedThrowingContinuation { continuation in
+            print("DEBUG: uploadAvatar - URL: \(endpoint)")
+            
             session.upload(multipartFormData: { multipartFormData in
                 if let imageData = image.jpegData(compressionQuality: 0.8) {
                     multipartFormData.append(imageData, withName: "file", fileName: "\(safeUserId).jpg", mimeType: "image/jpeg")
@@ -81,18 +108,7 @@ class APIService {
             }, to: endpoint, headers: defaultHeaders())
             .validate(statusCode: 200..<300)
             .responseData { response in
-                switch response.result {
-                case .success(let data):
-                    do {
-                        let decoder = JSONDecoder()
-                        let avatarResponse = try decoder.decode(AvatarUploadResponse.self, from: data)
-                        continuation.resume(returning: avatarResponse)
-                    } catch {
-                        continuation.resume(throwing: APIError.decodingError)
-                    }
-                case .failure:
-                    continuation.resume(throwing: APIError.invalidResponse)
-                }
+                self.handleResponse(response, debugTag: "uploadAvatar", continuation: continuation)
             }
         }
     }
@@ -131,41 +147,45 @@ class APIService {
             session.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default, headers: defaultHeaders())
                 .validate(statusCode: 200..<300)
                 .responseData { response in
-                    print("DEBUG: updateProfile - Response status code: \(response.response?.statusCode ?? -1)")
-                    print("DEBUG: updateProfile - Response headers: \(response.response?.headers ?? HTTPHeaders())")
-                    
-                    switch response.result {
-                    case .success(let data):
-                        if let responseString = String(data: data, encoding: .utf8) {
-                            print("DEBUG: updateProfile - Response data: \(responseString)")
-                        }
-                        do {
-                            let decoder = JSONDecoder()
-                            let profileResponse = try decoder.decode(UpdateProfileResponse.self, from: data)
-                            continuation.resume(returning: profileResponse)
-                        } catch {
-                            print("DEBUG: updateProfile - Decoding error: \(error)")
-                            continuation.resume(throwing: APIError.decodingError)
-                        }
-                    case .failure(let error):
-                        print("DEBUG: updateProfile - API Error: \(error)")
-                        
-                        if let data = response.data, let responseString = String(data: data, encoding: .utf8) {
-                            print("DEBUG: updateProfile - Error response data: \(responseString)")
-                            
-                            do {
-                                let decoder = JSONDecoder()
-                                let errorResponse = try decoder.decode(ErrorResponse.self, from: data)
-                                continuation.resume(throwing: APIError.serverErrorWithCode(errorResponse.status ?? -1, errorResponse.message ?? "未知错误"))
-                            } catch {
-                                print("DEBUG: updateProfile - Failed to decode ErrorResponse: \(error)")
-                                continuation.resume(throwing: APIError.serverError(responseString))
-                            }
-                        } else {
-                            continuation.resume(throwing: APIError.serverError("网络请求失败，请检查网络连接"))
-                        }
-                    }
+                    self.handleResponse(response, debugTag: "updateProfile", continuation: continuation)
                 }
+        }
+    }
+    
+    private func handleResponse<T: Decodable>(_ response: AFDataResponse<Data>, debugTag: String, continuation: CheckedContinuation<T, Error>) {
+        print("DEBUG: \(debugTag) - Response status code: \(response.response?.statusCode ?? -1)")
+        print("DEBUG: \(debugTag) - Response headers: \(response.response?.headers ?? HTTPHeaders())")
+        
+        switch response.result {
+        case .success(let data):
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("DEBUG: \(debugTag) - Response data: \(responseString)")
+            }
+            do {
+                let decoder = JSONDecoder()
+                let decodedResponse = try decoder.decode(T.self, from: data)
+                continuation.resume(returning: decodedResponse)
+            } catch {
+                print("DEBUG: \(debugTag) - Decoding error: \(error)")
+                continuation.resume(throwing: APIError.decodingError)
+            }
+        case .failure(let error):
+            print("DEBUG: \(debugTag) - API Error: \(error)")
+            
+            if let data = response.data, let responseString = String(data: data, encoding: .utf8) {
+                print("DEBUG: \(debugTag) - Error response data: \(responseString)")
+                
+                do {
+                    let decoder = JSONDecoder()
+                    let errorResponse = try decoder.decode(ErrorResponse.self, from: data)
+                    continuation.resume(throwing: APIError.serverErrorWithCode(errorResponse.status ?? -1, errorResponse.message ?? "未知错误"))
+                } catch {
+                    print("DEBUG: \(debugTag) - Failed to decode ErrorResponse: \(error)")
+                    continuation.resume(throwing: APIError.serverError(responseString))
+                }
+            } else {
+                continuation.resume(throwing: APIError.serverError("网络请求失败，请检查网络连接"))
+            }
         }
     }
     
@@ -226,22 +246,13 @@ class APIService {
         ]
         
         return try await withCheckedThrowingContinuation { continuation in
+            print("DEBUG: syncWeightRecords - URL: \(endpoint)")
+            
             session.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: defaultHeaders())
                 .validate(statusCode: 200..<300)
-            .responseData { response in
-                switch response.result {
-                case .success(let data):
-                    do {
-                        let decoder = JSONDecoder()
-                        let syncResponse = try decoder.decode(WeightRecordSyncResponse.self, from: data)
-                        continuation.resume(returning: syncResponse)
-                    } catch {
-                        continuation.resume(throwing: APIError.decodingError)
-                    }
-                case .failure:
-                    continuation.resume(throwing: APIError.invalidResponse)
+                .responseData { response in
+                    self.handleResponse(response, debugTag: "syncWeightRecords", continuation: continuation)
                 }
-            }
         }
     }
     
@@ -259,6 +270,8 @@ class APIService {
                 return
             }
             
+            print("DEBUG: syncWeightRecordsWithImages - URL: \(endpoint)")
+            
             session.upload(multipartFormData: { multipartFormData in
                 if let jsonData = recordsJson.data(using: .utf8) {
                     multipartFormData.append(jsonData, withName: "records")
@@ -273,18 +286,7 @@ class APIService {
             }, to: endpoint, headers: defaultHeaders())
             .validate(statusCode: 200..<300)
             .responseData { response in
-                switch response.result {
-                case .success(let data):
-                    do {
-                        let decoder = JSONDecoder()
-                        let syncResponse = try decoder.decode(WeightRecordSyncResponse.self, from: data)
-                        continuation.resume(returning: syncResponse)
-                    } catch {
-                        continuation.resume(throwing: APIError.decodingError)
-                    }
-                case .failure:
-                    continuation.resume(throwing: APIError.invalidResponse)
-                }
+                self.handleResponse(response, debugTag: "syncWeightRecordsWithImages", continuation: continuation)
             }
         }
     }
@@ -293,21 +295,12 @@ class APIService {
         let endpoint = baseURL.appendingPathComponent("user/fetch-all-data")
         
         return try await withCheckedThrowingContinuation { continuation in
+            print("DEBUG: fetchAllData - URL: \(endpoint)")
+            
             session.request(endpoint, method: .get, headers: defaultHeaders())
                 .validate(statusCode: 200..<300)
                 .responseData { response in
-                    switch response.result {
-                    case .success(let data):
-                        do {
-                            let decoder = JSONDecoder()
-                            let fetchResponse = try decoder.decode(FetchAllDataResponse.self, from: data)
-                            continuation.resume(returning: fetchResponse)
-                        } catch {
-                            continuation.resume(throwing: APIError.decodingError)
-                        }
-                    case .failure(let error):
-                        continuation.resume(throwing: error)
-                    }
+                    self.handleResponse(response, debugTag: "fetchAllData", continuation: continuation)
                 }
         }
     }
