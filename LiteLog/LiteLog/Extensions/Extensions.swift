@@ -139,6 +139,7 @@ extension View {
             .padding()
             .background(Color.primaryBlue)
             .cornerRadius(12)
+            .contentShape(Rectangle())
     }
 
     func secondaryButtonStyle() -> some View {

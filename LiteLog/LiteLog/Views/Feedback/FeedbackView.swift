@@ -138,8 +138,13 @@ struct FeedbackView: View {
                         // 提交按钮
                         Button(action: submitFeedback) {
                             Text(NSLocalizedString("action.submit", comment: ""))
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.primaryBlue)
+                                .cornerRadius(12)
                         }
-                        .primaryButtonStyle()
                         .disabled(message.trimmingCharacters(in: .whitespaces).isEmpty)
 
                         // 隐私提示

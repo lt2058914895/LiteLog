@@ -335,14 +335,11 @@ struct ProfileEditorView: View {
         Button(action: saveProfile) {
             Text(NSLocalizedString("action.save", comment: ""))
                 .font(.headline)
-                .fontWeight(.semibold)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .frame(height: 52)
+                .padding()
                 .background(Color.primaryBlue)
-                .cornerRadius(26)
-                .shadow(color: Color.primaryBlue.opacity(0.3), radius: 8, x: 0, y: 4)
-                .padding(.vertical, 8)
+                .cornerRadius(12)
         }
     }
 
