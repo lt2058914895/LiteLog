@@ -113,10 +113,12 @@ class APIService {
         }
     }
     
-    func updateProfile(nickname: String, avatarUrl: String?) async throws -> UpdateProfileResponse {
-        var parameters: [String: Any] = [
-            "nickname": nickname
-        ]
+    func updateProfile(nickname: String?, avatarUrl: String?) async throws -> UpdateProfileResponse {
+        var parameters: [String: Any] = [:]
+        
+        if let nickname = nickname, !nickname.isEmpty {
+            parameters["nickname"] = nickname
+        }
         
         if let avatarUrl = avatarUrl, !avatarUrl.isEmpty {
             parameters["avatarUrl"] = avatarUrl

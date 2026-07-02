@@ -5,8 +5,10 @@ struct UserInfoEditorView: View {
     @EnvironmentObject private var settingsManager: SettingsManager
     
     @State private var nickname = ""
+    @State private var originalNickname = ""
     @State private var avatarImage: UIImage?
     @State private var avatarUrl: String = ""
+    @State private var originalAvatarUrl = ""
     @State private var showImagePicker = false
     @State private var isLoading = false
     @State private var showingSuccessToast = false
@@ -14,8 +16,12 @@ struct UserInfoEditorView: View {
     @State private var isUploadingAvatar = false
     
     init() {
-        _nickname = State(initialValue: SettingsManager.shared.nickname)
-        _avatarUrl = State(initialValue: SettingsManager.shared.avatarUrl)
+        let currentNickname = SettingsManager.shared.nickname
+        let currentAvatarUrl = SettingsManager.shared.avatarUrl
+        _nickname = State(initialValue: currentNickname)
+        _originalNickname = State(initialValue: currentNickname)
+        _avatarUrl = State(initialValue: currentAvatarUrl)
+        _originalAvatarUrl = State(initialValue: currentAvatarUrl)
     }
     
     @StateObject private var errorAlertManager = ErrorAlertManager()
@@ -255,25 +261,33 @@ struct UserInfoEditorView: View {
     }
     
     private func saveProfile() async {
-        guard !nickname.isEmpty else { return }
-        
         hideKeyboard()
         isLoading = true
         
         do {
-            // 上传头像（如果有选择新头像）
-            let avatarUrl = await uploadAvatarIfNeeded()
+            var avatarUrl: String? = nil
+            if avatarImage != nil {
+                avatarUrl = await uploadAvatarIfNeeded()
+                
+                if avatarUrl == nil {
+                    self.avatarImage = nil
+                    isLoading = false
+                    return
+                }
+            }
             
-            // 如果用户选择了新头像但上传失败，中断保存流程
-            if avatarImage != nil && avatarUrl == nil {
-                // 头像上传失败，恢复显示原头像
-                self.avatarImage = nil
+            let isNicknameChanged = nickname != originalNickname
+            let isAvatarChanged = avatarImage != nil || (avatarUrl != nil && avatarUrl != originalAvatarUrl)
+            
+            if !isNicknameChanged && !isAvatarChanged {
                 isLoading = false
                 return
             }
             
-            // 调用更新用户信息接口
-            let response = try await APIService.shared.updateProfile(nickname: nickname, avatarUrl: avatarUrl)
+            let response = try await APIService.shared.updateProfile(
+                nickname: isNicknameChanged ? nickname : nil,
+                avatarUrl: isAvatarChanged ? avatarUrl : nil
+            )
             
             if response.success {
                 updateLocalProfile(nickname: response.nickname ?? nickname, avatarUrl: response.avatarUrl)
@@ -284,12 +298,10 @@ struct UserInfoEditorView: View {
                     dismiss()
                 }
             } else {
-                // 更新失败，恢复显示原头像
                 self.avatarImage = nil
                 errorAlertManager.showError(response.message ?? "更新失败")
             }
         } catch {
-            // 网络错误，恢复显示原头像
             self.avatarImage = nil
             errorAlertManager.showError(error.localizedDescription)
         }
@@ -322,8 +334,8 @@ struct UserInfoEditorView: View {
             // 如果用户选择了新头像，更新缓存
             if let image = avatarImage {
                 settingsManager.updateCachedAvatar(with: image)
-            } else {
-                // 否则清除旧缓存，下次会重新加载
+            } else if avatarUrl != originalAvatarUrl {
+                // 只有头像URL发生变化时才清除缓存
                 settingsManager.clearCachedAvatar()
             }
         }
