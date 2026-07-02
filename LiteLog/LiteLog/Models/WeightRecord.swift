@@ -45,6 +45,7 @@ final class WeightRecord: NSManagedObject, Identifiable {
     @NSManaged var updatedAt: Date
     @NSManaged var syncStatus: Int16
     @NSManaged var selectedImage: UIImage?
+    @NSManaged var deleteImage: Bool
 
     @objc(SyncStatus)
     enum SyncStatus: Int16 {
@@ -80,6 +81,10 @@ final class WeightRecord: NSManagedObject, Identifiable {
     var syncStatusEnum: SyncStatus {
         get { SyncStatus(rawValue: syncStatus) ?? .pending }
         set { syncStatus = newValue.rawValue }
+    }
+    
+    var hasImage: Bool {
+        imageUrl != nil || selectedImage != nil
     }
 }
 
@@ -127,6 +132,7 @@ extension WeightRecord {
         record.createdAt = Date()
         record.updatedAt = Date()
         record.syncStatus = SyncStatus.pending.rawValue
+        record.deleteImage = false
         return record
     }
 

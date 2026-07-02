@@ -31,13 +31,6 @@ struct AsyncImageView: View {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: contentMode)
-            } else if isLoading {
-                placeholder()
-                    .opacity(0.5)
-                    .overlay(
-                        ProgressView()
-                            .scaleEffect(0.5)
-                    )
             } else if error != nil {
                 errorPlaceholder()
             } else {

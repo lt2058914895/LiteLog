@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import Foundation
 
 extension Notification.Name {
     static let showProfileEditor = Notification.Name("showProfileEditor")
@@ -332,5 +333,71 @@ extension UIImage {
         self.draw(in: CGRect(origin: .zero, size: self.size))
         
         return UIGraphicsGetImageFromCurrentImageContext() ?? self
+    }
+}
+
+struct ImageStorageManager {
+    static let shared = ImageStorageManager()
+    
+    private let imagesDirectory: URL
+    
+    private init() {
+        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        imagesDirectory = documentsDir.appendingPathComponent("images")
+        createImagesDirectoryIfNeeded()
+    }
+    
+    private func createImagesDirectoryIfNeeded() {
+        do {
+            try FileManager.default.createDirectory(at: imagesDirectory, withIntermediateDirectories: true)
+        } catch {
+            print("Failed to create images directory: \(error)")
+        }
+    }
+    
+    func saveImage(_ image: UIImage, for recordId: String) -> String? {
+        let fileName = "\(recordId).jpg"
+        let fileUrl = imagesDirectory.appendingPathComponent(fileName)
+        
+        if let jpegData = image.jpegData(compressionQuality: 0.7) {
+            do {
+                try jpegData.write(to: fileUrl)
+                return fileUrl.absoluteString
+            } catch {
+                print("Failed to save image: \(error)")
+                return nil
+            }
+        }
+        return nil
+    }
+    
+    func loadImage(from urlString: String) -> UIImage? {
+        guard let url = URL(string: urlString), url.isFileURL else {
+            return nil
+        }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            return UIImage(data: data)
+        } catch {
+            print("Failed to load image: \(error)")
+            return nil
+        }
+    }
+    
+    func deleteImage(from urlString: String) {
+        guard let url = URL(string: urlString), url.isFileURL else {
+            return
+        }
+        
+        do {
+            try FileManager.default.removeItem(at: url)
+        } catch {
+            print("Failed to delete image: \(error)")
+        }
+    }
+    
+    func isLocalImageUrl(_ urlString: String) -> Bool {
+        return urlString.hasPrefix("file://")
     }
 }

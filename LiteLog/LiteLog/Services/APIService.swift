@@ -241,6 +241,9 @@ class APIService {
                 if let imageFileName = record.imageFileName {
                     dict["imageFileName"] = imageFileName
                 }
+                if let deleteImage = record.deleteImage {
+                    dict["deleteImage"] = deleteImage
+                }
                 return dict
             }
         ]

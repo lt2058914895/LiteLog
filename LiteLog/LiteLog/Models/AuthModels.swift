@@ -173,8 +173,9 @@ public struct WeightRecordRequest: Sendable {
     public let imageUrl: String?
     public let imageFileName: String?
     public let measurementTimePeriod: String?
+    public let deleteImage: Bool?
     
-    public init(recordId: String, weight: Double, bodyFatPercentage: Double?, waistCircumference: Double?, hipCircumference: Double?, chestCircumference: Double?, thighCircumference: Double?, note: String?, date: TimeInterval, createdAt: TimeInterval, updatedAt: TimeInterval, deleted: Bool?, imageUrl: String?, imageFileName: String?, measurementTimePeriod: String?) {
+    public init(recordId: String, weight: Double, bodyFatPercentage: Double?, waistCircumference: Double?, hipCircumference: Double?, chestCircumference: Double?, thighCircumference: Double?, note: String?, date: TimeInterval, createdAt: TimeInterval, updatedAt: TimeInterval, deleted: Bool?, imageUrl: String?, imageFileName: String?, measurementTimePeriod: String?, deleteImage: Bool? = nil) {
         self.recordId = recordId
         self.weight = weight
         self.bodyFatPercentage = bodyFatPercentage
@@ -190,10 +191,11 @@ public struct WeightRecordRequest: Sendable {
         self.imageUrl = imageUrl
         self.imageFileName = imageFileName
         self.measurementTimePeriod = measurementTimePeriod
+        self.deleteImage = deleteImage
     }
     
     private enum CodingKeys: String, CodingKey {
-        case recordId, weight, bodyFatPercentage, waistCircumference, hipCircumference, chestCircumference, thighCircumference, note, date, createdAt, updatedAt, deleted, imageUrl, imageFileName, measurementTimePeriod
+        case recordId, weight, bodyFatPercentage, waistCircumference, hipCircumference, chestCircumference, thighCircumference, note, date, createdAt, updatedAt, deleted, imageUrl, imageFileName, measurementTimePeriod, deleteImage
     }
 }
 
@@ -216,6 +218,7 @@ extension WeightRecordRequest: Decodable {
         imageUrl = try container.decodeIfPresent(String.self, forKey: .imageUrl)
         imageFileName = try container.decodeIfPresent(String.self, forKey: .imageFileName)
         measurementTimePeriod = try container.decodeIfPresent(String.self, forKey: .measurementTimePeriod)
+        deleteImage = try container.decodeIfPresent(Bool.self, forKey: .deleteImage)
     }
 }
 
@@ -238,6 +241,7 @@ extension WeightRecordRequest: Encodable {
         try container.encodeIfPresent(imageUrl, forKey: .imageUrl)
         try container.encodeIfPresent(imageFileName, forKey: .imageFileName)
         try container.encodeIfPresent(measurementTimePeriod, forKey: .measurementTimePeriod)
+        try container.encodeIfPresent(deleteImage, forKey: .deleteImage)
     }
 }
 
@@ -275,17 +279,29 @@ public struct WeightRecordSyncResponse: Sendable {
     public let syncedCount: Int
     public let syncedRecordIds: [String]?
     public let conflictRecordIds: [String]?
+    public let syncedRecords: [SyncedRecord]?
     
-    public init(success: Bool, message: String?, syncedCount: Int, syncedRecordIds: [String]?, conflictRecordIds: [String]?) {
+    public struct SyncedRecord: Sendable, Decodable, Encodable {
+        public let recordId: String
+        public let imageUrl: String?
+        
+        public init(recordId: String, imageUrl: String?) {
+            self.recordId = recordId
+            self.imageUrl = imageUrl
+        }
+    }
+    
+    public init(success: Bool, message: String?, syncedCount: Int, syncedRecordIds: [String]?, conflictRecordIds: [String]?, syncedRecords: [SyncedRecord]? = nil) {
         self.success = success
         self.message = message
         self.syncedCount = syncedCount
         self.syncedRecordIds = syncedRecordIds
         self.conflictRecordIds = conflictRecordIds
+        self.syncedRecords = syncedRecords
     }
     
     private enum CodingKeys: String, CodingKey {
-        case success, message, syncedCount, syncedRecordIds, conflictRecordIds
+        case success, message, syncedCount, syncedRecordIds, conflictRecordIds, syncedRecords
     }
 }
 
@@ -298,6 +314,7 @@ extension WeightRecordSyncResponse: Decodable {
         syncedCount = try container.decode(Int.self, forKey: .syncedCount)
         syncedRecordIds = try container.decodeIfPresent([String].self, forKey: .syncedRecordIds)
         conflictRecordIds = try container.decodeIfPresent([String].self, forKey: .conflictRecordIds)
+        syncedRecords = try container.decodeIfPresent([SyncedRecord].self, forKey: .syncedRecords)
     }
 }
 
@@ -310,6 +327,7 @@ extension WeightRecordSyncResponse: Encodable {
         try container.encode(syncedCount, forKey: .syncedCount)
         try container.encodeIfPresent(syncedRecordIds, forKey: .syncedRecordIds)
         try container.encodeIfPresent(conflictRecordIds, forKey: .conflictRecordIds)
+        try container.encodeIfPresent(syncedRecords, forKey: .syncedRecords)
     }
 }
 

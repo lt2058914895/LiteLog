@@ -233,8 +233,13 @@ final class DataSyncManager {
             return
         }
         
-        let recordsWithImages = pendingRecords.filter { $0.selectedImage != nil }
-        let recordsWithoutImages = pendingRecords.filter { $0.selectedImage == nil }
+        let recordsWithLocalImages = pendingRecords.filter { 
+            guard let url = $0.imageUrl else { return false }
+            return ImageStorageManager.shared.isLocalImageUrl(url)
+        }
+        let recordsWithoutImages = pendingRecords.filter { 
+            $0.imageUrl == nil || !ImageStorageManager.shared.isLocalImageUrl($0.imageUrl!)
+        }
         
         if !recordsWithoutImages.isEmpty {
             let requests = recordsWithoutImages.map { record in
@@ -253,7 +258,8 @@ final class DataSyncManager {
                     deleted: false,
                     imageUrl: record.imageUrl,
                     imageFileName: nil,
-                    measurementTimePeriod: record.measurementTimePeriod
+                    measurementTimePeriod: record.measurementTimePeriod,
+                    deleteImage: record.deleteImage
                 )
             }
             
@@ -264,6 +270,7 @@ final class DataSyncManager {
                     if let syncedIds = response.syncedRecordIds {
                         for record in recordsWithoutImages where syncedIds.contains(record.id.uuidString) {
                             record.syncStatus = WeightRecord.SyncStatus.synced.rawValue
+                            record.deleteImage = false
                         }
                     }
                     try context.save()
@@ -274,8 +281,8 @@ final class DataSyncManager {
             }
         }
         
-        if !recordsWithImages.isEmpty {
-            let requests = recordsWithImages.map { record in
+        if !recordsWithLocalImages.isEmpty {
+            let requests = recordsWithLocalImages.map { record in
                 WeightRecordRequest(
                     recordId: record.id.uuidString,
                     weight: record.weight,
@@ -295,8 +302,11 @@ final class DataSyncManager {
                 )
             }
             
-            let images = recordsWithImages.compactMap { record -> (recordId: String, image: UIImage)? in
-                guard let image = record.selectedImage else { return nil }
+            let images = recordsWithLocalImages.compactMap { record -> (recordId: String, image: UIImage)? in
+                guard let imageUrl = record.imageUrl, ImageStorageManager.shared.isLocalImageUrl(imageUrl),
+                      let image = ImageStorageManager.shared.loadImage(from: imageUrl) else { 
+                    return nil 
+                }
                 return (record.id.uuidString, image)
             }
             
@@ -305,11 +315,24 @@ final class DataSyncManager {
                 
                 if response.success {
                     if let syncedIds = response.syncedRecordIds {
-                        for record in recordsWithImages where syncedIds.contains(record.id.uuidString) {
+                        for record in recordsWithLocalImages where syncedIds.contains(record.id.uuidString) {
                             record.syncStatus = WeightRecord.SyncStatus.synced.rawValue
-                            record.selectedImage = nil
                         }
                     }
+                    
+                    if let syncedRecords = response.syncedRecords {
+                        for syncedRecord in syncedRecords {
+                            if let record = recordsWithLocalImages.first(where: { $0.id.uuidString == syncedRecord.recordId }),
+                               let imageUrl = syncedRecord.imageUrl {
+                                let oldLocalUrl = record.imageUrl
+                                record.imageUrl = imageUrl
+                                if let oldLocalUrl = oldLocalUrl, ImageStorageManager.shared.isLocalImageUrl(oldLocalUrl) {
+                                    ImageStorageManager.shared.deleteImage(from: oldLocalUrl)
+                                }
+                            }
+                        }
+                    }
+                    
                     try context.save()
                     print("带图片的体重记录同步成功，同步了 \(response.syncedCount) 条")
                 }

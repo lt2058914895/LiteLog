@@ -88,6 +88,7 @@ struct RecordFormView: View {
     @State private var showingImagePicker = false
     @State private var showingImageSourcePicker = false
     @State private var imageSourceType: UIImagePickerController.SourceType = .camera
+    @State private var deleteImage = false
 
     private var unit: WeightUnit { settingsManager.weightUnit }
     private var isEditMode: Bool { recordData != nil }
@@ -172,9 +173,7 @@ struct RecordFormView: View {
                 
                 dateAndPeriodSection
                 
-                if showPhotoSection || selectedImage != nil || imageUrl != nil {
-                    photoSection
-                }
+                photoSection
                 
                 VStack {
                     advancedSectionHeader
@@ -315,21 +314,23 @@ struct RecordFormView: View {
                             .scaledToFit()
                             .frame(width: 80, height: 80)
                             .cornerRadius(8)
-                    } else if let url = imageUrl, let imageUrl = URL(string: url) {
-                        AsyncImage(url: imageUrl) { phase in
-                            if let image = phase.image {
-                                image
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 80, height: 80)
-                                    .cornerRadius(8)
-                            } else {
-                                Image(systemName: "photo")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 80, height: 80)
-                                    .foregroundColor(.secondaryText)
-                            }
+                    } else if let url = imageUrl {
+                        if ImageStorageManager.shared.isLocalImageUrl(url), let localImage = ImageStorageManager.shared.loadImage(from: url) {
+                            Image(uiImage: localImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 80, height: 80)
+                                .cornerRadius(8)
+                        } else if let remoteUrl = URL(string: url) {
+                            AsyncImageView(
+                                url: remoteUrl,
+                                placeholder: { AnyView(Image(systemName: "photo").resizable().scaledToFit().frame(width: 80, height: 80).foregroundColor(.secondaryText)) },
+                                errorPlaceholder: { AnyView(Image(systemName: "photo").resizable().scaledToFit().frame(width: 80, height: 80).foregroundColor(.secondaryText)) },
+                                contentMode: .fit,
+                                cacheKey: url
+                            )
+                            .frame(width: 80, height: 80)
+                            .cornerRadius(8)
                         }
                     }
                     
@@ -348,7 +349,7 @@ struct RecordFormView: View {
                     Button(role: .destructive) {
                         selectedImage = nil
                         imageUrl = nil
-                        showPhotoSection = false
+                        deleteImage = true
                     } label: {
                         Image(systemName: "x.circle.fill")
                             .foregroundColor(.red)
@@ -356,20 +357,20 @@ struct RecordFormView: View {
                     }
                     .buttonStyle(.plain)
                 }
-            }
-            
-            Button(action: { showingImageSourcePicker = true }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "camera")
-                        .foregroundColor(.primaryBlue)
-                    Text(NSLocalizedString("record.add.photo", comment: ""))
-                        .font(.subheadline)
-                        .foregroundColor(.primaryBlue)
+            } else {
+                Button(action: { showingImageSourcePicker = true }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "camera")
+                            .foregroundColor(.primaryBlue)
+                        Text(NSLocalizedString("record.add.photo", comment: ""))
+                            .font(.subheadline)
+                            .foregroundColor(.primaryBlue)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(16)
+                    .background(Color.primaryBlue.opacity(0.05))
+                    .cornerRadius(8)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(12)
-                .background(Color.primaryBlue.opacity(0.05))
-                .cornerRadius(8)
             }
         }
         .padding(16)
@@ -533,9 +534,15 @@ struct RecordFormView: View {
         newRecord.chestCircumference = chestCircumference ?? 0
         newRecord.thighCircumference = thighCircumference ?? 0
         newRecord.note = note.isEmpty ? nil : note
-        newRecord.imageUrl = imageUrl
+        if let selectedImage = selectedImage {
+            let localImageUrl = ImageStorageManager.shared.saveImage(selectedImage, for: newRecord.id.uuidString)
+            newRecord.imageUrl = localImageUrl
+            newRecord.selectedImage = selectedImage
+        } else {
+            newRecord.imageUrl = imageUrl
+            newRecord.selectedImage = nil
+        }
         newRecord.measurementTimePeriod = selectedTimePeriod.rawValue
-        newRecord.selectedImage = selectedImage
 
         do {
             try context.save()
@@ -572,8 +579,16 @@ struct RecordFormView: View {
         record.thighCircumference = Double(thighString) ?? 0
         record.measurementTimePeriod = selectedTimePeriod.rawValue
         record.note = note.isEmpty ? nil : note
-        record.imageUrl = imageUrl
-        record.selectedImage = selectedImage
+        if let selectedImage = selectedImage {
+            let localImageUrl = ImageStorageManager.shared.saveImage(selectedImage, for: record.id.uuidString)
+            record.imageUrl = localImageUrl
+            record.selectedImage = selectedImage
+            record.deleteImage = false
+        } else {
+            record.imageUrl = imageUrl
+            record.selectedImage = nil
+            record.deleteImage = deleteImage
+        }
         record.updatedAt = Date()
         record.syncStatusEnum = .pending
         
