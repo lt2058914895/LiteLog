@@ -281,6 +281,7 @@ struct UserInfoEditorView: View {
             
             if !isNicknameChanged && !isAvatarChanged {
                 isLoading = false
+                dismiss()
                 return
             }
             

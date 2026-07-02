@@ -95,9 +95,6 @@ struct SettingsView: View {
                                 .font(.title3)
                                 .fontWeight(.semibold)
                                 .foregroundColor(.primary)
-                            Text(NSLocalizedString("settings.tap.to.edit", comment: ""))
-                                .font(.caption)
-                                .foregroundColor(.secondaryText)
                         }
                         
                         Spacer()
