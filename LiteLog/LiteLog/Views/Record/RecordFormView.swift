@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import UIKit
 
 struct RecordFormData: Equatable {
     let id: String
@@ -75,6 +76,12 @@ struct RecordFormView: View {
     
     @State private var showAdvancedFields = false
     @State private var showPhotoSection = false
+    
+    @Environment(\.colorScheme) private var colorScheme
+    
+    private var cardBackgroundColor: Color {
+        colorScheme == .dark ? Color(.secondarySystemBackground) : .white
+    }
     
     @State private var selectedImage: UIImage?
     @State private var imageUrl: String?
@@ -254,7 +261,7 @@ struct RecordFormView: View {
             }
         }
         .padding(20)
-        .background(Color.white)
+        .background(cardBackgroundColor)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
@@ -294,7 +301,7 @@ struct RecordFormView: View {
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(cardBackgroundColor)
         .cornerRadius(12)
     }
     
@@ -366,7 +373,7 @@ struct RecordFormView: View {
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(cardBackgroundColor)
         .cornerRadius(12)
     }
     
@@ -398,7 +405,7 @@ struct RecordFormView: View {
                     .font(.caption)
             }
             .padding(16)
-            .background(Color.white)
+            .background(cardBackgroundColor)
             .cornerRadius(12)
         }
     }
@@ -448,7 +455,7 @@ struct RecordFormView: View {
                 unit: "cm"
             )
         }
-        .background(Color.white)
+        .background(cardBackgroundColor)
         .cornerRadius(12)
         .padding(.top, 4)
     }
@@ -460,20 +467,15 @@ struct RecordFormView: View {
                 .foregroundColor(.secondaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
-            ZStack(alignment: .topLeading) {
-                Text(note.isEmpty ? NSLocalizedString("record.note.placeholder", comment: "") : "")
-                    .font(.body)
-                    .foregroundColor(.secondaryText)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .opacity(note.isEmpty ? 1 : 0)
-                
-                TextEditor(text: $note)
-                    .background(Color.white)
-                    .cornerRadius(12)
-                    .padding(4)
-            }
+            ClearTextView(
+                text: $note,
+                placeholder: NSLocalizedString("record.note.placeholder", comment: ""),
+                font: UIFont.preferredFont(forTextStyle: .body),
+                textColor: .label
+            )
             .frame(minHeight: 80)
+            .background(cardBackgroundColor)
+            .cornerRadius(12)
         }
     }
     
@@ -684,6 +686,11 @@ struct MeasurementRow: View {
 
 struct MeasurementPeriodSelector: View {
     @Binding var selectedPeriod: MeasurementTimePeriod
+    @Environment(\.colorScheme) private var colorScheme
+    
+    private var cardBackgroundColor: Color {
+        colorScheme == .dark ? Color(.secondarySystemBackground) : .white
+    }
     
     var body: some View {
         HStack(spacing: 6) {
@@ -695,7 +702,7 @@ struct MeasurementPeriodSelector: View {
                         .font(.caption)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
-                        .background(selectedPeriod == period ? Color.primaryBlue : Color(.secondarySystemBackground))
+                        .background(selectedPeriod == period ? Color.primaryBlue : cardBackgroundColor)
                         .foregroundColor(selectedPeriod == period ? .white : .primaryText)
                         .cornerRadius(12)
                 }
