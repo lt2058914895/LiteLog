@@ -98,8 +98,6 @@ class APIService {
     }
     
     func updateProfile(nickname: String, avatarUrl: String?) async throws -> UpdateProfileResponse {
-        let endpoint = baseURL.appendingPathComponent("user/profile")
-
         var parameters: [String: Any] = [
             "nickname": nickname
         ]
@@ -107,6 +105,24 @@ class APIService {
         if let avatarUrl = avatarUrl, !avatarUrl.isEmpty {
             parameters["avatarUrl"] = avatarUrl
         }
+        
+        return try await performProfileUpdate(parameters: parameters)
+    }
+    
+    func updateUserProfile(height: Double, gender: Int, age: Int, goalWeight: Double, weightUnit: String) async throws -> UpdateProfileResponse {
+        let parameters: [String: Any] = [
+            "height": height,
+            "gender": gender,
+            "age": age,
+            "goalWeight": goalWeight,
+            "weightUnit": weightUnit
+        ]
+        
+        return try await performProfileUpdate(parameters: parameters)
+    }
+    
+    private func performProfileUpdate(parameters: [String: Any]) async throws -> UpdateProfileResponse {
+        let endpoint = baseURL.appendingPathComponent("user/profile")
         
         return try await withCheckedThrowingContinuation { continuation in
             print("DEBUG: updateProfile - URL: \(endpoint)")
@@ -150,37 +166,6 @@ class APIService {
                         }
                     }
                 }
-        }
-    }
-    
-    func updateUserProfile(height: Double, gender: Int, age: Int, goalWeight: Double, weightUnit: String) async throws -> UpdateProfileResponse {
-        let endpoint = baseURL.appendingPathComponent("user/profile")
-
-        let parameters: [String: Any] = [
-            "height": height,
-            "gender": gender,
-            "age": age,
-            "goalWeight": goalWeight,
-            "weightUnit": weightUnit
-        ]
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            session.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default, headers: defaultHeaders())
-                .validate(statusCode: 200..<300)
-            .responseData { response in
-                switch response.result {
-                case .success(let data):
-                    do {
-                        let decoder = JSONDecoder()
-                        let profileResponse = try decoder.decode(UpdateProfileResponse.self, from: data)
-                        continuation.resume(returning: profileResponse)
-                    } catch {
-                        continuation.resume(throwing: APIError.decodingError)
-                    }
-                case .failure:
-                    continuation.resume(throwing: APIError.invalidResponse)
-                }
-            }
         }
     }
     
