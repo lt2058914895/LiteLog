@@ -49,6 +49,7 @@ struct RecordView: View {
                     }
                 }
                 .background(Color(.systemGroupedBackground))
+                .frame(maxWidth: 600, alignment: .center)
                 
                 linksView
             }
@@ -84,7 +85,7 @@ struct RecordView: View {
                 viewModel.refresh()
             }
         }
-        .navigationViewStyle(.stack)
+        .adaptiveNavigationViewStyle()
     }
     
     private var linksView: some View {

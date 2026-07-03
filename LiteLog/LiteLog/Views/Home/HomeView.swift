@@ -77,6 +77,7 @@ struct HomeView: View {
                     .padding()
                 }
                 .background(Color(.systemGroupedBackground))
+                .frame(maxWidth: 600, alignment: .center)
                 
                 linksView
             }
@@ -103,7 +104,7 @@ struct HomeView: View {
                 computeCachedData()
             }
         }
-        .navigationViewStyle(.stack)
+        .adaptiveNavigationViewStyle()
     }
     
     private var linksView: some View {

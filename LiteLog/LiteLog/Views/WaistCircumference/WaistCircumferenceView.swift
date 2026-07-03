@@ -76,7 +76,8 @@ struct WaistCircumferenceView: View {
                 viewModel.refresh()
             }
         }
-        .navigationViewStyle(.stack)
+        .adaptiveNavigationViewStyle()
+        
     }
     
     private var linksView: some View {

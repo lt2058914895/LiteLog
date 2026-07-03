@@ -76,7 +76,8 @@ struct BodyFatView: View {
                 viewModel.refresh()
             }
         }
-        .navigationViewStyle(.stack)
+        .adaptiveNavigationViewStyle()
+        
     }
     
     private var linksView: some View {

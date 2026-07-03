@@ -15,6 +15,14 @@ extension View {
         self.sheet(isPresented: isPresented, onDismiss: onDismiss, content: content)
     }
     
+    @ViewBuilder
+    func adaptiveNavigationViewStyle() -> some View {
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            self.navigationViewStyle(.stack)
+        } else {
+            self.navigationViewStyle(.automatic)
+        }
+    }
     }
 
 extension Color {

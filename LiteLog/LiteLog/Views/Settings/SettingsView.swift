@@ -40,7 +40,11 @@ struct SettingsView: View {
                     aboutSection
                 }
                 .navigationBarHidden(true)
-                .onReceive(NotificationCenter.default.publisher(for: .showProfileEditor)) { _ in
+                .frame(maxWidth: 600, alignment: .center)
+                
+                linksView
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .showProfileEditor)) { _ in
                     showingProfileEditor = true
                 }
                 .adaptiveSheet(item: $exportURL) { url in
@@ -55,11 +59,9 @@ struct SettingsView: View {
                 .alert(NSLocalizedString("settings.export.error", comment: ""), isPresented: $showingExportError) {
                     Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
                 }
-                
-                linksView
-            }
         }
-        .navigationViewStyle(.stack)
+        .adaptiveNavigationViewStyle()
+        
     }
     
     private var linksView: some View {
