@@ -464,7 +464,7 @@ struct SettingsView: View {
                     .foregroundColor(.gray)
                 Text(NSLocalizedString("settings.version", comment: ""))
                 Spacer()
-                Text("1.0.0")
+                Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0")
                     .foregroundColor(.secondaryText)
             }
         }
