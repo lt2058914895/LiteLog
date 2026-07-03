@@ -170,7 +170,7 @@ struct FeedbackView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .navigationBarItems(leading: backButton)
-            .tabBarHidden(true)
+            .toolbar(.hidden, for: .tabBar)
             .sheet(isPresented: $showingSuccess, onDismiss: {
                 dismiss()
             }) {

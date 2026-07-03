@@ -54,7 +54,7 @@ struct UserInfoEditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .navigationBarItems(leading: backButton)
-            .tabBarHidden(true)
+            .toolbar(.hidden, for: .tabBar)
             .sheet(isPresented: $showImagePicker) {
                 imagePicker
             }

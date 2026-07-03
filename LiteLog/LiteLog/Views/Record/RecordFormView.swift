@@ -196,7 +196,7 @@ struct RecordFormView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .navigationBarItems(leading: backButton)
-        .tabBarHidden(true)
+        .toolbar(.hidden, for: .tabBar)
         .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
             Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
         } message: {
@@ -226,7 +226,6 @@ struct RecordFormView: View {
                 .ignoresSafeArea(.all)
                 .background(Color.black)
         }
-        .dismissKeyboardOnTapOutside()
     }
     
     private var weightCard: some View {
