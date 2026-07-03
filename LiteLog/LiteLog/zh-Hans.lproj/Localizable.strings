@@ -224,7 +224,7 @@
 "settings.feedback" = "用户反馈";
 "settings.send.feedback" = "发送反馈";
 "settings.not.logged.in" = "未登录";
-"app.name" = "轻身记";
+"app.name" = "体迹";
 
 // 登录相关
 "login.title" = "登录";
@@ -299,7 +299,7 @@
 "error.title" = "错误";
 
 // 通知相关
-"notification.title" = "轻身记";
+"notification.title" = "体迹";
 "notification.body" = "该记录今天的体重了！";
 "notification.weight.recorded.title" = "体重已记录";
 "notification.weight.recorded.body" = "今日体重：%.1f kg";
