@@ -76,7 +76,7 @@ struct HomeView: View {
                 .padding()
             }
             .background(Color(.systemGroupedBackground))
-            .frame(maxWidth: 600, alignment: .center)
+            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 800 : 600, alignment: .center)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {

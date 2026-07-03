@@ -261,7 +261,7 @@ struct StatisticsView: View {
                 .background(Color(.systemGroupedBackground))
             }
             .background(Color(.systemGroupedBackground))
-            .frame(maxWidth: 800, alignment: .center)
+            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 900 : 800, alignment: .center)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {

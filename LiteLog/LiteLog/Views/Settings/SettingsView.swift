@@ -39,7 +39,7 @@ struct SettingsView: View {
                 aboutSection
             }
             .navigationBarHidden(true)
-            .frame(maxWidth: 600, alignment: .center)
+            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 800 : 600, alignment: .center)
             .navigationDestination(isPresented: $showingProfileEditor) {
                 ProfileEditorView()
             }
