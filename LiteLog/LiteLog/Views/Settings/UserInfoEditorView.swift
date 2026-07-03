@@ -53,7 +53,11 @@ struct UserInfoEditorView: View {
             .navigationTitle(NSLocalizedString("profile.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
-            .navigationBarItems(leading: backButton)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    backButton
+                }
+            }
             .toolbar(.hidden, for: .tabBar)
             .sheet(isPresented: $showImagePicker) {
                 imagePicker

@@ -60,27 +60,23 @@ struct HomeView: View {
 
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                ScrollView {
-                    VStack(spacing: 20) {
-                        todayWeightCard
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    todayWeightCard
 
-                        bmiProgressSection
+                    bmiProgressSection
 
-                        goalWeightCard
-                        
-                        goalBodyFatCard
-                        
-                        goalMeasurementsCard
-                    }
-                    .padding()
+                    goalWeightCard
+                    
+                    goalBodyFatCard
+                    
+                    goalMeasurementsCard
                 }
-                .background(Color(.systemGroupedBackground))
-                .frame(maxWidth: 600, alignment: .center)
-                
-                linksView
+                .padding()
             }
+            .background(Color(.systemGroupedBackground))
+            .frame(maxWidth: 600, alignment: .center)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     HStack(spacing: 12) {
@@ -92,6 +88,15 @@ struct HomeView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(isPresented: $showingAddSheet) {
+                RecordFormView(isPresented: $showingAddSheet)
+            }
+            .navigationDestination(isPresented: $showingProfileEditor) {
+                ProfileEditorView()
+            }
+            .navigationDestination(isPresented: $showingBMIInfo) {
+                BMIInfoView(isPresented: $showingBMIInfo)
+            }
             .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
                 Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
             } message: {
@@ -103,23 +108,6 @@ struct HomeView: View {
             .onChange(of: records.count) { _ in
                 computeCachedData()
             }
-        }
-        .adaptiveNavigationViewStyle()
-    }
-    
-    private var linksView: some View {
-        Group {
-            NavigationLink(isActive: $showingAddSheet) {
-                RecordFormView(isPresented: $showingAddSheet)
-            } label: { EmptyView() }
-            
-            NavigationLink(isActive: $showingProfileEditor) {
-                ProfileEditorView()
-            } label: { EmptyView() }
-            
-            NavigationLink(isActive: $showingBMIInfo) {
-                BMIInfoView(isPresented: $showingBMIInfo)
-            } label: { EmptyView() }
         }
     }
 

@@ -169,7 +169,11 @@ struct FeedbackView: View {
             .navigationTitle(NSLocalizedString("feedback.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
-            .navigationBarItems(leading: backButton)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    backButton
+                }
+            }
             .toolbar(.hidden, for: .tabBar)
             .sheet(isPresented: $showingSuccess, onDismiss: {
                 dismiss()
@@ -229,7 +233,7 @@ struct FeedbackSuccessView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 24) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 80))

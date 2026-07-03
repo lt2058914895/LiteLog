@@ -195,7 +195,11 @@ struct RecordFormView: View {
         .navigationTitle(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .navigationBarItems(leading: backButton)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                backButton
+            }
+        }
         .toolbar(.hidden, for: .tabBar)
         .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
             Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}

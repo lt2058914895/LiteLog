@@ -150,7 +150,7 @@ struct StatisticsView: View {
                 let avgWeight = weekRecords.reduce(0) { $0 + $1.weight } / Double(weekRecords.count)
                 let representativeRecord = weekRecords.max(by: { $0.date < $1.date })!
                 return WeightData(
-                    id: representativeRecord.id ?? UUID(),
+                    id: representativeRecord.id,
                     date: weekStart,
                     weight: avgWeight,
                     bodyFatPercentage: weekRecords.compactMap { $0.bodyFatPercentage }.average ?? 0,
@@ -225,7 +225,7 @@ struct StatisticsView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // 固定在顶部的周月季度选择器
                 periodPicker
@@ -258,36 +258,35 @@ struct StatisticsView: View {
             }
             .background(Color(.systemGroupedBackground))
             .frame(maxWidth: 800, alignment: .center)
-        }
-        .adaptiveNavigationViewStyle()
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                HStack(spacing: 12) {
-                    avatarImageView
-                    Text(NSLocalizedString("stats.title", comment: ""))
-                        .font(.headline)
-                        .foregroundColor(.primary)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    HStack(spacing: 12) {
+                        avatarImageView
+                        Text(NSLocalizedString("stats.title", comment: ""))
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                    }
                 }
             }
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            computeFilteredRecords()
-        }
-        .onChange(of: selectedPeriod) { newValue in
-            if newValue != .year {
-                selectedYear = maxYear
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                computeFilteredRecords()
             }
-            computeFilteredRecords()
-        }
-        .onChange(of: selectedYear) { _ in
-            computeFilteredRecords()
-        }
-        .onChange(of: records.count) { _ in
-            computeFilteredRecords()
-        }
-        .sheet(isPresented: $showYearPicker) {
-            yearPickerSheet
+            .onChange(of: selectedPeriod) { newValue in
+                if newValue != .year {
+                    selectedYear = maxYear
+                }
+                computeFilteredRecords()
+            }
+            .onChange(of: selectedYear) { _ in
+                computeFilteredRecords()
+            }
+            .onChange(of: records.count) { _ in
+                computeFilteredRecords()
+            }
+            .sheet(isPresented: $showYearPicker) {
+                yearPickerSheet
+            }
         }
     }
     
@@ -372,7 +371,7 @@ struct StatisticsView: View {
     }
     
     private var yearPickerSheet: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 Picker(NSLocalizedString("stats.year", comment: ""), selection: $selectedYear) {
                     ForEach(minYear...maxYear, id: \.self) { year in
@@ -389,10 +388,15 @@ struct StatisticsView: View {
                 .padding()
             }
             .background(Color(.systemGroupedBackground))
-            .navigationBarTitle(NSLocalizedString("stats.year", comment: ""), displayMode: .inline)
-            .navigationBarItems(leading: Button(NSLocalizedString("action.cancel", comment: "")) {
-                showYearPicker = false
-            })
+            .navigationTitle(NSLocalizedString("stats.year", comment: ""))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(NSLocalizedString("action.cancel", comment: "")) {
+                        showYearPicker = false
+                    }
+                }
+            }
         }
     }
 

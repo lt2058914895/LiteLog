@@ -42,20 +42,16 @@ struct WaistCircumferenceView: View {
     }
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                ScrollView {
-                    VStack(spacing: 20) {
-                        ModernTrendChartView(data: chartData, color: .primaryBlue, unit: "cm", title: NSLocalizedString("home.trend", comment: ""))
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    ModernTrendChartView(data: chartData, color: .primaryBlue, unit: "cm", title: NSLocalizedString("home.trend", comment: ""))
 
-                        historySection
-                    }
-                    .padding()
+                    historySection
                 }
-                .background(Color(.systemGroupedBackground))
-                
-                linksView
+                .padding()
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("home.waist.circumference", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -67,6 +63,17 @@ struct WaistCircumferenceView: View {
                     }
                 }
             }
+            .navigationDestination(isPresented: $isPresentingAddSheet) {
+                RecordFormView(isPresented: $isPresentingAddSheet)
+            }
+            .navigationDestination(isPresented: $isPresentingEditSheet) {
+                if let data = recordToEditData {
+                    RecordFormView(recordData: data, isPresented: $isPresentingEditSheet)
+                        .id(data.id)
+                } else {
+                    EmptyView()
+                }
+            }
             .onChange(of: recordToEditData) { newValue in
                 if newValue != nil {
                     isPresentingEditSheet = true
@@ -75,25 +82,6 @@ struct WaistCircumferenceView: View {
             .onAppear {
                 viewModel.refresh()
             }
-        }
-        .adaptiveNavigationViewStyle()
-        
-    }
-    
-    private var linksView: some View {
-        Group {
-            NavigationLink(isActive: $isPresentingAddSheet) {
-                RecordFormView(isPresented: $isPresentingAddSheet)
-            } label: { EmptyView() }
-            
-            NavigationLink(isActive: $isPresentingEditSheet) {
-                if let data = recordToEditData {
-                    RecordFormView(recordData: data, isPresented: $isPresentingEditSheet)
-                        .id(data.id)
-                } else {
-                    EmptyView()
-                }
-            } label: { EmptyView() }
         }
     }
 

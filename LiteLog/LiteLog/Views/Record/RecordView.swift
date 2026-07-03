@@ -36,23 +36,19 @@ struct RecordView: View {
     }
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                VStack(spacing: 0) {
-                    viewModePicker
+        NavigationStack {
+            VStack(spacing: 0) {
+                viewModePicker
 
-                    switch viewMode {
-                    case .list:
-                        listView
-                    case .calendar:
-                        calendarView
-                    }
+                switch viewMode {
+                case .list:
+                    listView
+                case .calendar:
+                    calendarView
                 }
-                .background(Color(.systemGroupedBackground))
-                .frame(maxWidth: 600, alignment: .center)
-                
-                linksView
             }
+            .background(Color(.systemGroupedBackground))
+            .frame(maxWidth: 600, alignment: .center)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     HStack(spacing: 12) {
@@ -70,6 +66,22 @@ struct RecordView: View {
                     }
                 }
             }
+            .navigationDestination(isPresented: $isPresentingAddSheet) {
+                RecordFormView(isPresented: $isPresentingAddSheet, onSave: {
+                    viewModel.forceRefresh()
+                })
+            }
+            .navigationDestination(isPresented: $isPresentingEditSheet) {
+                if let data = recordToEditData {
+                    RecordFormView(recordData: data, isPresented: $isPresentingEditSheet, onSave: {
+                        viewModel.forceRefresh()
+                        recordToEditData = nil
+                    })
+                        .id(data.id)
+                } else {
+                    EmptyView()
+                }
+            }
             .onChange(of: recordToEditData) { newValue in
                 if newValue != nil {
                     isPresentingEditSheet = true
@@ -84,29 +96,6 @@ struct RecordView: View {
             .onAppear {
                 viewModel.refresh()
             }
-        }
-        .adaptiveNavigationViewStyle()
-    }
-    
-    private var linksView: some View {
-        Group {
-            NavigationLink(isActive: $isPresentingAddSheet) {
-                RecordFormView(isPresented: $isPresentingAddSheet, onSave: {
-                    viewModel.forceRefresh()
-                })
-            } label: { EmptyView() }
-            
-            NavigationLink(isActive: $isPresentingEditSheet) {
-                if let data = recordToEditData {
-                    RecordFormView(recordData: data, isPresented: $isPresentingEditSheet, onSave: {
-                        viewModel.forceRefresh()
-                        recordToEditData = nil
-                    })
-                        .id(data.id)
-                } else {
-                    EmptyView()
-                }
-            } label: { EmptyView() }
         }
     }
 

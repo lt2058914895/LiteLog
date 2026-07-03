@@ -65,7 +65,11 @@ struct ProfileEditorView: View {
         .navigationTitle(NSLocalizedString("settings.profile", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .navigationBarItems(leading: backButton)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                backButton
+            }
+        }
         .toolbar(.hidden, for: .tabBar)
         .alert(NSLocalizedString("settings.error", comment: ""), isPresented: $showingValidationAlert) {
             Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}

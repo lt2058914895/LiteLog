@@ -123,7 +123,11 @@ struct BMIInfoView: View {
             .navigationTitle(NSLocalizedString("bmi.info.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
-            .navigationBarItems(leading: backButton)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    backButton
+                }
+            }
             .toolbar(.hidden, for: .tabBar)
     }
     

@@ -29,7 +29,11 @@ struct ContactView: View {
             .navigationTitle(NSLocalizedString("settings.contact", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
-            .navigationBarItems(leading: backButton)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    backButton
+                }
+            }
             .toolbar(.hidden, for: .tabBar)
     }
     

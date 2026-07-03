@@ -24,25 +24,33 @@ struct SettingsView: View {
     private var unit: WeightUnit { settingsManager.weightUnit }
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                List {
-                    userHeaderSection
-                    
-                    profileSection
-
-                    syncNotificationSection
-
-                    actionSection
-                    
-                    dataSection
-
-                    aboutSection
-                }
-                .navigationBarHidden(true)
-                .frame(maxWidth: 600, alignment: .center)
+        NavigationStack {
+            List {
+                userHeaderSection
                 
-                linksView
+                profileSection
+
+                syncNotificationSection
+
+                actionSection
+                
+                dataSection
+
+                aboutSection
+            }
+            .navigationBarHidden(true)
+            .frame(maxWidth: 600, alignment: .center)
+            .navigationDestination(isPresented: $showingProfileEditor) {
+                ProfileEditorView()
+            }
+            .navigationDestination(isPresented: $showingUserInfoEditor) {
+                UserInfoEditorView()
+            }
+            .navigationDestination(isPresented: $showingFeedback) {
+                FeedbackView()
+            }
+            .navigationDestination(isPresented: $showingContact) {
+                ContactView()
             }
             .onReceive(NotificationCenter.default.publisher(for: .showProfileEditor)) { _ in
                     showingProfileEditor = true
@@ -60,29 +68,7 @@ struct SettingsView: View {
                     Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
                 }
         }
-        .adaptiveNavigationViewStyle()
-        
     }
-    
-    private var linksView: some View {
-        Group {
-            NavigationLink(isActive: $showingProfileEditor) {
-                ProfileEditorView()
-            } label: { EmptyView() }
-            
-            NavigationLink(isActive: $showingUserInfoEditor) {
-                UserInfoEditorView()
-            } label: { EmptyView() }
-            
-            NavigationLink(isActive: $showingFeedback) {
-                FeedbackView()
-            } label: { EmptyView() }
-            
-            NavigationLink(isActive: $showingContact) {
-                    ContactView()
-                } label: { EmptyView() }
-            }
-        }
 
     private var userHeaderSection: some View {
             Section {
