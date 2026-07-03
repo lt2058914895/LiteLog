@@ -25,12 +25,16 @@ struct StatisticsView: View {
     @State private var cachedFilteredRecords: [WeightData] = []
     @State private var selectedYear: Int = Calendar.current.component(.year, from: Date())
     @State private var showYearPicker: Bool = false
+    @State private var showingProfileEditor = false
     
     private let minYear = 2000
     private let maxYear = Calendar.current.component(.year, from: Date())
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
+    private var displayName: String {
+        !settingsManager.nickname.isEmpty ? settingsManager.nickname : NSLocalizedString("tab.statistics", comment: "")
+    }
 
     enum Period: String, CaseIterable {
         case week = "stats.week"
@@ -260,15 +264,22 @@ struct StatisticsView: View {
             .frame(maxWidth: 800, alignment: .center)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    HStack(spacing: 12) {
-                        avatarImageView
-                        Text(NSLocalizedString("stats.title", comment: ""))
-                            .font(.headline)
-                            .foregroundColor(.primary)
+                    Button(action: {
+                        showingProfileEditor = true
+                    }) {
+                        HStack(spacing: 12) {
+                            avatarImageView
+                            Text(displayName)
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                        }
                     }
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(isPresented: $showingProfileEditor) {
+                UserInfoEditorView()
+            }
             .onAppear {
                 computeFilteredRecords()
             }

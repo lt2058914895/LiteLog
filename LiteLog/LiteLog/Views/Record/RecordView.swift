@@ -12,6 +12,7 @@ struct RecordView: View {
     @State private var viewMode: ViewMode = .list
     @State private var isPresentingAddSheet = false
     @State private var isPresentingEditSheet = false
+    @State private var showingProfileEditor = false
     
     @StateObject private var viewModel: RecordViewModel
 
@@ -51,11 +52,15 @@ struct RecordView: View {
             .frame(maxWidth: 600, alignment: .center)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    HStack(spacing: 12) {
-                        avatarImageView
-                        Text(displayName)
-                            .font(.headline)
-                            .foregroundColor(.primary)
+                    Button(action: {
+                        showingProfileEditor = true
+                    }) {
+                        HStack(spacing: 12) {
+                            avatarImageView
+                            Text(displayName)
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                        }
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -70,6 +75,9 @@ struct RecordView: View {
                 RecordFormView(isPresented: $isPresentingAddSheet, onSave: {
                     viewModel.forceRefresh()
                 })
+            }
+            .navigationDestination(isPresented: $showingProfileEditor) {
+                UserInfoEditorView()
             }
             .navigationDestination(isPresented: $isPresentingEditSheet) {
                 if let data = recordToEditData {

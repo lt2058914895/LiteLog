@@ -79,11 +79,15 @@ struct HomeView: View {
             .frame(maxWidth: 600, alignment: .center)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    HStack(spacing: 12) {
-                        avatarImageView
-                        Text(displayName)
-                            .font(.headline)
-                            .foregroundColor(.primary)
+                    Button(action: {
+                        showingProfileEditor = true
+                    }) {
+                        HStack(spacing: 12) {
+                            avatarImageView
+                            Text(displayName)
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                        }
                     }
                 }
             }
@@ -92,7 +96,7 @@ struct HomeView: View {
                 RecordFormView(isPresented: $showingAddSheet)
             }
             .navigationDestination(isPresented: $showingProfileEditor) {
-                ProfileEditorView()
+                UserInfoEditorView()
             }
             .navigationDestination(isPresented: $showingBMIInfo) {
                 BMIInfoView(isPresented: $showingBMIInfo)
