@@ -29,18 +29,16 @@ extension View {
 struct DismissKeyboardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .onAppear {
-                let tapGesture = UITapGestureRecognizer(target: UIApplication.shared, action: #selector(UIApplication.shared.dismissKeyboard))
-                tapGesture.cancelsTouchesInView = false
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-                    windowScene.windows.first?.addGestureRecognizer(tapGesture)
-                }
+            .onTapGesture(coordinateSpace: .global) { _ in
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             }
-            .onDisappear {
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-                    windowScene.windows.first?.gestureRecognizers?.removeAll { $0 is UITapGestureRecognizer }
-                }
-            }
+            .background(
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
+            )
     }
 }
 
@@ -230,6 +228,7 @@ struct RecordFormView: View {
                 .ignoresSafeArea(.all)
                 .background(Color.black)
         }
+        .dismissKeyboardOnTapOutside()
     }
     
     private var weightCard: some View {
