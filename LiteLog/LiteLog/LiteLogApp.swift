@@ -18,12 +18,11 @@ struct LiteLogApp: App {
                 .onAppear {
                     settingsManager.setContext(persistenceController.viewContext)
                     
-                    #if DEBUG
-                    if !hasPopulatedMockData {
+                    // 仅在非正式环境下填充假数据（正式环境使用真实数据，无需假数据）
+                    if settingsManager.appEnvironment != .production && !hasPopulatedMockData {
                         MockDataManager.shared.populateMockData(context: persistenceController.viewContext)
                         hasPopulatedMockData = true
                     }
-                    #endif
                     
                     Task {
                         if !hasHandledCloudSync {

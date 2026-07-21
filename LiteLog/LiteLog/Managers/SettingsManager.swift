@@ -3,6 +3,25 @@ import SwiftUI
 import Combine
 import CoreData
 
+enum AppEnvironment: String, CaseIterable {
+    case development
+    case production
+    
+    var displayName: String {
+        switch self {
+        case .development: return NSLocalizedString("settings.env.dev", value: "开发环境", comment: "")
+        case .production: return NSLocalizedString("settings.env.prod", value: "正式环境", comment: "")
+        }
+    }
+    
+    var baseURL: URL {
+        switch self {
+        case .development: return URL(string: "http://10.226.220.119:8080")!
+        case .production: return URL(string: "https://litelog.com.cn")!
+        }
+    }
+}
+
 final class SettingsManager: ObservableObject {
     static let shared = SettingsManager()
 
@@ -27,8 +46,15 @@ final class SettingsManager: ObservableObject {
         static let avatarUrl = "avatarUrl"
         static let avatarData = "avatarData"
         static let avatarUrlHash = "avatarUrlHash"
+        static let appEnvironment = "appEnvironment"
     }
 
+    @Published var appEnvironment: AppEnvironment {
+        didSet {
+            defaults.set(appEnvironment.rawValue, forKey: Keys.appEnvironment)
+        }
+    }
+    
     @Published var weightUnit: WeightUnit {
         didSet {
             defaults.set(weightUnit.rawValue, forKey: Keys.weightUnit)
@@ -160,6 +186,9 @@ final class SettingsManager: ObservableObject {
     }
 
     private init() {
+        let savedEnv = defaults.string(forKey: Keys.appEnvironment) ?? AppEnvironment.production.rawValue
+        self.appEnvironment = AppEnvironment(rawValue: savedEnv) ?? .production
+
         let savedUnit = defaults.string(forKey: Keys.weightUnit) ?? WeightUnit.kg.rawValue
         self.weightUnit = WeightUnit(rawValue: savedUnit) ?? .kg
 

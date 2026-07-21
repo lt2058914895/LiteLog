@@ -4,11 +4,9 @@ import Alamofire
 class APIService {
     static let shared = APIService()
     
-    #if DEBUG
-    public let baseURL = URL(string: "http://10.226.220.119:8080")!
-    #else
-    public let baseURL = URL(string: "https://litelog.com.cn")!
-    #endif
+    public var baseURL: URL {
+        SettingsManager.shared.appEnvironment.baseURL
+    }
     
     private init() {}
     

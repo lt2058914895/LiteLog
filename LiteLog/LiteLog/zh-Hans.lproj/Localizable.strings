@@ -221,6 +221,9 @@
 "settings.share" = "推荐给好友";
 "settings.about" = "关于";
 "settings.version" = "版本";
+"settings.env" = "服务器环境";
+"settings.env.dev" = "开发环境";
+"settings.env.prod" = "正式环境";
 "settings.feedback" = "用户反馈";
 "settings.send.feedback" = "发送反馈";
 "settings.not.logged.in" = "未登录";

@@ -19,6 +19,8 @@ struct SettingsView: View {
     @State private var notificationTime = SettingsManager.defaultNotificationTime()
     @State private var showingFeedback = false
     @State private var showingContact = false
+    @State private var versionTapCount = 0
+    @State private var showingEnvPicker = false
     
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -466,6 +468,36 @@ struct SettingsView: View {
                 Spacer()
                 Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0")
                     .foregroundColor(.secondaryText)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                versionTapCount += 1
+                if versionTapCount >= 5 {
+                    versionTapCount = 0
+                    showingEnvPicker = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    versionTapCount = 0
+                }
+            }
+            .confirmationDialog(
+                NSLocalizedString("settings.env", value: "服务器环境", comment: ""),
+                isPresented: $showingEnvPicker,
+                titleVisibility: .visible
+            ) {
+                ForEach(AppEnvironment.allCases, id: \.self) { env in
+                    Button(action: {
+                        settingsManager.appEnvironment = env
+                    }) {
+                        HStack {
+                            Text(env.displayName)
+                            if settingsManager.appEnvironment == env {
+                                Text("✓")
+                            }
+                        }
+                    }
+                }
+                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
             }
         }
     }
