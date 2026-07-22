@@ -44,7 +44,7 @@ struct BMIInfoView: View {
     }
     
     private var currentBodyFat: Double? {
-        latestWeightRecord?.bodyFatPercentage
+        latestWeightRecord?.bodyFatPercentageValue
     }
     
     private var bmiCategory: UserProfile.BMICategory? {

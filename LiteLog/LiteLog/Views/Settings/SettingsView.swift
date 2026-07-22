@@ -1,7 +1,9 @@
 import SwiftUI
 import CoreData
+import os
 
 struct SettingsView: View {
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "SettingsView")
     @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var settingsManager: SettingsManager
     @StateObject private var notificationManager = NotificationManager.shared
@@ -155,7 +157,7 @@ struct SettingsView: View {
                     }
                 }
             } catch {
-                print("Failed to load avatar: \(error)")
+                Self.logger.error("Failed to load avatar: \(error.localizedDescription)")
             }
         }
         
@@ -195,7 +197,7 @@ struct SettingsView: View {
                                     Text(NSLocalizedString("settings.goal.weight", comment: ""))
                                         .font(.caption)
                                         .foregroundColor(.secondaryText)
-                                    Text("\(unit.convertFromKg(profile.goalWeight).smartFormatted) \(unit.shortName)")
+                                    Text("\(profile.goalWeightValue.map { unit.convertFromKg($0).smartFormatted } ?? "--") \(unit.shortName)")
                                         .font(.body)
                                         .fontWeight(.semibold)
                                         .foregroundColor(.primaryBlue)
@@ -534,7 +536,7 @@ struct SettingsView: View {
                 await DataSyncManager.shared.syncDeletedRecords(recordIds: recordIds)
             }
         } catch {
-            print("Failed to delete all data: \(error)")
+            Self.logger.error("Failed to delete all data: \(error.localizedDescription)")
         }
     }
 }

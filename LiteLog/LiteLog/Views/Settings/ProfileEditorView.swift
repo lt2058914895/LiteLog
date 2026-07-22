@@ -1,7 +1,9 @@
 import SwiftUI
 import CoreData
+import os
 
 struct ProfileEditorView: View {
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "ProfileEditorView")
     @Environment(\.managedObjectContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
@@ -352,7 +354,7 @@ struct ProfileEditorView: View {
             heightString = heightUnit.convertFromCm(profile.height).smartFormatted
             gender = profile.genderEnum
             age = Int(profile.age)
-            goalWeightString = unit.convertFromKg(profile.goalWeight).smartFormatted
+            goalWeightString = profile.goalWeightValue.map { unit.convertFromKg($0).smartFormatted } ?? ""
             goalBodyFatString = profile.goalBodyFatPercentage?.smartFormatted ?? ""
             goalWaistCircumferenceString = profile.goalWaistCircumferenceValue?.smartFormatted ?? ""
             goalHipCircumferenceString = profile.goalHipCircumferenceValue?.smartFormatted ?? ""
@@ -430,12 +432,12 @@ struct ProfileEditorView: View {
             existing.height = heightInCm
             existing.genderEnum = gender
             existing.age = Int16(age)
-            existing.goalWeight = goalWeightInKg
-            existing.goalBodyFat = goalBodyFat ?? 0
-            existing.goalWaistCircumference = goalWaistCircumference ?? 0
-            existing.goalHipCircumference = goalHipCircumference ?? 0
-            existing.goalChestCircumference = goalChestCircumference ?? 0
-            existing.goalThighCircumference = goalThighCircumference ?? 0
+            existing.goalWeightValue = goalWeightInKg
+            existing.goalBodyFatPercentage = goalBodyFat
+            existing.goalWaistCircumferenceValue = goalWaistCircumference
+            existing.goalHipCircumferenceValue = goalHipCircumference
+            existing.goalChestCircumferenceValue = goalChestCircumference
+            existing.goalThighCircumferenceValue = goalThighCircumference
             existing.updatedAt = Date()
             existing.syncStatusEnum = .pending
         } else {
@@ -443,12 +445,12 @@ struct ProfileEditorView: View {
             newProfile.height = heightInCm
             newProfile.genderEnum = gender
             newProfile.age = Int16(age)
-            newProfile.goalWeight = goalWeightInKg
-            newProfile.goalBodyFat = goalBodyFat ?? 0
-            newProfile.goalWaistCircumference = goalWaistCircumference ?? 0
-            newProfile.goalHipCircumference = goalHipCircumference ?? 0
-            newProfile.goalChestCircumference = goalChestCircumference ?? 0
-            newProfile.goalThighCircumference = goalThighCircumference ?? 0
+            newProfile.goalWeightValue = goalWeightInKg
+            newProfile.goalBodyFatPercentage = goalBodyFat
+            newProfile.goalWaistCircumferenceValue = goalWaistCircumference
+            newProfile.goalHipCircumferenceValue = goalHipCircumference
+            newProfile.goalChestCircumferenceValue = goalChestCircumference
+            newProfile.goalThighCircumferenceValue = goalThighCircumference
         }
         
         do {
@@ -461,7 +463,7 @@ struct ProfileEditorView: View {
                 dismiss()
             }
         } catch {
-            print("保存个人资料失败: \(error)")
+            Self.logger.error("保存个人资料失败: \(error.localizedDescription)")
         }
     }
     

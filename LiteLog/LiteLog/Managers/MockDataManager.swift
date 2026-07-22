@@ -27,12 +27,12 @@ class MockDataManager {
         profile.height = 175.0
         profile.gender = UserProfile.Gender.male.rawValue
         profile.age = 28
-        profile.goalWeight = 70.0
-        profile.goalBodyFat = 15.0
-        profile.goalWaistCircumference = 78.0
-        profile.goalHipCircumference = 92.0
-        profile.goalChestCircumference = 98.0
-        profile.goalThighCircumference = 54.0
+        profile.goalWeightValue = 70.0
+        profile.goalBodyFatPercentage = 15.0
+        profile.goalWaistCircumferenceValue = 78.0
+        profile.goalHipCircumferenceValue = 92.0
+        profile.goalChestCircumferenceValue = 98.0
+        profile.goalThighCircumferenceValue = 54.0
         profile.weightUnit = WeightUnit.kg.rawValue
         profile.createdAt = Date().addingTimeInterval(-30 * 24 * 60 * 60)
         profile.updatedAt = Date()
@@ -57,13 +57,13 @@ class MockDataManager {
             let weight = currentWeight + fluctuation
             
             // 随机添加体脂率
-            let bodyFatPercentage = Bool.random() ? 18.0 + Double.random(in: 0...3) : 0
+            let bodyFatPercentage: Double? = Bool.random() ? 18.0 + Double.random(in: 0...3) : nil
             
             // 随机添加围度数据（70%概率有值）
-            let waistCircumference = Bool.random() ? 80.0 + Double.random(in: 0...5) : 0
-            let hipCircumference = Bool.random() ? 90.0 + Double.random(in: 0...5) : 0
-            let chestCircumference = Bool.random() ? 95.0 + Double.random(in: 0...5) : 0
-            let thighCircumference = Bool.random() ? 55.0 + Double.random(in: 0...3) : 0
+            let waistCircumference: Double? = Bool.random() ? 80.0 + Double.random(in: 0...5) : nil
+            let hipCircumference: Double? = Bool.random() ? 90.0 + Double.random(in: 0...5) : nil
+            let chestCircumference: Double? = Bool.random() ? 95.0 + Double.random(in: 0...5) : nil
+            let thighCircumference: Double? = Bool.random() ? 55.0 + Double.random(in: 0...3) : nil
             
             // 随机选择测量时段
             let measurementTimePeriod = MeasurementTimePeriod.allCases.randomElement()?.rawValue ?? MeasurementTimePeriod.random.rawValue
@@ -78,11 +78,11 @@ class MockDataManager {
             
             let record = WeightRecord.create(in: context, weight: weight)
             record.date = date
-            record.bodyFatPercentage = bodyFatPercentage
-            record.waistCircumference = waistCircumference
-            record.hipCircumference = hipCircumference
-            record.chestCircumference = chestCircumference
-            record.thighCircumference = thighCircumference
+            record.bodyFatPercentageValue = bodyFatPercentage
+            record.waistCircumferenceValue = waistCircumference
+            record.hipCircumferenceValue = hipCircumference
+            record.chestCircumferenceValue = chestCircumference
+            record.thighCircumferenceValue = thighCircumference
             record.note = note
             record.measurementTimePeriod = measurementTimePeriod
             record.createdAt = date

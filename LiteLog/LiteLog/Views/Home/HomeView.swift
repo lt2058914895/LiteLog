@@ -40,19 +40,19 @@ struct HomeView: View {
         let today = Date().startOfDay
         todayRecord = records.first { Calendar.current.isDate($0.date, inSameDayAs: today) }
         
-        let bodyFatRecord = records.first { $0.bodyFatPercentage != 0 }
+        let bodyFatRecord = records.first { $0.bodyFatPercentageValue != nil }
         latestBodyFat = bodyFatRecord?.bodyFatPercentageValue
         
-        let waistRecord = records.first { $0.waistCircumference != 0 }
+        let waistRecord = records.first { $0.waistCircumferenceValue != nil }
         latestWaist = waistRecord?.waistCircumferenceValue
         
-        let hipRecord = records.first { $0.hipCircumference != 0 }
+        let hipRecord = records.first { $0.hipCircumferenceValue != nil }
         latestHip = hipRecord?.hipCircumferenceValue
         
-        let chestRecord = records.first { $0.chestCircumference != 0 }
+        let chestRecord = records.first { $0.chestCircumferenceValue != nil }
         latestChest = chestRecord?.chestCircumferenceValue
         
-        let thighRecord = records.first { $0.thighCircumference != 0 }
+        let thighRecord = records.first { $0.thighCircumferenceValue != nil }
         latestThigh = thighRecord?.thighCircumferenceValue
         
         bodyFatProgress = latestBodyFat.map { min($0 / 50.0 * 100, 100) } ?? 0
@@ -168,9 +168,8 @@ struct HomeView: View {
                 Spacer()
             }
             
-            if let profile = profile {
+            if let profile = profile, let goalWeight = profile.goalWeightValue {
                 let currentWeight = latestWeight ?? 0
-                let goalWeight = profile.goalWeight
                 let difference = goalWeight - currentWeight
                 
                 // 目标体重和进度一行显示
@@ -248,7 +247,7 @@ struct HomeView: View {
             }
             
             // 只有目标体脂率和当前体脂率都为空时才展示暂无数据
-            if let profile = profile, (profile.goalBodyFat != 0 || latestBodyFat != nil) {
+            if let profile = profile, (profile.goalBodyFatPercentage != nil || latestBodyFat != nil) {
                 let goalBodyFat = profile.goalBodyFatPercentage
                 let currentBodyFat = latestBodyFat ?? 0
                 
@@ -361,10 +360,10 @@ struct HomeView: View {
             
             // 内容区域
             if let profile = profile {
-                let hasWaistData = profile.goalWaistCircumference != 0 || latestWaist != nil
-                let hasHipData = profile.goalHipCircumference != 0 || latestHip != nil
-                let hasChestData = profile.goalChestCircumference != 0 || latestChest != nil
-                let hasThighData = profile.goalThighCircumference != 0 || latestThigh != nil
+                let hasWaistData = profile.goalWaistCircumferenceValue != nil || latestWaist != nil
+                let hasHipData = profile.goalHipCircumferenceValue != nil || latestHip != nil
+                let hasChestData = profile.goalChestCircumferenceValue != nil || latestChest != nil
+                let hasThighData = profile.goalThighCircumferenceValue != nil || latestThigh != nil
                 
                 if hasWaistData || hasHipData || hasChestData || hasThighData {
                     VStack(spacing: 20) {

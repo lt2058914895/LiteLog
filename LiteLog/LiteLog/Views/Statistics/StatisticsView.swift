@@ -157,11 +157,11 @@ struct StatisticsView: View {
                     id: representativeRecord.id,
                     date: weekStart,
                     weight: avgWeight,
-                    bodyFatPercentage: weekRecords.compactMap { $0.bodyFatPercentage }.average ?? 0,
-                    waistCircumference: weekRecords.compactMap { $0.waistCircumference }.average ?? 0,
-                    hipCircumference: weekRecords.compactMap { $0.hipCircumference }.average ?? 0,
-                    chestCircumference: weekRecords.compactMap { $0.chestCircumference }.average ?? 0,
-                    thighCircumference: weekRecords.compactMap { $0.thighCircumference }.average ?? 0
+                    bodyFatPercentage: weekRecords.compactMap { $0.bodyFatPercentageValue }.average,
+                    waistCircumference: weekRecords.compactMap { $0.waistCircumferenceValue }.average,
+                    hipCircumference: weekRecords.compactMap { $0.hipCircumferenceValue }.average,
+                    chestCircumference: weekRecords.compactMap { $0.chestCircumferenceValue }.average,
+                    thighCircumference: weekRecords.compactMap { $0.thighCircumferenceValue }.average
                 )
             }
             .sorted { $0.date < $1.date }
@@ -176,11 +176,11 @@ struct StatisticsView: View {
                         id: record.id,
                         date: record.date,
                         weight: record.weight,
-                        bodyFatPercentage: record.bodyFatPercentage,
-                        waistCircumference: record.waistCircumference,
-                        hipCircumference: record.hipCircumference,
-                        chestCircumference: record.chestCircumference,
-                        thighCircumference: record.thighCircumference
+                        bodyFatPercentage: record.bodyFatPercentageValue,
+                        waistCircumference: record.waistCircumferenceValue,
+                        hipCircumference: record.hipCircumferenceValue,
+                        chestCircumference: record.chestCircumferenceValue,
+                        thighCircumference: record.thighCircumferenceValue
                     )
                 }
                 .sorted { $0.date < $1.date }
@@ -605,7 +605,7 @@ struct StatisticsView: View {
                     Spacer()
 
                     if let profile = profile {
-                        Text("\(unit.convertFromKg(profile.goalWeight).smartFormatted) \(unit.shortName)")
+                        Text("\(profile.goalWeightValue.map { unit.convertFromKg($0).smartFormatted } ?? "--") \(unit.shortName)")
                             .fontWeight(.medium)
                             .foregroundColor(.primaryText)
                     }

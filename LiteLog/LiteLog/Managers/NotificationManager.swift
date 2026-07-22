@@ -2,10 +2,13 @@ import Foundation
 import UserNotifications
 import Combine
 import CoreData
+import os
 
 final class NotificationManager: ObservableObject {
     static let shared = NotificationManager()
-
+    
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "NotificationManager")
+    
     @Published var isAuthorized = false
     @Published var streakDays: Int = 0
 
@@ -149,7 +152,7 @@ final class NotificationManager: ObservableObject {
             
             return streak
         } catch {
-            print("Error calculating streak: \(error)")
+            Self.logger.error("Error calculating streak: \(error.localizedDescription)")
             return 0
         }
     }
@@ -201,7 +204,7 @@ final class NotificationManager: ObservableObject {
 
             return nil
         } catch {
-            print("Error suggesting reminder time: \(error)")
+            Self.logger.error("Error suggesting reminder time: \(error.localizedDescription)")
             return nil
         }
     }

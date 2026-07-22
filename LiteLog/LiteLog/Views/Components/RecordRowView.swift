@@ -29,11 +29,11 @@ struct RecordRowView: View, Equatable {
     static func == (lhs: RecordRowView, rhs: RecordRowView) -> Bool {
         lhs.record.objectID == rhs.record.objectID &&
         lhs.record.weight == rhs.record.weight &&
-        lhs.record.bodyFatPercentage == rhs.record.bodyFatPercentage &&
-        lhs.record.waistCircumference == rhs.record.waistCircumference &&
-        lhs.record.hipCircumference == rhs.record.hipCircumference &&
-        lhs.record.chestCircumference == rhs.record.chestCircumference &&
-        lhs.record.thighCircumference == rhs.record.thighCircumference &&
+        lhs.record.bodyFatPercentageValue == rhs.record.bodyFatPercentageValue &&
+        lhs.record.waistCircumferenceValue == rhs.record.waistCircumferenceValue &&
+        lhs.record.hipCircumferenceValue == rhs.record.hipCircumferenceValue &&
+        lhs.record.chestCircumferenceValue == rhs.record.chestCircumferenceValue &&
+        lhs.record.thighCircumferenceValue == rhs.record.thighCircumferenceValue &&
         lhs.record.date == rhs.record.date &&
         lhs.record.note == rhs.record.note &&
         lhs.record.imageUrl == rhs.record.imageUrl &&
@@ -259,13 +259,7 @@ struct RecordRowView: View, Equatable {
                 Spacer().frame(width: 56)
             }
             
-            if let image = record.selectedImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 120)
-                    .cornerRadius(8)
-            } else if let url = record.imageUrl {
+            if let url = record.imageUrl {
                 if ImageStorageManager.shared.isLocalImageUrl(url), let localImage = ImageStorageManager.shared.loadImage(from: url) {
                     Image(uiImage: localImage)
                         .resizable()

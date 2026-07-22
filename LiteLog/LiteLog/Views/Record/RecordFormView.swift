@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreData
 import UIKit
+import os
 
 struct RecordFormData: Equatable {
     let id: String
@@ -19,6 +20,8 @@ struct RecordFormData: Equatable {
         lhs.id == rhs.id
     }
 }
+
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "RecordFormView")
 
 extension View {
     func dismissKeyboardOnTapOutside() -> some View {
@@ -530,19 +533,17 @@ struct RecordFormView: View {
         
         let newRecord = WeightRecord.create(in: context, weight: weightInKg)
         newRecord.date = date.startOfDay
-        newRecord.bodyFatPercentage = bodyFatPercentage ?? 0
-        newRecord.waistCircumference = waistCircumference ?? 0
-        newRecord.hipCircumference = hipCircumference ?? 0
-        newRecord.chestCircumference = chestCircumference ?? 0
-        newRecord.thighCircumference = thighCircumference ?? 0
+        newRecord.bodyFatPercentageValue = bodyFatPercentage
+        newRecord.waistCircumferenceValue = waistCircumference
+        newRecord.hipCircumferenceValue = hipCircumference
+        newRecord.chestCircumferenceValue = chestCircumference
+        newRecord.thighCircumferenceValue = thighCircumference
         newRecord.note = note.isEmpty ? nil : note
         if let selectedImage = selectedImage {
             let localImageUrl = ImageStorageManager.shared.saveImage(selectedImage, for: newRecord.id.uuidString)
             newRecord.imageUrl = localImageUrl
-            newRecord.selectedImage = selectedImage
         } else {
             newRecord.imageUrl = imageUrl
-            newRecord.selectedImage = nil
         }
         newRecord.measurementTimePeriod = selectedTimePeriod.rawValue
 
@@ -574,21 +575,19 @@ struct RecordFormView: View {
 
         record.date = date.startOfDay
         record.weight = unit.convertToKg(weightValue)
-        record.bodyFatPercentage = Double(bodyFatString) ?? 0
-        record.waistCircumference = Double(waistString) ?? 0
-        record.hipCircumference = Double(hipString) ?? 0
-        record.chestCircumference = Double(chestString) ?? 0
-        record.thighCircumference = Double(thighString) ?? 0
+        record.bodyFatPercentageValue = Double(bodyFatString)
+        record.waistCircumferenceValue = Double(waistString)
+        record.hipCircumferenceValue = Double(hipString)
+        record.chestCircumferenceValue = Double(chestString)
+        record.thighCircumferenceValue = Double(thighString)
         record.measurementTimePeriod = selectedTimePeriod.rawValue
         record.note = note.isEmpty ? nil : note
         if let selectedImage = selectedImage {
             let localImageUrl = ImageStorageManager.shared.saveImage(selectedImage, for: record.id.uuidString)
             record.imageUrl = localImageUrl
-            record.selectedImage = selectedImage
             record.deleteImage = false
         } else {
             record.imageUrl = imageUrl
-            record.selectedImage = nil
             record.deleteImage = deleteImage
         }
         record.updatedAt = Date()
@@ -644,7 +643,7 @@ struct RecordFormView: View {
                 await DataSyncManager.shared.syncDeletedRecords(recordIds: recordIds)
             }
         } catch {
-            print("Failed to delete records for selected date: \(error)")
+            logger.error("Failed to delete records for selected date: \(error.localizedDescription)")
         }
     }
 }

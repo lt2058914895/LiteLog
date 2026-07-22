@@ -13,12 +13,12 @@ final class UserProfile: NSManagedObject {
     @NSManaged var height: Double
     @NSManaged var gender: Int16
     @NSManaged var age: Int16
-    @NSManaged var goalWeight: Double
-    @NSManaged var goalBodyFat: Double
-    @NSManaged var goalWaistCircumference: Double
-    @NSManaged var goalHipCircumference: Double
-    @NSManaged var goalChestCircumference: Double
-    @NSManaged var goalThighCircumference: Double
+    @NSManaged var goalWeight: NSNumber?
+    @NSManaged var goalBodyFat: NSNumber?
+    @NSManaged var goalWaistCircumference: NSNumber?
+    @NSManaged var goalHipCircumference: NSNumber?
+    @NSManaged var goalChestCircumference: NSNumber?
+    @NSManaged var goalThighCircumference: NSNumber?
     @NSManaged var weightUnit: String
     @NSManaged var createdAt: Date
     @NSManaged var updatedAt: Date
@@ -47,29 +47,40 @@ final class UserProfile: NSManagedObject {
         NSFetchRequest<UserProfile>(entityName: "UserProfile")
     }
 
+    // Double? 桥接计算属性（CoreData @NSManaged 不支持 Double?，需用 NSNumber? 存储）
+    var goalWeightValue: Double? {
+        get { goalWeight?.doubleValue }
+        set { goalWeight = newValue.map { NSNumber(value: $0) } }
+    }
+
     var goalBodyFatPercentage: Double? {
-        goalBodyFat == 0 ? nil : goalBodyFat
+        get { goalBodyFat?.doubleValue }
+        set { goalBodyFat = newValue.map { NSNumber(value: $0) } }
     }
 
     var goalWaistCircumferenceValue: Double? {
-        goalWaistCircumference == 0 ? nil : goalWaistCircumference
+        get { goalWaistCircumference?.doubleValue }
+        set { goalWaistCircumference = newValue.map { NSNumber(value: $0) } }
     }
 
     var goalHipCircumferenceValue: Double? {
-        goalHipCircumference == 0 ? nil : goalHipCircumference
+        get { goalHipCircumference?.doubleValue }
+        set { goalHipCircumference = newValue.map { NSNumber(value: $0) } }
     }
 
     var goalChestCircumferenceValue: Double? {
-        goalChestCircumference == 0 ? nil : goalChestCircumference
+        get { goalChestCircumference?.doubleValue }
+        set { goalChestCircumference = newValue.map { NSNumber(value: $0) } }
     }
 
     var goalThighCircumferenceValue: Double? {
-        goalThighCircumference == 0 ? nil : goalThighCircumference
+        get { goalThighCircumference?.doubleValue }
+        set { goalThighCircumference = newValue.map { NSNumber(value: $0) } }
     }
     
     var hasGoalMeasurements: Bool {
-        goalWaistCircumference > 0 || goalHipCircumference > 0 || 
-        goalChestCircumference > 0 || goalThighCircumference > 0
+        goalWaistCircumference != nil || goalHipCircumference != nil || 
+        goalChestCircumference != nil || goalThighCircumference != nil
     }
 
     var genderEnum: Gender {
@@ -153,12 +164,12 @@ extension UserProfile {
         profile.height = 170.0
         profile.gender = Gender.male.rawValue
         profile.age = 30
-        profile.goalWeight = 65.0
-        profile.goalBodyFat = 0
-        profile.goalWaistCircumference = 0
-        profile.goalHipCircumference = 0
-        profile.goalChestCircumference = 0
-        profile.goalThighCircumference = 0
+        profile.goalWeightValue = 65.0
+        profile.goalBodyFatPercentage = nil
+        profile.goalWaistCircumferenceValue = nil
+        profile.goalHipCircumferenceValue = nil
+        profile.goalChestCircumferenceValue = nil
+        profile.goalThighCircumferenceValue = nil
         profile.weightUnit = "kg"
         profile.createdAt = Date()
         profile.updatedAt = Date()

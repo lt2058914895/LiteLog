@@ -34,7 +34,6 @@
         <attribute name="createdAt" attributeType="Date"/>
         <attribute name="updatedAt" attributeType="Date"/>
         <attribute name="syncStatus" attributeType="Integer 16" usesScalarValueType="YES"/>
-        <attribute name="selectedImage" attributeType="Transformable" optional="YES" transient="YES" valueTransformerName="NSSecureUnarchiveFromDataTransformerName" customClass="UIImage"/>
         <attribute name="deleteImage" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <index name="dateIndex">
             <indexAttribute name="date"/>

@@ -1,8 +1,11 @@
 import Foundation
 import Combine
+import os
 
 class FeedbackManager: ObservableObject {
     static let shared = FeedbackManager()
+    
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "FeedbackManager")
     
     private let feedbacksKey = "com.litelog.feedbacks"
     private let pendingFeedbacksKey = "com.litelog.pending_feedbacks"
@@ -40,7 +43,9 @@ class FeedbackManager: ObservableObject {
         let shouldSend = try await withCheckedThrowingContinuation { continuation in
             queue.async {
                 if self.sendingIds.contains(feedback.id) {
-                    print("Feedback \(feedback.id) is already being sent, skipping")
+                    #if DEBUG
+                    Self.logger.debug("Feedback \(feedback.id) is already being sent, skipping")
+                    #endif
                     continuation.resume(returning: false)
                     return
                 }
@@ -72,7 +77,7 @@ class FeedbackManager: ObservableObject {
             do {
                 try await sendFeedback(feedback)
             } catch {
-                print("Failed to sync pending feedback: \(error.localizedDescription)")
+                Self.logger.error("Failed to sync pending feedback: \(error.localizedDescription)")
             }
             try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
@@ -87,7 +92,7 @@ class FeedbackManager: ObservableObject {
         do {
             feedbacks = try JSONDecoder().decode([UserFeedback].self, from: data)
         } catch {
-            print("Failed to load feedbacks: \(error)")
+            Self.logger.error("Failed to load feedbacks: \(error.localizedDescription)")
             feedbacks = []
         }
     }
@@ -97,7 +102,7 @@ class FeedbackManager: ObservableObject {
             let data = try JSONEncoder().encode(feedbacks)
             UserDefaults.standard.set(data, forKey: feedbacksKey)
         } catch {
-            print("Failed to save feedbacks: \(error)")
+            Self.logger.error("Failed to save feedbacks: \(error.localizedDescription)")
         }
     }
     
@@ -110,7 +115,7 @@ class FeedbackManager: ObservableObject {
         do {
             pendingFeedbacks = try JSONDecoder().decode([UserFeedback].self, from: data)
         } catch {
-            print("Failed to load pending feedbacks: \(error)")
+            Self.logger.error("Failed to load pending feedbacks: \(error.localizedDescription)")
             pendingFeedbacks = []
         }
     }
@@ -120,7 +125,7 @@ class FeedbackManager: ObservableObject {
             let data = try JSONEncoder().encode(pendingFeedbacks)
             UserDefaults.standard.set(data, forKey: pendingFeedbacksKey)
         } catch {
-            print("Failed to save pending feedbacks: \(error)")
+            Self.logger.error("Failed to save pending feedbacks: \(error.localizedDescription)")
         }
     }
     

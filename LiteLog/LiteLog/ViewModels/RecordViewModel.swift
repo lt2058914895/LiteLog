@@ -2,10 +2,13 @@ import Foundation
 import CoreData
 import SwiftUI
 import Combine
+import os
 
 class RecordViewModel: NSObject, ObservableObject, NSFetchedResultsControllerDelegate {
     private let context: NSManagedObjectContext
     private let settingsManager: SettingsManager
+    
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "RecordViewModel")
     
     @Published var records: [WeightRecord] = []
     @Published var groupedRecords: [Date: [WeightChangeRecord]] = [:]
@@ -40,14 +43,16 @@ class RecordViewModel: NSObject, ObservableObject, NSFetchedResultsControllerDel
             records = fetchedResultsController?.fetchedObjects ?? []
             updateGroupedRecords()
         } catch {
-            print("Error fetching records: \(error)")
+            Self.logger.error("Error fetching records: \(error.localizedDescription)")
             records = []
             groupedRecords = [:]
         }
     }
     
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        print("FRC content changed, records count: \(controller.fetchedObjects?.count ?? 0)")
+        #if DEBUG
+        Self.logger.debug("FRC content changed, records count: \(controller.fetchedObjects?.count ?? 0)")
+        #endif
         records = controller.fetchedObjects as? [WeightRecord] ?? []
         updateGroupedRecords()
     }
@@ -63,7 +68,7 @@ class RecordViewModel: NSObject, ObservableObject, NSFetchedResultsControllerDel
             records = fetchedResultsController?.fetchedObjects ?? []
             updateGroupedRecords()
         } catch {
-            print("Error refreshing records: \(error)")
+            Self.logger.error("Error refreshing records: \(error.localizedDescription)")
         }
     }
     

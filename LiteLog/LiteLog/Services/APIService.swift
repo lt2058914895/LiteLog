@@ -1,8 +1,11 @@
 import Foundation
 import Alamofire
+import os
 
 class APIService {
     static let shared = APIService()
+    
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "APIService")
     
     public var baseURL: URL {
         SettingsManager.shared.appEnvironment.baseURL
@@ -41,46 +44,44 @@ class APIService {
         ]
         
         return try await withCheckedThrowingContinuation { continuation in
-            print("DEBUG: submitFeedback - URL: \(endpoint)")
-            print("DEBUG: submitFeedback - Parameters: \(parameters)")
+            #if DEBUG
+            Self.logger.debug("submitFeedback - URL: \(endpoint.absoluteString)")
+            Self.logger.debug("submitFeedback - Parameters: \(parameters)")
+            #endif
             
             session.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: defaultHeaders())
                 .validate(statusCode: 200..<300)
                 .responseData { response in
-                    print("DEBUG: submitFeedback - Response status code: \(response.response?.statusCode ?? -1)")
-                    print("DEBUG: submitFeedback - Response headers: \(response.response?.headers ?? HTTPHeaders())")
+                    #if DEBUG
+                    Self.logger.debug("submitFeedback - Status: \(response.response?.statusCode ?? -1)")
+                    #endif
                     
                     switch response.result {
                     case .success(let data):
-                        if let responseString = String(data: data, encoding: .utf8) {
-                            print("DEBUG: submitFeedback - Response data: \(responseString)")
-                        }
                         do {
                             let decoder = JSONDecoder()
                             let feedbackResponse = try decoder.decode(FeedbackSubmitResponse.self, from: data)
                             
                             if !feedbackResponse.success {
-                                print("DEBUG: submitFeedback - Response success is false")
+                                Self.logger.error("submitFeedback - Server returned failure: code=\(feedbackResponse.code)")
                                 continuation.resume(throwing: APIError.serverErrorWithCode(feedbackResponse.code, feedbackResponse.message ?? "unknown_error"))
                             } else {
                                 continuation.resume()
                             }
                         } catch {
-                            print("DEBUG: submitFeedback - Decoding error: \(error)")
+                            Self.logger.error("submitFeedback - Decoding error: \(error.localizedDescription)")
                             continuation.resume(throwing: APIError.decodingError)
                         }
                     case .failure(let error):
-                        print("DEBUG: submitFeedback - API Error: \(error)")
+                        Self.logger.error("submitFeedback - API Error: \(error.localizedDescription)")
                         
                         if let data = response.data, let responseString = String(data: data, encoding: .utf8) {
-                            print("DEBUG: submitFeedback - Error response data: \(responseString)")
-                            
                             do {
                                 let decoder = JSONDecoder()
                                 let errorResponse = try decoder.decode(ErrorResponse.self, from: data)
                                 continuation.resume(throwing: APIError.serverErrorWithCode(errorResponse.status ?? -1, errorResponse.message ?? "未知错误"))
                             } catch {
-                                print("DEBUG: submitFeedback - Failed to decode ErrorResponse: \(error)")
+                                Self.logger.error("submitFeedback - Failed to decode ErrorResponse: \(error.localizedDescription)")
                                 continuation.resume(throwing: APIError.serverError(responseString))
                             }
                         } else {
@@ -97,7 +98,9 @@ class APIService {
         let safeUserId = userId.replacingOccurrences(of: "-", with: "")
         
         return try await withCheckedThrowingContinuation { continuation in
-            print("DEBUG: uploadAvatar - URL: \(endpoint)")
+            #if DEBUG
+            Self.logger.debug("uploadAvatar - URL: \(endpoint.absoluteString)")
+            #endif
             
             session.upload(multipartFormData: { multipartFormData in
                 if let imageData = image.jpegData(compressionQuality: 0.8) {
@@ -141,8 +144,10 @@ class APIService {
         let endpoint = baseURL.appendingPathComponent("user/profile")
         
         return try await withCheckedThrowingContinuation { continuation in
-            print("DEBUG: updateProfile - URL: \(endpoint)")
-            print("DEBUG: updateProfile - Parameters: \(parameters)")
+            #if DEBUG
+            Self.logger.debug("updateProfile - URL: \(endpoint.absoluteString)")
+            Self.logger.debug("updateProfile - Parameters: \(parameters)")
+            #endif
             
             session.request(endpoint, method: .put, parameters: parameters, encoding: JSONEncoding.default, headers: defaultHeaders())
                 .validate(statusCode: 200..<300)
@@ -153,34 +158,30 @@ class APIService {
     }
     
     private func handleResponse<T: Decodable>(_ response: AFDataResponse<Data>, debugTag: String, continuation: CheckedContinuation<T, Error>) {
-        print("DEBUG: \(debugTag) - Response status code: \(response.response?.statusCode ?? -1)")
-        print("DEBUG: \(debugTag) - Response headers: \(response.response?.headers ?? HTTPHeaders())")
+        #if DEBUG
+        Self.logger.debug("\(debugTag) - Status: \(response.response?.statusCode ?? -1)")
+        #endif
         
         switch response.result {
         case .success(let data):
-            if let responseString = String(data: data, encoding: .utf8) {
-                print("DEBUG: \(debugTag) - Response data: \(responseString)")
-            }
             do {
                 let decoder = JSONDecoder()
                 let decodedResponse = try decoder.decode(T.self, from: data)
                 continuation.resume(returning: decodedResponse)
             } catch {
-                print("DEBUG: \(debugTag) - Decoding error: \(error)")
+                Self.logger.error("\(debugTag) - Decoding error: \(error.localizedDescription)")
                 continuation.resume(throwing: APIError.decodingError)
             }
         case .failure(let error):
-            print("DEBUG: \(debugTag) - API Error: \(error)")
+            Self.logger.error("\(debugTag) - API Error: \(error.localizedDescription)")
             
             if let data = response.data, let responseString = String(data: data, encoding: .utf8) {
-                print("DEBUG: \(debugTag) - Error response data: \(responseString)")
-                
                 do {
                     let decoder = JSONDecoder()
                     let errorResponse = try decoder.decode(ErrorResponse.self, from: data)
                     continuation.resume(throwing: APIError.serverErrorWithCode(errorResponse.status ?? -1, errorResponse.message ?? "未知错误"))
                 } catch {
-                    print("DEBUG: \(debugTag) - Failed to decode ErrorResponse: \(error)")
+                    Self.logger.error("\(debugTag) - Failed to decode ErrorResponse: \(error.localizedDescription)")
                     continuation.resume(throwing: APIError.serverError(responseString))
                 }
             } else {
@@ -249,7 +250,9 @@ class APIService {
         ]
         
         return try await withCheckedThrowingContinuation { continuation in
-            print("DEBUG: syncWeightRecords - URL: \(endpoint)")
+            #if DEBUG
+            Self.logger.debug("syncWeightRecords - URL: \(endpoint.absoluteString)")
+            #endif
             
             session.request(endpoint, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: defaultHeaders())
                 .validate(statusCode: 200..<300)
@@ -273,7 +276,9 @@ class APIService {
                 return
             }
             
-            print("DEBUG: syncWeightRecordsWithImages - URL: \(endpoint)")
+            #if DEBUG
+            Self.logger.debug("syncWeightRecordsWithImages - URL: \(endpoint.absoluteString)")
+            #endif
             
             session.upload(multipartFormData: { multipartFormData in
                 if let jsonData = recordsJson.data(using: .utf8) {
@@ -298,7 +303,9 @@ class APIService {
         let endpoint = baseURL.appendingPathComponent("user/fetch-all-data")
         
         return try await withCheckedThrowingContinuation { continuation in
-            print("DEBUG: fetchAllData - URL: \(endpoint)")
+            #if DEBUG
+            Self.logger.debug("fetchAllData - URL: \(endpoint.absoluteString)")
+            #endif
             
             session.request(endpoint, method: .get, headers: defaultHeaders())
                 .validate(statusCode: 200..<300)

@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import Foundation
+import os
 
 extension Notification.Name {
     static let showProfileEditor = Notification.Name("showProfileEditor")
@@ -285,6 +286,7 @@ extension UIImage {
 
 struct ImageStorageManager {
     static let shared = ImageStorageManager()
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "ImageStorageManager")
     
     private let imagesDirectory: URL
     
@@ -298,7 +300,7 @@ struct ImageStorageManager {
         do {
             try FileManager.default.createDirectory(at: imagesDirectory, withIntermediateDirectories: true)
         } catch {
-            print("Failed to create images directory: \(error)")
+            Self.logger.error("Failed to create images directory: \(error)")
         }
     }
     
@@ -311,7 +313,7 @@ struct ImageStorageManager {
                 try jpegData.write(to: fileUrl)
                 return fileUrl.absoluteString
             } catch {
-                print("Failed to save image: \(error)")
+                Self.logger.error("Failed to save image: \(error)")
                 return nil
             }
         }
@@ -327,7 +329,7 @@ struct ImageStorageManager {
             let data = try Data(contentsOf: url)
             return UIImage(data: data)
         } catch {
-            print("Failed to load image: \(error)")
+            Self.logger.error("Failed to load image: \(error)")
             return nil
         }
     }
@@ -340,7 +342,7 @@ struct ImageStorageManager {
         do {
             try FileManager.default.removeItem(at: url)
         } catch {
-            print("Failed to delete image: \(error)")
+            Self.logger.error("Failed to delete image: \(error)")
         }
     }
     

@@ -1,6 +1,8 @@
 import SwiftUI
+import os
 
 struct UserInfoEditorView: View {
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "UserInfoEditorView")
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var settingsManager: SettingsManager
     
@@ -189,7 +191,7 @@ struct UserInfoEditorView: View {
                         settingsManager.updateCachedAvatar(with: image)
                     }
                 } catch {
-                    print("DEBUG: Failed to load avatar: \(error)")
+                    Self.logger.error("Failed to load avatar: \(error.localizedDescription)")
                 }
             }
         }

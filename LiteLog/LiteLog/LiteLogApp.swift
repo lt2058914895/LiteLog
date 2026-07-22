@@ -1,8 +1,11 @@
 import SwiftUI
 import CoreData
+import os
 
 @main
 struct LiteLogApp: App {
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "LiteLogApp")
+    
     @StateObject private var settingsManager = SettingsManager.shared
     
     @State private var hasPopulatedMockData = false
@@ -57,7 +60,7 @@ struct LiteLogApp: App {
                     
                     return
                 } catch {
-                    print("Failed to merge synced data: \(error)")
+                    Self.logger.error("Failed to merge synced data: \(error.localizedDescription)")
                 }
             }
             try? await Task.sleep(nanoseconds: 500_000_000)

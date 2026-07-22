@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 import CoreData
+import os
 
 enum AppEnvironment: String, CaseIterable {
     case development
@@ -23,6 +24,7 @@ enum AppEnvironment: String, CaseIterable {
 }
 
 final class SettingsManager: ObservableObject {
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "SettingsManager")
     static let shared = SettingsManager()
 
     private let defaults = UserDefaults.standard
@@ -82,7 +84,7 @@ final class SettingsManager: ObservableObject {
                     try context.save()
                 }
             } catch {
-                print("Failed to update weight unit in database: \(error)")
+                Self.logger.error("Failed to update weight unit in database: \(error.localizedDescription)")
             }
         }
     }
@@ -128,7 +130,7 @@ final class SettingsManager: ObservableObject {
                 await DataSyncManager.shared.syncLocalDataToCloud(context: context)
                 
             } catch {
-                print("Failed to merge data from synced device: \(error)")
+                Self.logger.error("Failed to merge data from synced device: \(error.localizedDescription)")
             }
         }
     }

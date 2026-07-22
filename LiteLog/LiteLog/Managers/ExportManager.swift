@@ -1,9 +1,10 @@
 import Foundation
 import SwiftUI
+import os
 
 final class ExportManager {
     static let shared = ExportManager()
-
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "ExportManager")
     private init() {}
 
     enum ExportFormat {
@@ -20,7 +21,7 @@ final class ExportManager {
         for record in records.sorted(by: { $0.date > $1.date }) {
             let dateString = dateFormatter.string(from: record.date)
             let weight = unit.convertFromKg(record.weight)
-            let bodyFat = record.bodyFatPercentageValue != nil ? String(format: "%.1f", record.bodyFatPercentageValue!) : ""
+            let bodyFat = record.bodyFatPercentageValue.map { String(format: "%.1f", $0) } ?? ""
             let note = record.note?.replacingOccurrences(of: ",", with: ";").replacingOccurrences(of: "\n", with: " ") ?? ""
 
             csvContent += "\(dateString),\(String(format: "%.1f", weight)),\(bodyFat),\"\(note)\"\n"
@@ -33,7 +34,7 @@ final class ExportManager {
             try csvContent.write(to: tempURL, atomically: true, encoding: .utf8)
             return tempURL
         } catch {
-            print("Error writing CSV: \(error)")
+            Self.logger.error("Error writing CSV: \(error.localizedDescription)")
             return nil
         }
     }
@@ -74,7 +75,7 @@ final class ExportManager {
             let latestBMI = profile.calculateBMI(weight: sortedRecords.last?.weight ?? 0)
             summary += "\n\nLatest BMI: \(String(format: "%.1f", latestBMI))"
             summary += "\nBMI Category: \(profile.bmiCategory(bmi: latestBMI).displayName)"
-            summary += "\nGoal Weight: \(String(format: "%.1f", unit.convertFromKg(profile.goalWeight))) \(unit.shortName)"
+            summary += "\nGoal Weight: \(profile.goalWeightValue.map { String(format: "%.1f", unit.convertFromKg($0)) } ?? "--") \(unit.shortName)"
         }
 
         return summary
@@ -90,11 +91,11 @@ final class ExportManager {
                 "date": dateFormatter.string(from: record.date),
                 "weight": String(format: "%.1f", unit.convertFromKg(record.weight)),
                 "weightUnit": unit.shortName,
-                "bodyFatPercentage": record.bodyFatPercentageValue != nil ? String(format: "%.1f", record.bodyFatPercentageValue!) : nil,
-                "waistCircumference": record.waistCircumferenceValue != nil ? String(format: "%.1f", record.waistCircumferenceValue!) : nil,
-                "hipCircumference": record.hipCircumferenceValue != nil ? String(format: "%.1f", record.hipCircumferenceValue!) : nil,
-                "chestCircumference": record.chestCircumferenceValue != nil ? String(format: "%.1f", record.chestCircumferenceValue!) : nil,
-                "thighCircumference": record.thighCircumferenceValue != nil ? String(format: "%.1f", record.thighCircumferenceValue!) : nil,
+                "bodyFatPercentage": record.bodyFatPercentageValue.map { String(format: "%.1f", $0) },
+                "waistCircumference": record.waistCircumferenceValue.map { String(format: "%.1f", $0) },
+                "hipCircumference": record.hipCircumferenceValue.map { String(format: "%.1f", $0) },
+                "chestCircumference": record.chestCircumferenceValue.map { String(format: "%.1f", $0) },
+                "thighCircumference": record.thighCircumferenceValue.map { String(format: "%.1f", $0) },
                 "note": record.note,
                 "measurementTimePeriod": record.measurementTimePeriod
             ] as [String: Any?]
@@ -116,7 +117,7 @@ final class ExportManager {
             try jsonData.write(to: tempURL, options: .atomic)
             return tempURL
         } catch {
-            print("Error writing JSON: \(error)")
+            Self.logger.error("Error writing JSON: \(error.localizedDescription)")
             return nil
         }
     }
