@@ -17,12 +17,11 @@ struct ModernTrendChartView: View {
         self.chartData = ChartData(data: data)
     }
     
-    private let yAxisWidth: CGFloat = 20
+    private let yAxisWidth: CGFloat = 28
     private let xAxisHeight: CGFloat = 26
     private let chartHeight: CGFloat = 180
     private let lineWidth: CGFloat = 2.5
     private let gridLineWidth: CGFloat = 0.5
-    private let gridLineCount = 5
     private let pointSize: CGFloat = 6
     private let chartPadding: CGFloat = 8
     
@@ -34,6 +33,8 @@ struct ModernTrendChartView: View {
         let displayMax: Double
         let displayMin: Double
         let displayRange: Double
+        let yAxisValues: [Double]
+        let decimalPlaces: Int
         
         init(data: [(Date, Double)]) {
             self.values = data.map { $0.1 }
@@ -41,18 +42,70 @@ struct ModernTrendChartView: View {
             self.minValue = values.min() ?? 0
             self.range = maxValue - minValue
             
-            let margin = range * 0.1
-            self.displayMax = maxValue + margin
-            self.displayMin = max(minValue - margin, 0)
-            self.displayRange = displayMax - displayMin
+            let targetTickCount = 5
+            
+            if range == 0 {
+                // 所有值相同，创建一个小范围
+                let base = minValue
+                let step: Double
+                if base == 0 {
+                    step = 1
+                } else {
+                    let rawStep = max(abs(base) * 0.2, 0.1)
+                    let mag = pow(10, floor(log10(rawStep)))
+                    let res = rawStep / mag
+                    if res <= 1.5 { step = 1 * mag }
+                    else if res <= 3 { step = 2 * mag }
+                    else if res <= 7 { step = 5 * mag }
+                    else { step = 10 * mag }
+                }
+                
+                self.displayMin = Double(round((base - step * 2) * 10000)) / 10000
+                self.displayMax = Double(round((base + step * 2) * 10000)) / 10000
+                self.displayRange = displayMax - displayMin
+                
+                var ticks: [Double] = []
+                var current = displayMin
+                while current <= displayMax + step * 0.01 {
+                    ticks.append(Double(round(current * 10000)) / 10000)
+                    current += step
+                }
+                self.yAxisValues = ticks
+                self.decimalPlaces = step >= 1 ? 0 : (step >= 0.1 ? 1 : 2)
+            } else {
+                // Nice Numbers算法：选择合适的刻度间隔
+                let rawStep = range / Double(targetTickCount - 1)
+                let magnitude = pow(10, floor(log10(rawStep)))
+                let residual = rawStep / magnitude
+                
+                let niceStep: Double
+                if residual <= 1.5 {
+                    niceStep = 1 * magnitude
+                } else if residual <= 3 {
+                    niceStep = 2 * magnitude
+                } else if residual <= 7 {
+                    niceStep = 5 * magnitude
+                } else {
+                    niceStep = 10 * magnitude
+                }
+                
+                self.displayMin = Double(round(floor(minValue / niceStep) * niceStep * 10000)) / 10000
+                self.displayMax = Double(round(ceil(maxValue / niceStep) * niceStep * 10000)) / 10000
+                self.displayRange = displayMax - displayMin
+                
+                var ticks: [Double] = []
+                var current = displayMin
+                while current <= displayMax + niceStep * 0.01 {
+                    ticks.append(Double(round(current * 10000)) / 10000)
+                    current += niceStep
+                }
+                self.yAxisValues = ticks
+                self.decimalPlaces = niceStep >= 1 ? 0 : (niceStep >= 0.1 ? 1 : 2)
+            }
         }
         
         func normalizedY(for value: Double) -> Double {
             displayRange > 0 ? (value - displayMin) / displayRange : 0.5
-        }
-        
-        func yAxisValue(at index: Int, total: Int) -> Double {
-            displayMax - Double(index) * displayRange / Double(total - 1)
         }
     }
     
@@ -103,15 +156,23 @@ struct ModernTrendChartView: View {
     
     private var yAxisLabels: some View {
         VStack(spacing: 0) {
-            ForEach(0..<gridLineCount, id: \.self) { index in
-                let value = chartData.yAxisValue(at: index, total: gridLineCount)
-                Text("\(Int(value))")
+            ForEach(Array(chartData.yAxisValues.indices.reversed()), id: \.self) { index in
+                let value = chartData.yAxisValues[index]
+                Text(formatYAxisLabel(value))
                     .font(.system(size: 10))
                     .foregroundColor(.secondaryText)
-                    .frame(height: (chartHeight - xAxisHeight) / CGFloat(gridLineCount - 1), alignment: .center)
+                    .frame(height: (chartHeight - xAxisHeight) / CGFloat(max(chartData.yAxisValues.count - 1, 1)), alignment: .center)
             }
         }
         .frame(width: yAxisWidth, alignment: .trailing)
+    }
+    
+    private func formatYAxisLabel(_ value: Double) -> String {
+        if chartData.decimalPlaces == 0 {
+            return "\(Int(value))"
+        } else {
+            return String(format: "%.\(chartData.decimalPlaces)f", value)
+        }
     }
     
     private var chartContent: some View {
@@ -139,8 +200,9 @@ struct ModernTrendChartView: View {
     
     private func gridLines(width: CGFloat, height: CGFloat) -> some View {
         VStack(spacing: 0) {
-            ForEach(0..<gridLineCount, id: \.self) { index in
-                let y = chartPadding + CGFloat(index) * (height + chartPadding) / CGFloat(gridLineCount - 1)
+            ForEach(chartData.yAxisValues.indices, id: \.self) { index in
+                let normalizedY = chartData.normalizedY(for: chartData.yAxisValues[index])
+                let y = chartPadding + (1 - normalizedY) * height
                 Path { path in
                     path.move(to: CGPoint(x: chartPadding, y: y))
                     path.addLine(to: CGPoint(x: width + chartPadding, y: y))
