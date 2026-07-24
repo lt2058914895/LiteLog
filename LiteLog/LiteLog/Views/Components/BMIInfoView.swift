@@ -113,6 +113,8 @@ struct BMIInfoView: View {
                         comprehensiveAnalysisSection
                         
                         referenceRangeSection(gender: UserProfile.Gender(rawValue: profile.gender) ?? .male, age: Int(profile.age), height: profile.height)
+                        
+                        citationsSection
                     } else {
                         emptyStateView
                     }
@@ -487,5 +489,57 @@ struct BMIInfoView: View {
             .font(.subheadline)
         }
         .frame(maxHeight: .infinity)
+    }
+    
+    private var citationsSection: some View {
+        VStack(spacing: 12) {
+            Text(NSLocalizedString("bmi.info.citations.title", comment: ""))
+                .font(.headline)
+                .foregroundColor(.primaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            VStack(spacing: 8) {
+                citationLink(
+                    title: NSLocalizedString("bmi.info.citation.bmi.source", comment: ""),
+                    url: URL(string: "https://www.chinacdc.cn")!
+                )
+                
+                citationLink(
+                    title: NSLocalizedString("bmi.info.citation.bmi.who", comment: ""),
+                    url: URL(string: "https://www.who.int")!
+                )
+                
+                citationLink(
+                    title: NSLocalizedString("bmi.info.citation.body.fat", comment: ""),
+                    url: URL(string: "https://www.acsm.org")!
+                )
+            }
+        }
+        .padding()
+        .cardStyle()
+    }
+    
+    private func citationLink(title: String, url: URL) -> some View {
+        Button(action: {
+            UIApplication.shared.open(url)
+        }) {
+            HStack {
+                Image(systemName: "link")
+                    .font(.caption)
+                    .foregroundColor(.primaryBlue)
+                
+                Text(title)
+                    .font(.body)
+                    .foregroundColor(.primaryBlue)
+                    .underline()
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondaryText)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }

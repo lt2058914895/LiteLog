@@ -43,6 +43,10 @@
 "bmi.info.no.profile" = "请先完善个人资料以获取健康解读";
 "bmi.info.bmi.note" = "* 根据《中国成人超重和肥胖症预防控制指南》标准";
 "bmi.info.body.fat.note" = "* 体脂率标准参考美国运动医学学会(ACSM)建议";
+"bmi.info.citations.title" = "参考资料";
+"bmi.info.citation.bmi.source" = "中国成人超重和肥胖症预防控制指南";
+"bmi.info.citation.bmi.who" = "WHO 国际肥胖特别工作组";
+"bmi.info.citation.body.fat" = "美国运动医学学会(ACSM)体成分评估指南";
 "bmi.underweight" = "偏瘦";
 "bmi.normal" = "正常";
 "bmi.overweight" = "超重";
@@ -227,7 +231,7 @@
 "settings.feedback" = "用户反馈";
 "settings.send.feedback" = "发送反馈";
 "settings.not.logged.in" = "未登录";
-"app.name" = "体迹";
+"app.name" = "身体日记";
 
 // 登录相关
 "login.title" = "登录";
@@ -302,7 +306,7 @@
 "error.title" = "错误";
 
 // 通知相关
-"notification.title" = "体迹";
+"notification.title" = "身体日记";
 "notification.body" = "该记录今天的体重了！";
 "notification.weight.recorded.title" = "体重已记录";
 "notification.weight.recorded.body" = "今日体重：%.1f kg";
