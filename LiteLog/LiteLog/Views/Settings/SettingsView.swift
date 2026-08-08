@@ -474,7 +474,7 @@ struct SettingsView: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 versionTapCount += 1
-                if versionTapCount >= 5 {
+                if versionTapCount >= 30 {
                     versionTapCount = 0
                     showingEnvPicker = true
                 }
