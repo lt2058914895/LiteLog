@@ -306,7 +306,7 @@ struct UserInfoEditorView: View {
                 }
             } else {
                 self.avatarImage = nil
-                errorAlertManager.showError(response.message ?? "更新失败")
+                errorAlertManager.showError(response.message ?? NSLocalizedString("error.update.failed", comment: ""))
             }
         } catch {
             self.avatarImage = nil
@@ -324,7 +324,7 @@ struct UserInfoEditorView: View {
             if response.success, let avatarUrl = response.avatarUrl {
                 return avatarUrl
             } else {
-                errorAlertManager.showError(response.message ?? "头像上传失败")
+                errorAlertManager.showError(response.message ?? NSLocalizedString("error.avatar.upload.failed", comment: ""))
                 return nil
             }
         } catch {

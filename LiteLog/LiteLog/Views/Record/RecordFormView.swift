@@ -236,13 +236,13 @@ struct RecordFormView: View {
     
     private var weightCard: some View {
         VStack(spacing: 12) {
-            Text(NSLocalizedString("record.weight", comment: ""))
+            Text(NSLocalizedString("measure.weight", comment: ""))
                 .font(.subheadline)
                 .foregroundColor(.secondaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             HStack(alignment: .center, spacing: 8) {
-                TextField(NSLocalizedString("record.input.placeholder", comment: ""), text: $weightString)
+                TextField(NSLocalizedString("common.input.placeholder", comment: ""), text: $weightString)
                     .keyboardType(.decimalPad)
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.primaryBlue)
@@ -419,8 +419,8 @@ struct RecordFormView: View {
     private var advancedFieldsSection: some View {
         VStack(spacing: 0) {
             MeasurementRow(
-                label: NSLocalizedString("record.body.fat", comment: ""),
-                placeholder: NSLocalizedString("record.input.placeholder", comment: ""),
+                label: NSLocalizedString("measure.body.fat", comment: ""),
+                placeholder: NSLocalizedString("common.input.placeholder", comment: ""),
                 text: $bodyFatString,
                 unit: "%"
             )
@@ -428,8 +428,8 @@ struct RecordFormView: View {
             Divider()
             
             MeasurementRow(
-                label: NSLocalizedString("record.waist.circumference", comment: ""),
-                placeholder: NSLocalizedString("record.input.placeholder", comment: ""),
+                label: NSLocalizedString("measure.waist", comment: ""),
+                placeholder: NSLocalizedString("common.input.placeholder", comment: ""),
                 text: $waistString,
                 unit: "cm"
             )
@@ -437,8 +437,8 @@ struct RecordFormView: View {
             Divider()
             
             MeasurementRow(
-                label: NSLocalizedString("record.hip.circumference", comment: ""),
-                placeholder: NSLocalizedString("record.input.placeholder", comment: ""),
+                label: NSLocalizedString("measure.hip", comment: ""),
+                placeholder: NSLocalizedString("common.input.placeholder", comment: ""),
                 text: $hipString,
                 unit: "cm"
             )
@@ -446,8 +446,8 @@ struct RecordFormView: View {
             Divider()
             
             MeasurementRow(
-                label: NSLocalizedString("record.chest.circumference", comment: ""),
-                placeholder: NSLocalizedString("record.input.placeholder", comment: ""),
+                label: NSLocalizedString("measure.chest", comment: ""),
+                placeholder: NSLocalizedString("common.input.placeholder", comment: ""),
                 text: $chestString,
                 unit: "cm"
             )
@@ -455,8 +455,8 @@ struct RecordFormView: View {
             Divider()
             
             MeasurementRow(
-                label: NSLocalizedString("record.thigh.circumference", comment: ""),
-                placeholder: NSLocalizedString("record.input.placeholder", comment: ""),
+                label: NSLocalizedString("measure.thigh", comment: ""),
+                placeholder: NSLocalizedString("common.input.placeholder", comment: ""),
                 text: $thighString,
                 unit: "cm"
             )

@@ -46,12 +46,12 @@ struct StatisticsView: View {
     }
 
     enum Metric: String, CaseIterable, Identifiable {
-        case weight = "stats.metric.weight"
-        case bodyFat = "stats.metric.body.fat"
-        case waist = "stats.metric.waist"
-        case hip = "stats.metric.hip"
-        case chest = "stats.metric.chest"
-        case thigh = "stats.metric.thigh"
+        case weight = "measure.weight"
+        case bodyFat = "measure.body.fat"
+        case waist = "measure.waist"
+        case hip = "measure.hip"
+        case chest = "measure.chest"
+        case thigh = "measure.thigh"
 
         var id: String { rawValue }
         var localizedKey: String { rawValue }
@@ -243,7 +243,7 @@ struct StatisticsView: View {
                         if records.isEmpty {
                             EmptyStateView(
                                 icon: "chart.bar",
-                                title: NSLocalizedString("stats.no.data", comment: ""),
+                                title: NSLocalizedString("common.no.data", comment: ""),
                                 message: NSLocalizedString("home.start.record", comment: "")
                             )
                         } else {
@@ -464,7 +464,7 @@ struct StatisticsView: View {
             }
 
             if currentMetricData.isEmpty {
-                Text(NSLocalizedString("stats.no.data", comment: ""))
+                Text(NSLocalizedString("common.no.data", comment: ""))
                     .font(.subheadline)
                     .foregroundColor(.secondaryText)
                     .frame(height: 200)
@@ -492,7 +492,7 @@ struct StatisticsView: View {
                             .font(.headline)
                             .foregroundColor(.primaryText)
                         
-                        Text(NSLocalizedString("stats.no.data", comment: ""))
+                        Text(NSLocalizedString("common.no.data", comment: ""))
                             .font(.subheadline)
                             .foregroundColor(.secondaryText)
                             .frame(height: 150)
@@ -599,7 +599,7 @@ struct StatisticsView: View {
                 Divider()
 
                 HStack {
-                    Text(NSLocalizedString("settings.goal.weight", comment: ""))
+                    Text(NSLocalizedString("goal.weight", comment: ""))
                         .foregroundColor(.secondaryText)
 
                     Spacer()

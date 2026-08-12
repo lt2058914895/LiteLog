@@ -37,7 +37,6 @@ final class SettingsManager: ObservableObject {
 
     private enum Keys {
         static let weightUnit = "weightUnit"
-        static let heightUnit = "heightUnit"
         static let iCloudSyncEnabled = "iCloudSyncEnabled"
         static let notificationsEnabled = "notificationsEnabled"
         static let notificationTime = "notificationTime"
@@ -86,12 +85,6 @@ final class SettingsManager: ObservableObject {
             } catch {
                 Self.logger.error("Failed to update weight unit in database: \(error.localizedDescription)")
             }
-        }
-    }
-
-    @Published var heightUnit: HeightUnit {
-        didSet {
-            defaults.set(heightUnit.rawValue, forKey: Keys.heightUnit)
         }
     }
 
@@ -194,9 +187,6 @@ final class SettingsManager: ObservableObject {
         let savedUnit = defaults.string(forKey: Keys.weightUnit) ?? WeightUnit.kg.rawValue
         self.weightUnit = WeightUnit(rawValue: savedUnit) ?? .kg
 
-        let savedHeightUnit = defaults.string(forKey: Keys.heightUnit) ?? HeightUnit.cm.rawValue
-        self.heightUnit = HeightUnit(rawValue: savedHeightUnit) ?? .cm
-
         self.iCloudSyncEnabled = defaults.bool(forKey: Keys.iCloudSyncEnabled) || defaults.object(forKey: Keys.iCloudSyncEnabled) == nil
         self.notificationsEnabled = defaults.bool(forKey: Keys.notificationsEnabled)
         self.notificationTime = defaults.object(forKey: Keys.notificationTime) as? Date ?? Self.defaultNotificationTime()
@@ -211,7 +201,6 @@ final class SettingsManager: ObservableObject {
 
     func resetToDefaults() {
         weightUnit = .kg
-        heightUnit = .cm
         iCloudSyncEnabled = true
         notificationsEnabled = false
         notificationTime = Self.defaultNotificationTime()
@@ -222,45 +211,5 @@ final class SettingsManager: ObservableObject {
             return "User"
         }
         return nickname
-    }
-}
-
-enum HeightUnit: String, Codable, CaseIterable {
-    case cm
-    case inch
-
-    var displayName: String {
-        switch self {
-        case .cm:
-            return NSLocalizedString("unit.cm", comment: "")
-        case .inch:
-            return NSLocalizedString("unit.inch", comment: "")
-        }
-    }
-
-    func convert(_ value: Double, to unit: HeightUnit) -> Double {
-        if self == unit { return value }
-        switch (self, unit) {
-        case (.cm, .inch):
-            return value / 2.54
-        case (.inch, .cm):
-            return value * 2.54
-        default:
-            return value
-        }
-    }
-
-    func convertToCm(_ value: Double) -> Double {
-        switch self {
-        case .cm: return value
-        case .inch: return value * 2.54
-        }
-    }
-
-    func convertFromCm(_ valueInCm: Double) -> Double {
-        switch self {
-        case .cm: return valueInCm
-        case .inch: return valueInCm / 2.54
-        }
     }
 }

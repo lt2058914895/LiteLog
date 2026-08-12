@@ -135,10 +135,10 @@ final class UserProfile: NSManagedObject {
 
         var localizedKey: String {
             switch self {
-            case .underweight: return "bmi.category.underweight"
-            case .normal: return "bmi.category.normal"
+            case .underweight: return "bmi.underweight"
+            case .normal: return "bmi.normal"
             case .overweight: return "bmi.category.overweight"
-            case .obese: return "bmi.category.obese"
+            case .obese: return "bmi.obese"
             }
         }
 

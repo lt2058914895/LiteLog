@@ -29,11 +29,11 @@ struct BMIInfoView: View {
             (6...13, NSLocalizedString("body.fat.essential", comment: ""), Color.blue, "male"),
             (14...17, NSLocalizedString("body.fat.athletic", comment: ""), Color.green, "male"),
             (18...24, NSLocalizedString("body.fat.average", comment: ""), Color.yellow, "male"),
-            (25...Double.infinity, NSLocalizedString("body.fat.obese", comment: ""), Color.red, "male"),
+            (25...Double.infinity, NSLocalizedString("bmi.obese", comment: ""), Color.red, "male"),
             (14...20, NSLocalizedString("body.fat.essential", comment: ""), Color.blue, "female"),
             (21...24, NSLocalizedString("body.fat.athletic", comment: ""), Color.green, "female"),
             (25...31, NSLocalizedString("body.fat.average", comment: ""), Color.yellow, "female"),
-            (32...Double.infinity, NSLocalizedString("body.fat.obese", comment: ""), Color.red, "female")
+            (32...Double.infinity, NSLocalizedString("bmi.obese", comment: ""), Color.red, "female")
         ]
     }
     
@@ -93,7 +93,7 @@ struct BMIInfoView: View {
     private var comprehensiveRatingColor: Color {
         if comprehensiveRating.contains(NSLocalizedString("rating.excellent", comment: "")) {
             return .green
-        } else if comprehensiveRating.contains(NSLocalizedString("rating.hidden", comment: "")) {
+        } else if comprehensiveRating.contains(NSLocalizedString("rating.hidden.obesity", comment: "")) {
             return .orange
         } else {
             return .red
@@ -179,7 +179,7 @@ struct BMIInfoView: View {
                 Spacer()
                 
                 VStack(spacing: 8) {
-                    Text(NSLocalizedString("bmi.info.body.fat", comment: ""))
+                    Text(NSLocalizedString("measure.body.fat", comment: ""))
                         .font(.subheadline)
                         .foregroundColor(.secondaryText)
                     
@@ -408,17 +408,17 @@ struct BMIInfoView: View {
             
             VStack(spacing: 16) {
                 referenceRow(
-                    label: NSLocalizedString("reference.gender", comment: ""),
+                    label: NSLocalizedString("common.gender", comment: ""),
                     value: gender == .male ? NSLocalizedString("bmi.info.male", comment: "") : NSLocalizedString("bmi.info.female", comment: "")
                 )
                 
                 referenceRow(
-                    label: NSLocalizedString("reference.age", comment: ""),
-                    value: "\(age) " + NSLocalizedString("reference.age.unit", comment: "")
+                    label: NSLocalizedString("common.age", comment: ""),
+                    value: "\(age) " + NSLocalizedString("common.years", comment: "")
                 )
                 
                 referenceRow(
-                    label: NSLocalizedString("reference.height", comment: ""),
+                    label: NSLocalizedString("common.height", comment: ""),
                     value: String(format: "%.1f cm", height)
                 )
                 

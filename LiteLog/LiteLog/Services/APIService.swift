@@ -79,13 +79,13 @@ class APIService {
                             do {
                                 let decoder = JSONDecoder()
                                 let errorResponse = try decoder.decode(ErrorResponse.self, from: data)
-                                continuation.resume(throwing: APIError.serverErrorWithCode(errorResponse.status ?? -1, errorResponse.message ?? "未知错误"))
+                                continuation.resume(throwing: APIError.serverErrorWithCode(errorResponse.status ?? -1, errorResponse.message ?? NSLocalizedString("error.unknown.chinese", comment: "")))
                             } catch {
                                 Self.logger.error("submitFeedback - Failed to decode ErrorResponse: \(error.localizedDescription)")
                                 continuation.resume(throwing: APIError.serverError(responseString))
                             }
                         } else {
-                            continuation.resume(throwing: APIError.serverError("网络请求失败，请检查网络连接"))
+                            continuation.resume(throwing: APIError.serverError(NSLocalizedString("error.network.chinese", comment: "")))
                         }
                     }
                 }
@@ -179,13 +179,13 @@ class APIService {
                 do {
                     let decoder = JSONDecoder()
                     let errorResponse = try decoder.decode(ErrorResponse.self, from: data)
-                    continuation.resume(throwing: APIError.serverErrorWithCode(errorResponse.status ?? -1, errorResponse.message ?? "未知错误"))
+                    continuation.resume(throwing: APIError.serverErrorWithCode(errorResponse.status ?? -1, errorResponse.message ?? NSLocalizedString("error.unknown.chinese", comment: "")))
                 } catch {
                     Self.logger.error("\(debugTag) - Failed to decode ErrorResponse: \(error.localizedDescription)")
                     continuation.resume(throwing: APIError.serverError(responseString))
                 }
             } else {
-                continuation.resume(throwing: APIError.serverError("网络请求失败，请检查网络连接"))
+                continuation.resume(throwing: APIError.serverError(NSLocalizedString("error.network.chinese", comment: "")))
             }
         }
     }

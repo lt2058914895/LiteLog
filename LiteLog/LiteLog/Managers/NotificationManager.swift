@@ -36,7 +36,7 @@ final class NotificationManager: ObservableObject {
         center.removePendingNotificationRequests(withIdentifiers: ["daily_weight_reminder"])
 
         let content = UNMutableNotificationContent()
-        content.title = NSLocalizedString("notification.title", comment: "")
+        content.title = NSLocalizedString("app.name", comment: "")
         content.body = NSLocalizedString("notification.body", comment: "")
         content.sound = .default
 

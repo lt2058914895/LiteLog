@@ -171,7 +171,7 @@ struct SettingsView: View {
                                 .font(.body)
                                 .fontWeight(.semibold)
                                 .foregroundColor(.primaryText)
-                            Text("\(profile.age) \(NSLocalizedString("settings.years", comment: ""))")
+                            Text("\(profile.age) \(NSLocalizedString("common.years", comment: ""))")
                                 .font(.body)
                                 .fontWeight(.semibold)
                                 .foregroundColor(.primaryText)
@@ -179,10 +179,10 @@ struct SettingsView: View {
                             Spacer()
                             
                             VStack(alignment: .trailing, spacing: 4) {
-                                Text(NSLocalizedString("settings.height", comment: ""))
+                                Text(NSLocalizedString("common.height", comment: ""))
                                     .font(.caption)
                                     .foregroundColor(.secondaryText)
-                                Text("\(settingsManager.heightUnit.convertFromCm(profile.height).smartFormatted) \(settingsManager.heightUnit.displayName)")
+                                Text("\(profile.height.smartFormatted) \(NSLocalizedString("unit.cm", comment: ""))")
                                     .font(.body)
                                     .fontWeight(.semibold)
                                     .foregroundColor(.primaryText)
@@ -194,7 +194,7 @@ struct SettingsView: View {
                         VStack(spacing: 10) {
                             HStack(spacing: 16) {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(NSLocalizedString("settings.goal.weight", comment: ""))
+                                    Text(NSLocalizedString("goal.weight", comment: ""))
                                         .font(.caption)
                                         .foregroundColor(.secondaryText)
                                     Text("\(profile.goalWeightValue.map { unit.convertFromKg($0).smartFormatted } ?? "--") \(unit.shortName)")
@@ -207,7 +207,7 @@ struct SettingsView: View {
                                 
                                 if let goalBodyFat = profile.goalBodyFatPercentage {
                                     VStack(alignment: .trailing, spacing: 4) {
-                                        Text(NSLocalizedString("settings.goal.body.fat", comment: ""))
+                                        Text(NSLocalizedString("goal.body.fat", comment: ""))
                                             .font(.caption)
                                             .foregroundColor(.secondaryText)
                                         Text("\(goalBodyFat.smartFormatted)%")
@@ -224,7 +224,7 @@ struct SettingsView: View {
                                     
                                     HStack(spacing: 16) {
                                         VStack(alignment: .leading, spacing: 4) {
-                                            Text(NSLocalizedString("settings.goal.waist", comment: ""))
+                                            Text(NSLocalizedString("measure.waist", comment: ""))
                                                 .font(.caption)
                                                 .foregroundColor(.secondaryText)
                                             if let waist = profile.goalWaistCircumferenceValue {
@@ -238,7 +238,7 @@ struct SettingsView: View {
                                         Spacer()
                                         
                                         VStack(alignment: .trailing, spacing: 4) {
-                                            Text(NSLocalizedString("settings.goal.hip", comment: ""))
+                                            Text(NSLocalizedString("measure.hip", comment: ""))
                                                 .font(.caption)
                                                 .foregroundColor(.secondaryText)
                                             if let hip = profile.goalHipCircumferenceValue {
@@ -252,7 +252,7 @@ struct SettingsView: View {
                                     
                                     HStack(spacing: 16) {
                                         VStack(alignment: .leading, spacing: 4) {
-                                            Text(NSLocalizedString("settings.goal.chest", comment: ""))
+                                            Text(NSLocalizedString("measure.chest", comment: ""))
                                                 .font(.caption)
                                                 .foregroundColor(.secondaryText)
                                             if let chest = profile.goalChestCircumferenceValue {
@@ -266,7 +266,7 @@ struct SettingsView: View {
                                         Spacer()
                                         
                                         VStack(alignment: .trailing, spacing: 4) {
-                                            Text(NSLocalizedString("settings.goal.thigh", comment: ""))
+                                            Text(NSLocalizedString("measure.thigh", comment: ""))
                                                 .font(.caption)
                                                 .foregroundColor(.secondaryText)
                                             if let thigh = profile.goalThighCircumferenceValue {

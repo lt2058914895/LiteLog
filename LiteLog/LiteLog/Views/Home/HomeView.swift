@@ -161,7 +161,7 @@ struct HomeView: View {
                 Image(systemName: "target")
                     .foregroundColor(.primaryBlue)
                 
-                Text(NSLocalizedString("home.goal.weight", comment: ""))
+                Text(NSLocalizedString("goal.weight", comment: ""))
                     .font(.subheadline)
                     .foregroundColor(.primaryText)
                 
@@ -239,7 +239,7 @@ struct HomeView: View {
                 Image(systemName: "percent")
                     .foregroundColor(.primaryBlue)
                 
-                Text(NSLocalizedString("home.goal.body.fat", comment: ""))
+                Text(NSLocalizedString("goal.body.fat", comment: ""))
                     .font(.subheadline)
                     .foregroundColor(.primaryText)
                 
@@ -334,7 +334,7 @@ struct HomeView: View {
                     }
                 }
             } else {
-                Text(NSLocalizedString("home.goal.no.data", comment: ""))
+                Text(NSLocalizedString("common.no.data", comment: ""))
                     .font(.subheadline)
                     .foregroundColor(.secondaryText)
             }
@@ -351,7 +351,7 @@ struct HomeView: View {
                     .font(.title)
                     .foregroundColor(.primaryBlue)
                 
-                Text(NSLocalizedString("home.goal.measurements", comment: ""))
+                Text(NSLocalizedString("goal.measurements", comment: ""))
                     .font(.subheadline)
                     .foregroundColor(.primaryText)
                 
@@ -368,32 +368,32 @@ struct HomeView: View {
                 if hasWaistData || hasHipData || hasChestData || hasThighData {
                     VStack(spacing: 20) {
                         // 腰围
-                        measurementRow(title: NSLocalizedString("home.waist", comment: ""),
+                        measurementRow(title: NSLocalizedString("measure.waist", comment: ""),
                                        goal: profile.goalWaistCircumferenceValue,
                                        current: latestWaist)
                         
                         // 臀围
-                        measurementRow(title: NSLocalizedString("home.hip", comment: ""),
+                        measurementRow(title: NSLocalizedString("measure.hip", comment: ""),
                                        goal: profile.goalHipCircumferenceValue,
                                        current: latestHip)
                         
                         // 胸围
-                        measurementRow(title: NSLocalizedString("home.chest", comment: ""),
+                        measurementRow(title: NSLocalizedString("measure.chest", comment: ""),
                                        goal: profile.goalChestCircumferenceValue,
                                        current: latestChest)
                         
                         // 大腿围
-                        measurementRow(title: NSLocalizedString("home.thigh", comment: ""),
+                        measurementRow(title: NSLocalizedString("measure.thigh", comment: ""),
                                        goal: profile.goalThighCircumferenceValue,
                                        current: latestThigh)
                     }
                 } else {
-                    Text(NSLocalizedString("home.goal.no.data", comment: ""))
+                    Text(NSLocalizedString("common.no.data", comment: ""))
                         .font(.subheadline)
                         .foregroundColor(.secondaryText)
                 }
             } else {
-                Text(NSLocalizedString("home.goal.no.data", comment: ""))
+                Text(NSLocalizedString("common.no.data", comment: ""))
                     .font(.subheadline)
                     .foregroundColor(.secondaryText)
             }
@@ -411,7 +411,7 @@ struct HomeView: View {
             
             // 第二行：目标
             HStack(spacing: 8) {
-                Text("目标:")
+                Text(NSLocalizedString("home.goal.label", comment: ""))
                     .font(.body)
                     .foregroundColor(.secondaryText)
                 
@@ -433,7 +433,7 @@ struct HomeView: View {
             
             // 第三行：当前 + 进度提示
             HStack(spacing: 8) {
-                Text("当前:")
+                Text(NSLocalizedString("home.current.label", comment: ""))
                     .font(.body)
                     .foregroundColor(.secondaryText)
                 
@@ -511,7 +511,7 @@ struct HomeView: View {
                             Spacer()
                         }
                         
-                        Text(NSLocalizedString("home.bmi.no.data", comment: ""))
+                        Text(NSLocalizedString("common.no.data", comment: ""))
                             .font(.subheadline)
                             .foregroundColor(.secondaryText)
                             .padding(.vertical, 20)

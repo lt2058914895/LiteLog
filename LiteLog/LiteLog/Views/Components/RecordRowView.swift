@@ -151,7 +151,7 @@ struct RecordRowView: View, Equatable {
                 .foregroundColor(.primaryBlue)
             
             VStack(alignment: .leading, spacing: 1) {
-                Text(NSLocalizedString("record.body.fat", comment: ""))
+                Text(NSLocalizedString("measure.body.fat", comment: ""))
                     .font(.caption2)
                     .foregroundColor(.secondaryText)
                 
@@ -181,19 +181,19 @@ struct RecordRowView: View, Equatable {
             
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 75))], spacing: 12) {
                 if let waist = waistString {
-                    measurementCardView(value: waist, unit: "cm", title: NSLocalizedString("record.waist.circumference", comment: ""))
+                    measurementCardView(value: waist, unit: "cm", title: NSLocalizedString("measure.waist", comment: ""))
                 }
                 
                 if let hip = hipString {
-                    measurementCardView(value: hip, unit: "cm", title: NSLocalizedString("record.hip.circumference", comment: ""))
+                    measurementCardView(value: hip, unit: "cm", title: NSLocalizedString("measure.hip", comment: ""))
                 }
                 
                 if let chest = chestString {
-                    measurementCardView(value: chest, unit: "cm", title: NSLocalizedString("record.chest.circumference", comment: ""))
+                    measurementCardView(value: chest, unit: "cm", title: NSLocalizedString("measure.chest", comment: ""))
                 }
                 
                 if let thigh = thighString {
-                    measurementCardView(value: thigh, unit: "cm", title: NSLocalizedString("record.thigh.circumference", comment: ""))
+                    measurementCardView(value: thigh, unit: "cm", title: NSLocalizedString("measure.thigh", comment: ""))
                 }
             }
         }

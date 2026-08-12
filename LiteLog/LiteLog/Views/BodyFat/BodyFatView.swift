@@ -52,7 +52,7 @@ struct BodyFatView: View {
                 .padding()
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle(NSLocalizedString("home.body.fat", comment: ""))
+            .navigationTitle(NSLocalizedString("measure.body.fat", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -144,7 +144,7 @@ struct BodyFatView: View {
             
             Spacer()
             
-            Text("\(count) 条记录")
+            Text(String(format: NSLocalizedString("record.count.records", comment: ""), count))
                 .font(.caption)
                 .foregroundColor(.secondaryText)
                 .padding(.horizontal, 8)

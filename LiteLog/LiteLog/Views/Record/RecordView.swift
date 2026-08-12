@@ -248,7 +248,7 @@ struct RecordView: View {
             
             Spacer()
             
-            Text("\(count) 条记录")
+            Text(String(format: NSLocalizedString("record.count.records", comment: ""), count))
                 .font(.caption)
                 .foregroundColor(.secondaryText)
                 .padding(.horizontal, 8)

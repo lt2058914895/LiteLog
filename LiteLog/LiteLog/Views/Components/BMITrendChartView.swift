@@ -77,7 +77,7 @@ struct BMITrendChartView: View {
                 .font(.system(size: 32))
                 .foregroundColor(.secondaryText)
             
-            Text(NSLocalizedString("stats.no.data", comment: ""))
+            Text(NSLocalizedString("common.no.data", comment: ""))
                 .font(.subheadline)
                 .foregroundColor(.secondaryText)
         }

@@ -31,7 +31,6 @@ struct ProfileEditorView: View {
 
     private var existingProfile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
-    private var heightUnit: HeightUnit { settingsManager.heightUnit }
     private var inputBackgroundColor: Color {
         colorScheme == .dark ? Color(.secondarySystemBackground) : .white
     }
@@ -134,11 +133,11 @@ struct ProfileEditorView: View {
     
     private var genderPicker: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(NSLocalizedString("settings.gender", comment: ""))
+            Text(NSLocalizedString("common.gender", comment: ""))
                 .font(.subheadline)
                 .foregroundColor(.secondaryText)
             
-            Picker(NSLocalizedString("settings.gender", comment: ""), selection: $gender) {
+            Picker(NSLocalizedString("common.gender", comment: ""), selection: $gender) {
                 Text(NSLocalizedString("settings.male", comment: "")).tag(UserProfile.Gender.male)
                 Text(NSLocalizedString("settings.female", comment: "")).tag(UserProfile.Gender.female)
             }
@@ -149,7 +148,7 @@ struct ProfileEditorView: View {
     
     private var ageStepper: some View {
         HStack(spacing: 12) {
-            Text(NSLocalizedString("settings.age", comment: ""))
+            Text(NSLocalizedString("common.age", comment: ""))
                 .font(.subheadline)
                 .foregroundColor(.secondaryText)
             
@@ -172,7 +171,7 @@ struct ProfileEditorView: View {
                     .frame(width: 40, height: 40)
             }
             
-            Text(NSLocalizedString("settings.years", comment: ""))
+            Text(NSLocalizedString("common.years", comment: ""))
                 .font(.body)
                 .foregroundColor(.secondaryText)
         }
@@ -185,7 +184,7 @@ struct ProfileEditorView: View {
     private var heightInput: some View {
         HStack(spacing: 12) {
             HStack(spacing: 2) {
-                Text(NSLocalizedString("settings.height", comment: ""))
+                Text(NSLocalizedString("common.height", comment: ""))
                     .font(.subheadline)
                     .foregroundColor(.secondaryText)
                 Text("*")
@@ -195,12 +194,12 @@ struct ProfileEditorView: View {
             
             Spacer()
             
-            NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $heightString)
+            NumericTextField(NSLocalizedString("common.input.placeholder", comment: ""), text: $heightString)
                 .font(Font(UIFont.systemFont(ofSize: 22, weight: .semibold)))
                 .multilineTextAlignment(.center)
                 .focused($focusedField, equals: .height)
             
-            Text(heightUnit.displayName)
+            Text(NSLocalizedString("unit.cm", comment: ""))
                 .font(.body)
                 .foregroundColor(.secondaryText)
         }
@@ -228,15 +227,15 @@ struct ProfileEditorView: View {
             
             Divider()
             
-            Text(NSLocalizedString("settings.goal.measurements", comment: ""))
+            Text(NSLocalizedString("goal.measurements", comment: ""))
                 .font(.subheadline)
                 .foregroundColor(.secondaryText)
             
             VStack(spacing: 10) {
-                circumferenceInput(label: NSLocalizedString("settings.goal.waist", comment: ""), text: $goalWaistCircumferenceString, field: .waist)
-                circumferenceInput(label: NSLocalizedString("settings.goal.hip", comment: ""), text: $goalHipCircumferenceString, field: .hip)
-                circumferenceInput(label: NSLocalizedString("settings.goal.chest", comment: ""), text: $goalChestCircumferenceString, field: .chest)
-                circumferenceInput(label: NSLocalizedString("settings.goal.thigh", comment: ""), text: $goalThighCircumferenceString, field: .thigh)
+                circumferenceInput(label: NSLocalizedString("measure.waist", comment: ""), text: $goalWaistCircumferenceString, field: .waist)
+                circumferenceInput(label: NSLocalizedString("measure.hip", comment: ""), text: $goalHipCircumferenceString, field: .hip)
+                circumferenceInput(label: NSLocalizedString("measure.chest", comment: ""), text: $goalChestCircumferenceString, field: .chest)
+                circumferenceInput(label: NSLocalizedString("measure.thigh", comment: ""), text: $goalThighCircumferenceString, field: .thigh)
             }
         }
         .padding()
@@ -248,7 +247,7 @@ struct ProfileEditorView: View {
     private var goalWeightInput: some View {
         HStack(spacing: 12) {
             HStack(spacing: 2) {
-                Text(NSLocalizedString("settings.goal.weight", comment: ""))
+                Text(NSLocalizedString("goal.weight", comment: ""))
                     .font(.subheadline)
                     .foregroundColor(.secondaryText)
                 Text("*")
@@ -258,7 +257,7 @@ struct ProfileEditorView: View {
             
             Spacer()
             
-            NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalWeightString)
+            NumericTextField(NSLocalizedString("common.input.placeholder", comment: ""), text: $goalWeightString)
                 .font(Font(UIFont.systemFont(ofSize: 22, weight: .semibold)))
                 .multilineTextAlignment(.center)
                 .focused($focusedField, equals: .goalWeight)
@@ -281,13 +280,13 @@ struct ProfileEditorView: View {
     
     private var goalBodyFatInput: some View {
         HStack(spacing: 12) {
-            Text(NSLocalizedString("settings.goal.body.fat", comment: ""))
+            Text(NSLocalizedString("goal.body.fat", comment: ""))
                 .font(.subheadline)
                 .foregroundColor(.secondaryText)
             
             Spacer()
             
-            NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: $goalBodyFatString)
+            NumericTextField(NSLocalizedString("common.input.placeholder", comment: ""), text: $goalBodyFatString)
                 .font(Font(UIFont.systemFont(ofSize: 22, weight: .semibold)))
                 .multilineTextAlignment(.center)
                 .focused($focusedField, equals: .goalBodyFat)
@@ -316,12 +315,12 @@ struct ProfileEditorView: View {
             
             Spacer()
             
-            NumericTextField(NSLocalizedString("settings.prompt.enter", comment: ""), text: text)
+            NumericTextField(NSLocalizedString("common.input.placeholder", comment: ""), text: text)
                 .font(Font(UIFont.systemFont(ofSize: 22, weight: .semibold)))
                 .multilineTextAlignment(.center)
                 .focused($focusedField, equals: field)
             
-            Text(NSLocalizedString("settings.cm", comment: ""))
+            Text(NSLocalizedString("unit.cm", comment: ""))
                 .font(.body)
                 .foregroundColor(.secondaryText)
         }
@@ -351,7 +350,7 @@ struct ProfileEditorView: View {
 
     private func loadExistingProfile() {
         if let profile = existingProfile {
-            heightString = heightUnit.convertFromCm(profile.height).smartFormatted
+            heightString = profile.height.smartFormatted
             gender = profile.genderEnum
             age = Int(profile.age)
             goalWeightString = profile.goalWeightValue.map { unit.convertFromKg($0).smartFormatted } ?? ""
@@ -420,7 +419,7 @@ struct ProfileEditorView: View {
             return
         }
 
-        let heightInCm = heightUnit.convertToCm(heightValue)
+        let heightInCm = heightValue
         let goalWeightInKg = unit.convertToKg(goalWeightValue)
         let goalBodyFat = Double(goalBodyFatString)
         let goalWaistCircumference = Double(goalWaistCircumferenceString)

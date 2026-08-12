@@ -40,7 +40,7 @@ final class ExportManager {
     }
 
     func exportSummary(records: [WeightRecord], profile: UserProfile?, unit: WeightUnit) -> String {
-        guard !records.isEmpty else { return NSLocalizedString("stats.no.data", comment: "") }
+        guard !records.isEmpty else { return NSLocalizedString("common.no.data", comment: "") }
 
         let sortedRecords = records.sorted { $0.date < $1.date }
         let weightsInUnit = sortedRecords.map { unit.convertFromKg($0.weight) }
