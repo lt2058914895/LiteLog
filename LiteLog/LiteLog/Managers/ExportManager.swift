@@ -13,7 +13,7 @@ final class ExportManager {
     }
 
     func exportToCSV(records: [WeightRecord], unit: WeightUnit) -> URL? {
-        var csvContent = "Date,Weight (\(unit.shortName)),Body Fat (%),Note\n"
+        var csvContent = "Date,Weight (\(unit.shortName)),Body Fat (%),Note,Image URL\n"
 
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
@@ -24,7 +24,8 @@ final class ExportManager {
             let bodyFat = record.bodyFatPercentageValue.map { String(format: "%.1f", $0) } ?? ""
             let note = record.note?.replacingOccurrences(of: ",", with: ";").replacingOccurrences(of: "\n", with: " ") ?? ""
 
-            csvContent += "\(dateString),\(String(format: "%.1f", weight)),\(bodyFat),\"\(note)\"\n"
+            let imageUrl = record.imageUrl ?? ""
+            csvContent += "\(dateString),\(String(format: "%.1f", weight)),\(bodyFat),\"\(note)\",\(imageUrl)\n"
         }
 
         let fileName = "LiteLog_Export_\(dateFormatter.string(from: Date())).csv"
@@ -97,6 +98,7 @@ final class ExportManager {
                 "chestCircumference": record.chestCircumferenceValue.map { String(format: "%.1f", $0) },
                 "thighCircumference": record.thighCircumferenceValue.map { String(format: "%.1f", $0) },
                 "note": record.note,
+                "imageUrl": record.imageUrl,
                 "measurementTimePeriod": record.measurementTimePeriod
             ] as [String: Any?]
         }

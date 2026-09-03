@@ -75,6 +75,13 @@ struct HomeView: View {
                 }
                 .padding()
             }
+            .refreshable {
+                isLoading = true
+                await DataSyncManager.shared.syncFromCloud(context: context)
+                await DataSyncManager.shared.syncLocalDataToCloud(context: context)
+                isLoading = false
+                computeCachedData()
+            }
             .background(Color(.systemGroupedBackground))
             .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 800 : 600, alignment: .center)
             .toolbar {

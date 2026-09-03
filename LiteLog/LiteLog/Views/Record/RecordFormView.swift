@@ -555,6 +555,7 @@ struct RecordFormView: View {
             return
         }
 
+        HapticManager.success()
         DataSyncManager.shared.triggerWeightRecordSync(context: context)
         onSave?()
         dismiss()
@@ -601,6 +602,7 @@ struct RecordFormView: View {
             return
         }
 
+        HapticManager.success()
         DataSyncManager.shared.triggerWeightRecordSync(context: context)
         onSave?()
         dismiss()

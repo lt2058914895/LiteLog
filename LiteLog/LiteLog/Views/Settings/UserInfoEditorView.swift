@@ -297,6 +297,7 @@ struct UserInfoEditorView: View {
             )
             
             if response.success {
+                HapticManager.success()
                 updateLocalProfile(nickname: response.nickname ?? nickname, avatarUrl: response.avatarUrl)
                 
                 showingSuccessToast = true

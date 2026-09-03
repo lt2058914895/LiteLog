@@ -169,6 +169,11 @@ struct RecordView: View {
                 .listStyle(.insetGrouped)
             }
         }
+        .refreshable {
+            await DataSyncManager.shared.syncFromCloud(context: context)
+            await DataSyncManager.shared.syncLocalDataToCloud(context: context)
+            viewModel.refresh()
+        }
     }
 
     private var calendarView: some View {
@@ -262,13 +267,14 @@ struct RecordView: View {
 
     private func deleteRecord(_ record: WeightRecord) {
         let recordId = record.id.uuidString
+        HapticManager.warning()
         withAnimation {
             context.delete(record)
             try? context.save()
         }
-        
+
         viewModel.refresh()
-        
+
         Task {
             await DataSyncManager.shared.syncDeletedRecords(recordIds: [recordId])
         }
