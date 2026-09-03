@@ -242,6 +242,19 @@ extension UIImage {
         return UIGraphicsGetImageFromCurrentImageContext() ?? self
     }
     
+    func resizedToMaxDimension(_ maxDimension: CGFloat) -> UIImage {
+        let currentDimension = max(self.size.width, self.size.height)
+        if currentDimension <= maxDimension {
+            return self
+        }
+        let scale = maxDimension / currentDimension
+        let newSize = CGSize(width: self.size.width * scale, height: self.size.height * scale)
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in
+            self.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+    }
+    
     private func normalizedImage() -> UIImage {
         if self.imageOrientation == .up {
             return self

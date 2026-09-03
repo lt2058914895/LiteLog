@@ -17,7 +17,9 @@ enum AppEnvironment: String, CaseIterable {
     
     var baseURL: URL {
         switch self {
-        case .development: return URL(string: "http://10.226.220.119:8080")!
+        case .development:
+            let custom = UserDefaults.standard.string(forKey: "dev_server_url") ?? "http://10.226.220.119:8080"
+            return URL(string: custom)!
         case .production: return URL(string: "https://litelog.com.cn")!
         }
     }
@@ -150,25 +152,28 @@ final class SettingsManager: ObservableObject {
     
     @Published var avatarCacheUpdated = false
     
+    private var avatarCacheURL: URL {
+        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        return documentsDir.appendingPathComponent("cached_avatar.png")
+    }
+    
     var cachedAvatarImage: UIImage? {
-        if let data = defaults.data(forKey: Keys.avatarData),
-           let image = UIImage(data: data) {
-            return image
-        }
-        return nil
+        guard FileManager.default.fileExists(atPath: avatarCacheURL.path) else { return nil }
+        guard let data = try? Data(contentsOf: avatarCacheURL) else { return nil }
+        return UIImage(data: data)
     }
     
     func updateCachedAvatar(with image: UIImage) {
         let scaledImage = image.scaledToSize(CGSize(width: 120, height: 120))
         if let data = scaledImage.pngData() {
-            defaults.set(data, forKey: Keys.avatarData)
+            try? data.write(to: avatarCacheURL)
             defaults.set(avatarUrl.hashValue, forKey: Keys.avatarUrlHash)
             avatarCacheUpdated.toggle()
         }
     }
     
     func clearCachedAvatar() {
-        defaults.removeObject(forKey: Keys.avatarData)
+        try? FileManager.default.removeItem(at: avatarCacheURL)
         defaults.removeObject(forKey: Keys.avatarUrlHash)
     }
     

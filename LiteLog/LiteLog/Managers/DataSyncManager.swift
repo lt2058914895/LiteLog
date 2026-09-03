@@ -138,6 +138,18 @@ final class DataSyncManager {
             }
         }
         
+        // 删除云端已删除的记录（仅在另一台设备删除的已同步记录）
+        let cloudRecordIds = Set(records.map { $0.recordId })
+        for (_, record) in existingRecordMap {
+            if !cloudRecordIds.contains(record.id.uuidString)
+               && record.syncStatusEnum == .synced {
+                if let imageUrl = record.imageUrl, ImageStorageManager.shared.isLocalImageUrl(imageUrl) {
+                    ImageStorageManager.shared.deleteImage(from: imageUrl)
+                }
+                context.delete(record)
+            }
+        }
+        
         try context.save()
         Self.logger.info("体重记录从云端合并成功，共 \(records.count) 条")
     }

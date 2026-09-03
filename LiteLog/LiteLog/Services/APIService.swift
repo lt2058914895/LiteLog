@@ -15,8 +15,8 @@ class APIService {
     
     private let session: Session = {
         let configuration = URLSessionConfiguration.af.default
-        configuration.timeoutIntervalForRequest = 5
-        configuration.timeoutIntervalForResource = 8
+        configuration.timeoutIntervalForRequest = 30
+        configuration.timeoutIntervalForResource = 60
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         return Session(configuration: configuration)
     }()
@@ -93,6 +93,12 @@ class APIService {
     }
     
     func uploadAvatar(image: UIImage) async throws -> AvatarUploadResponse {
+        return try await withRetry {
+            try await performUploadAvatar(image: image)
+        }
+    }
+    
+    private func performUploadAvatar(image: UIImage) async throws -> AvatarUploadResponse {
         let endpoint = baseURL.appendingPathComponent("user/avatar/upload")
         let userId = UserIdentifierManager.shared.deviceId
         let safeUserId = userId.replacingOccurrences(of: "-", with: "")
@@ -103,7 +109,7 @@ class APIService {
             #endif
             
             session.upload(multipartFormData: { multipartFormData in
-                if let imageData = image.jpegData(compressionQuality: 0.8) {
+                if let imageData = image.resizedToMaxDimension(1024).jpegData(compressionQuality: 0.8) {
                     multipartFormData.append(imageData, withName: "file", fileName: "\(safeUserId).jpg", mimeType: "image/jpeg")
                 }
             }, to: endpoint, headers: defaultHeaders())
@@ -112,6 +118,23 @@ class APIService {
                 self.handleResponse(response, debugTag: "uploadAvatar", continuation: continuation)
             }
         }
+    }
+    
+    private func withRetry<T>(maxRetries: Int = 3, operation: () async throws -> T) async throws -> T {
+        var lastError: Error?
+        for attempt in 0..<maxRetries {
+            do {
+                return try await operation()
+            } catch {
+                lastError = error
+                if attempt < maxRetries - 1 {
+                    let delay = UInt64(1_000_000_000 * (1 << attempt))
+                    Self.logger.warning("uploadAvatar 失败，\(delay / 1_000_000_000)秒后重试（第\(attempt + 1)次）: \(error.localizedDescription)")
+                    try? await Task.sleep(nanoseconds: delay)
+                }
+            }
+        }
+        throw lastError!
     }
     
     func updateProfile(nickname: String?, avatarUrl: String?) async throws -> UpdateProfileResponse {
@@ -286,7 +309,7 @@ class APIService {
                 }
                 
                 for (recordId, image) in images {
-                    if let imageData = image.jpegData(compressionQuality: 0.8) {
+                    if let imageData = image.resizedToMaxDimension(1024).jpegData(compressionQuality: 0.8) {
                         let fileName = "\(recordId)_image.jpg"
                         multipartFormData.append(imageData, withName: "files", fileName: fileName, mimeType: "image/jpeg")
                     }
