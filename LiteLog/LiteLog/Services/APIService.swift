@@ -198,6 +198,20 @@ class APIService {
         case .failure(let error):
             Self.logger.error("\(debugTag) - API Error: \(error.localizedDescription)")
             
+            // 区分超时、无网络、服务端错误
+            if let urlError = error.underlyingError as? URLError {
+                switch urlError.code {
+                case .timedOut:
+                    continuation.resume(throwing: APIError.timeoutError)
+                    return
+                case .notConnectedToInternet, .networkConnectionLost:
+                    continuation.resume(throwing: APIError.noNetworkError)
+                    return
+                default:
+                    break
+                }
+            }
+            
             if let data = response.data, let responseString = String(data: data, encoding: .utf8) {
                 do {
                     let decoder = JSONDecoder()
@@ -343,6 +357,8 @@ class APIService {
 enum APIError: Error, LocalizedError, Equatable {
     case invalidResponse
     case networkError
+    case timeoutError
+    case noNetworkError
     case decodingError
     case serverError(String)
     case serverErrorWithCode(Int, String)
@@ -351,6 +367,8 @@ enum APIError: Error, LocalizedError, Equatable {
         switch self {
         case .invalidResponse: return NSLocalizedString("error.invalid_response", comment: "")
         case .networkError: return NSLocalizedString("error.network_error", comment: "")
+        case .timeoutError: return NSLocalizedString("error.timeout", value: "请求超时，请稍后重试", comment: "")
+        case .noNetworkError: return NSLocalizedString("error.no_network", value: "网络连接不可用，请检查网络设置", comment: "")
         case .decodingError: return NSLocalizedString("error.decoding_error", comment: "")
         case .serverError(let message): return message
         case .serverErrorWithCode(let code, let message):

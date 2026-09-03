@@ -86,26 +86,57 @@ struct AsyncImageView: View {
 class ImageCache {
     static let shared = ImageCache()
     
-    private let cache = NSCache<NSString, UIImage>()
+    private let memoryCache = NSCache<NSString, UIImage>()
+    private let diskCacheURL: URL
     
     private init() {
-        cache.countLimit = 50
-        cache.totalCostLimit = 10 * 1024 * 1024
+        memoryCache.countLimit = 50
+        memoryCache.totalCostLimit = 10 * 1024 * 1024
+        
+        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        diskCacheURL = documentsDir.appendingPathComponent("ImageCache")
+        try? FileManager.default.createDirectory(at: diskCacheURL, withIntermediateDirectories: true)
+    }
+    
+    private func diskFilename(_ key: String) -> String {
+        key.replacingOccurrences(of: "https://", with: "")
+            .replacingOccurrences(of: "http://", with: "")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: ":", with: "_")
+            .replacingOccurrences(of: ".", with: "_")
     }
     
     func image(forKey key: String) -> UIImage? {
-        cache.object(forKey: key as NSString)
+        if let cached = memoryCache.object(forKey: key as NSString) {
+            return cached
+        }
+        let fileURL = diskCacheURL.appendingPathComponent(diskFilename(key))
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            if let data = try? Data(contentsOf: fileURL), let image = UIImage(data: data) {
+                memoryCache.setObject(image, forKey: key as NSString)
+                return image
+            }
+        }
+        return nil
     }
     
     func setImage(_ image: UIImage, forKey key: String) {
-        cache.setObject(image, forKey: key as NSString)
+        memoryCache.setObject(image, forKey: key as NSString)
+        let fileURL = diskCacheURL.appendingPathComponent(diskFilename(key))
+        if let data = image.jpegData(compressionQuality: 0.8) {
+            try? data.write(to: fileURL)
+        }
     }
     
     func removeImage(forKey key: String) {
-        cache.removeObject(forKey: key as NSString)
+        memoryCache.removeObject(forKey: key as NSString)
+        let fileURL = diskCacheURL.appendingPathComponent(diskFilename(key))
+        try? FileManager.default.removeItem(at: fileURL)
     }
     
     func clear() {
-        cache.removeAllObjects()
+        memoryCache.removeAllObjects()
+        try? FileManager.default.removeItem(at: diskCacheURL)
+        try? FileManager.default.createDirectory(at: diskCacheURL, withIntermediateDirectories: true)
     }
 }

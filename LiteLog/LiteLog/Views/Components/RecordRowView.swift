@@ -39,7 +39,8 @@ struct RecordRowView: View, Equatable {
         lhs.record.imageUrl == rhs.record.imageUrl &&
         lhs.unit == rhs.unit &&
         lhs.showDate == rhs.showDate &&
-        lhs.weightChange == rhs.weightChange
+        lhs.weightChange == rhs.weightChange &&
+        lhs.record.syncStatus == rhs.record.syncStatus
     }
     
     @Environment(\.colorScheme) private var colorScheme
@@ -83,6 +84,16 @@ struct RecordRowView: View, Equatable {
                 }
                 
                 Spacer()
+                
+                if record.syncStatusEnum == .pending {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                } else if record.syncStatusEnum == .failed {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
                 
                 if let timePeriod = record.measurementTimePeriod,
                    let period = MeasurementTimePeriod(rawValue: timePeriod) {
