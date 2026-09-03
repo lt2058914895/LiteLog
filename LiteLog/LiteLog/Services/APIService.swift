@@ -336,12 +336,21 @@ class APIService {
         }
     }
     
-    func fetchAllData() async throws -> FetchAllDataResponse {
-        let endpoint = baseURL.appendingPathComponent("user/fetch-all-data")
+    func fetchAllData(page: Int? = nil, size: Int? = nil) async throws -> FetchAllDataResponse {
+        var endpoint = baseURL.appendingPathComponent("user/fetch-all-data")
+        
+        var queryItems: [URLQueryItem] = []
+        if let page = page { queryItems.append(URLQueryItem(name: "page", value: String(page))) }
+        if let size = size { queryItems.append(URLQueryItem(name: "size", value: String(size))) }
+        if !queryItems.isEmpty {
+            var components = URLComponents(url: endpoint, resolvingAgainstBaseURL: false)
+            components?.queryItems = queryItems
+            if let url = components?.url { endpoint = url }
+        }
         
         return try await withCheckedThrowingContinuation { continuation in
             #if DEBUG
-            Self.logger.debug("fetchAllData - URL: \(endpoint.absoluteString)")
+            Self.logger.debug("fetchAllData - URL: \(endpoint.absoluteString), page=\(page ?? -1), size=\(size ?? -1)")
             #endif
             
             session.request(endpoint, method: .get, headers: defaultHeaders())
@@ -403,4 +412,8 @@ public struct FetchAllDataResponse: Sendable, Decodable {
     public let message: String?
     public let profile: UpdateProfileResponse?
     public let records: [WeightRecordRequest]?
+    public let totalRecords: Int?
+    public let currentPage: Int?
+    public let totalPages: Int?
+    public let pageSize: Int?
 }

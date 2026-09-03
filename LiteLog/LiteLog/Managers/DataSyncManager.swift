@@ -10,6 +10,27 @@ final class DataSyncManager {
     
     private init() {}
     
+    private var autoSyncTimer: Timer?
+    private static let autoSyncInterval: TimeInterval = 300
+    
+    /// 启动自动重试定时器（每 5 分钟同步一次，前台运行时生效）
+    func startAutoSyncTimer() {
+        guard autoSyncTimer == nil else { return }
+        autoSyncTimer = Timer.scheduledTimer(withTimeInterval: Self.autoSyncInterval, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            Task { @MainActor in
+                let context = PersistenceController.shared.viewContext
+                await self.syncLocalDataToCloud(context: context)
+            }
+        }
+        Self.logger.info("自动重试定时器已启动（间隔 5 分钟）")
+    }
+    
+    func stopAutoSyncTimer() {
+        autoSyncTimer?.invalidate()
+        autoSyncTimer = nil
+    }
+    
     @MainActor
     func syncLocalDataToCloud(context: NSManagedObjectContext) async {
         do {
@@ -24,17 +45,43 @@ final class DataSyncManager {
     @MainActor
     func syncFromCloud(context: NSManagedObjectContext) async -> Bool {
         do {
-            let response = try await APIService.shared.fetchAllData()
+            var allRecords: [WeightRecordRequest] = []
+            var profile: UpdateProfileResponse? = nil
+            var page = 0
+            let pageSize = 50
+            var totalPages = 1
             
-            if response.success, let profile = response.profile, let records = response.records {
+            repeat {
+                let response = try await APIService.shared.fetchAllData(page: page, size: pageSize)
+                
+                guard response.success else {
+                    Self.logger.error("从云端同步数据失败: \(response.message ?? "未知错误")")
+                    return false
+                }
+                
+                if page == 0, let p = response.profile {
+                    profile = p
+                }
+                
+                if let records = response.records {
+                    allRecords.append(contentsOf: records)
+                }
+                
+                if let tp = response.totalPages, tp > 0 {
+                    totalPages = tp
+                } else {
+                    totalPages = page + 1
+                }
+                
+                page += 1
+            } while page < totalPages
+            
+            if let profile = profile {
                 try await mergeProfileFromCloud(profile, context: context)
-                try await mergeRecordsFromCloud(records, context: context)
-                Self.logger.info("从云端同步数据成功")
-                return true
-            } else {
-                Self.logger.error("从云端同步数据失败: \(response.message ?? "未知错误")")
-                return false
             }
+            try await mergeRecordsFromCloud(allRecords, context: context)
+            Self.logger.info("从云端同步数据成功，共 \(allRecords.count) 条记录（\(page) 页）")
+            return true
         } catch {
             Self.logger.error("从云端同步数据失败: \(error.localizedDescription)")
             return false
@@ -183,13 +230,15 @@ final class DataSyncManager {
                 let unit = WeightUnit(rawValue: profile.weightUnit) ?? .kg
                 let goalWeightInCurrentUnit = profile.goalWeightValue.map { unit.convertFromKg($0) } ?? 0
                 
-                let response = try await APIService.shared.updateUserProfile(
-                    height: profile.height,
-                    gender: Int(profile.gender),
-                    age: Int(profile.age),
-                    goalWeight: goalWeightInCurrentUnit,
-                    weightUnit: profile.weightUnit
-                )
+                let response = try await syncWithRetry {
+                    try await APIService.shared.updateUserProfile(
+                        height: profile.height,
+                        gender: Int(profile.gender),
+                        age: Int(profile.age),
+                        goalWeight: goalWeightInCurrentUnit,
+                        weightUnit: profile.weightUnit
+                    )
+                }
                 
                 if response.success {
                     profile.syncStatus = UserProfile.SyncStatus.synced.rawValue
@@ -197,7 +246,7 @@ final class DataSyncManager {
                     Self.logger.info("个人资料同步成功")
                 }
             } catch {
-                Self.logger.error("个人资料同步失败: \(error.localizedDescription)")
+                Self.logger.error("个人资料同步失败（重试3次后仍失败）: \(error.localizedDescription)")
             }
         }
     }
@@ -226,12 +275,16 @@ final class DataSyncManager {
     @MainActor
     func syncDeletedRecords(recordIds: [String]) async {
         do {
-            let response = try await APIService.shared.deleteWeightRecords(recordIds: recordIds)
+            let response = try await syncWithRetry {
+                try await APIService.shared.deleteWeightRecords(recordIds: recordIds)
+            }
             if response.success {
                 Self.logger.info("删除记录同步成功，删除了 \(response.syncedCount) 条")
+            } else {
+                Self.logger.error("删除记录同步失败: \(response.message ?? "未知错误")")
             }
         } catch {
-            Self.logger.error("删除记录同步失败: \(error.localizedDescription)")
+            Self.logger.error("删除记录同步失败（重试3次后仍失败）: \(error.localizedDescription)")
         }
     }
     

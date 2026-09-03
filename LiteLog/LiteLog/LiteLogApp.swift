@@ -11,7 +11,13 @@ struct LiteLogApp: App {
     @State private var hasPopulatedMockData = false
     @State private var hasHandledCloudSync = false
     
+    @Environment(\.scenePhase) private var scenePhase
+
     let persistenceController = PersistenceController.shared
+
+    init() {
+        BackgroundTaskManager.shared.registerBackgroundTasks()
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -20,7 +26,10 @@ struct LiteLogApp: App {
                 .environment(\.managedObjectContext, persistenceController.viewContext)
                 .onAppear {
                     settingsManager.setContext(persistenceController.viewContext)
-                    
+
+                    BackgroundTaskManager.shared.scheduleAppRefresh()
+                    DataSyncManager.shared.startAutoSyncTimer()
+
                     // 仅在非正式环境下填充假数据（正式环境使用真实数据，无需假数据）
                     if settingsManager.appEnvironment != .production && !hasPopulatedMockData {
                         MockDataManager.shared.populateMockData(context: persistenceController.viewContext)
@@ -35,6 +44,20 @@ struct LiteLogApp: App {
                         await DataSyncManager.shared.syncLocalDataToCloud(context: persistenceController.viewContext)
                     }
                 }
+                .onChange(of: scenePhase) { phase in
+                    switch phase {
+                    case .active:
+                        DataSyncManager.shared.startAutoSyncTimer()
+                        Task {
+                            await DataSyncManager.shared.syncLocalDataToCloud(context: persistenceController.viewContext)
+                        }
+                    case .background:
+                        DataSyncManager.shared.stopAutoSyncTimer()
+                        BackgroundTaskManager.shared.scheduleAppRefresh()
+                    default:
+                        break
+                    }
+                }
         }
     }
     
@@ -47,21 +70,8 @@ struct LiteLogApp: App {
         for _ in 0..<5 {
             if let syncedId = UserIdentifierManager.shared.checkForSyncedDeviceId() {
                 UserIdentifierManager.shared.switchToDeviceId(syncedId)
-                
-                do {
-                    let response = try await APIService.shared.fetchAllData()
-                    
-                    if let profile = response.profile {
-                        try await DataSyncManager.shared.mergeProfileFromCloud(profile, context: persistenceController.viewContext)
-                    }
-                    if let records = response.records {
-                        try await DataSyncManager.shared.mergeRecordsFromCloud(records, context: persistenceController.viewContext)
-                    }
-                    
-                    return
-                } catch {
-                    Self.logger.error("Failed to merge synced data: \(error.localizedDescription)")
-                }
+                await DataSyncManager.shared.syncFromCloud(context: persistenceController.viewContext)
+                return
             }
             try? await Task.sleep(nanoseconds: 500_000_000)
         }

@@ -85,16 +85,6 @@ struct RecordRowView: View, Equatable {
                 
                 Spacer()
                 
-                if record.syncStatusEnum == .pending {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                } else if record.syncStatusEnum == .failed {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .font(.caption)
-                        .foregroundColor(.red)
-                }
-                
                 if let timePeriod = record.measurementTimePeriod,
                    let period = MeasurementTimePeriod(rawValue: timePeriod) {
                     timePeriodView(period)
@@ -117,7 +107,6 @@ struct RecordRowView: View, Equatable {
         .padding(.horizontal, 16)
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.white)
         .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 4)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color(.separator).opacity(0.3), lineWidth: 1)
@@ -281,7 +270,7 @@ struct RecordRowView: View, Equatable {
                     AsyncImageView(
                         url: imageUrl,
                         placeholder: { AnyView(Color(.secondarySystemBackground).aspectRatio(4/3, contentMode: .fit).frame(maxHeight: 120)) },
-                        errorPlaceholder: { AnyView(Text(NSLocalizedString("record.image.load.failed", comment: "")).font(.caption).foregroundColor(.secondaryText).frame(height: 120)) },
+                        errorPlaceholder: { AnyView(EmptyView()) },
                         contentMode: .fit,
                         cacheKey: url
                     )

@@ -133,9 +133,9 @@ struct RecordView: View {
                     ForEach(viewModel.sortedGroupedRecords, id: \.0) { date, monthRecords in
                         Section(header: monthHeaderView(date, count: monthRecords.count)) {
                             ForEach(monthRecords, id: \.record.objectID) { item in
-                                RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
+                               RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
                                     .id("\(item.record.objectID)-\(item.record.updatedAt.timeIntervalSince1970)")
-                                    .listRowInsets(EdgeInsets())
+                                   .listRowInsets(EdgeInsets())
                                     .listRowBackground(Color.clear)
                                     .listRowSeparator(.hidden)
                                     .padding(.bottom, 12)
@@ -172,7 +172,7 @@ struct RecordView: View {
         .refreshable {
             await DataSyncManager.shared.syncFromCloud(context: context)
             await DataSyncManager.shared.syncLocalDataToCloud(context: context)
-            viewModel.refresh()
+            viewModel.forceRefresh()
         }
     }
 
@@ -211,9 +211,9 @@ struct RecordView: View {
                     .padding()
             } else {
                 ForEach(dayRecordsWithChange, id: \.record.objectID) { item in
-                    RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
+                   RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange)
                         .id("\(item.record.objectID)-\(item.record.updatedAt.timeIntervalSince1970)")
-                        .onTapGesture {
+                       .onTapGesture {
                             recordToEditData = RecordFormData(
                                 id: item.record.id.uuidString,
                                 date: item.record.date,
