@@ -540,7 +540,7 @@ struct StatisticsView: View {
                 Divider()
 
                 HStack {
-                    Text("Min")
+                    Text(NSLocalizedString("stats.min", comment: ""))
                         .foregroundColor(.secondaryText)
 
                     Spacer()
@@ -553,7 +553,7 @@ struct StatisticsView: View {
                 Divider()
 
                 HStack {
-                    Text("Max")
+                    Text(NSLocalizedString("stats.max", comment: ""))
                         .foregroundColor(.secondaryText)
 
                     Spacer()

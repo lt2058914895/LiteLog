@@ -794,10 +794,7 @@ private enum SettingsAlert: Identifiable {
         case .exportFailed:
             return NSLocalizedString("settings.export.error.message", comment: "")
         case .restoreSucceeded(let count):
-            return String(
-                format: NSLocalizedString("settings.restore.success.message", comment: ""),
-                count
-            )
+            return localizedRestoreCount(count)
         case .restoreFailed(let message), .notificationFailed(let message):
             return message
         case .notificationPermissionDenied:

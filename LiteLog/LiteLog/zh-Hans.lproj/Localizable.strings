@@ -139,6 +139,8 @@
 "stats.loss.speed" = "减重速度";
 "stats.per.week" = "/周";
 "stats.metric" = "指标";
+"stats.min" = "最小";
+"stats.max" = "最大";
 // 设置页
 "settings.profile" = "个人资料";
 "settings.profile.incomplete" = "完善健康资料后即可查看 BMI 和目标进度";
@@ -177,7 +179,8 @@
 "settings.restore.continue" = "选择备份文件";
 "settings.restore.confirm" = "恢复将替换当前全部资料和记录，当前头像和昵称也会被替换。";
 "settings.restore.success.title" = "恢复完成";
-"settings.restore.success.message" = "已恢复 %d 条记录。";
+"settings.restore.success.message.one" = "已恢复 %d 条记录。";
+"settings.restore.success.message.other" = "已恢复 %d 条记录。";
 "settings.restore.error.title" = "恢复失败";
 "settings.backup.hint" = "数据仅保存在当前设备。更换设备或卸载 App 前，请先导出 JSON 备份。";
 "backup.error.version" = "不支持此备份文件版本。";
@@ -221,7 +224,7 @@
 "action.cancel" = "取消";
 "action.edit" = "编辑";
 "action.delete" = "删除";
-"action.done" = "查看全部";
+"action.done" = "完成";
 "action.confirm" = "确定";
 "action.submit" = "提交";
 "action.submitting" = "提交中...";
@@ -239,11 +242,13 @@
 "notification.weight.recorded.body" = "今日体重：%.1f kg";
 "notification.milestone.body" = "恭喜！您已达到减重里程碑！";
 "notification.milestone.title" = "减重里程碑";
-"notification.streak.body" = "您已连续记录体重%d天了！";
+"notification.streak.body.one" = "您已连续记录体重 %d 天！";
+"notification.streak.body.other" = "您已连续记录体重 %d 天！";
 "notification.streak.title" = "连续记录";
 "notification.weight.loss.body" = "本月已减重%.1f kg，继续加油！";
 "notification.weight.loss.title" = "减重成就";
 
-"record.count.records" = "%d条记录";
+"record.count.records.one" = "%d 条记录";
+"record.count.records.other" = "%d 条记录";
 "home.goal.label" = "目标:";
 "home.current.label" = "当前:";

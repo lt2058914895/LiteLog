@@ -162,7 +162,7 @@ final class NotificationManager: ObservableObject {
 
         let content = UNMutableNotificationContent()
         content.title = NSLocalizedString("notification.streak.title", comment: "")
-        content.body = String(format: NSLocalizedString("notification.streak.body", comment: ""), streak)
+        content.body = localizedStreakMessage(streak)
         content.sound = .default
         content.categoryIdentifier = "streak"
 

@@ -5,6 +5,24 @@ import Foundation
 extension Notification.Name {
     static let showProfileEditor = Notification.Name("showProfileEditor")
 }
+
+func localizedRecordCount(_ count: Int) -> String {
+    let key = count == 1 ? "record.count.records.one" : "record.count.records.other"
+    return String(format: NSLocalizedString(key, comment: ""), count)
+}
+
+func localizedRestoreCount(_ count: Int) -> String {
+    let key = count == 1
+        ? "settings.restore.success.message.one"
+        : "settings.restore.success.message.other"
+    return String(format: NSLocalizedString(key, comment: ""), count)
+}
+
+func localizedStreakMessage(_ days: Int) -> String {
+    let key = days == 1 ? "notification.streak.body.one" : "notification.streak.body.other"
+    return String(format: NSLocalizedString(key, comment: ""), days)
+}
+
 extension View {
     func adaptiveSheet<Item, Content>(item: Binding<Item?>, onDismiss: (() -> Void)? = nil, content: @escaping (Item) -> Content) -> some View where Item: Identifiable, Content: View {
         self.sheet(item: item, onDismiss: onDismiss, content: content)
