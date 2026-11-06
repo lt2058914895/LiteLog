@@ -62,6 +62,7 @@
 "bmi.info.citation.bmi.source" = "中国成人超重和肥胖症预防控制指南";
 "bmi.info.citation.bmi.who" = "WHO 国际肥胖特别工作组";
 "bmi.info.citation.body.fat" = "美国运动医学学会(ACSM)体成分评估指南";
+"bmi.info.disclaimer" = "BMI 和体脂分类仅用于一般健康信息参考，不能替代医生或专业医疗诊断。如有健康问题，请咨询专业医疗人员。";
 "bmi.underweight" = "偏瘦";
 "bmi.normal" = "正常";
 "bmi.overweight" = "超重";
@@ -144,8 +145,7 @@
 "settings.profile.edit.hint" = "查看并修改身高、年龄和目标";
 "settings.section.health" = "健康档案";
 "settings.section.notifications" = "提醒";
-"settings.section.data" = "数据与隐私";
-"settings.section.support" = "支持";
+"settings.section.data" = "数据与支持";
 "settings.height.required" = "请输入身高";
 "settings.height.invalid" = "请输入有效的身高";
 "settings.male" = "男";
@@ -188,6 +188,12 @@
 "backup.error.size" = "所选备份文件过大。";
 "settings.contact" = "联系我们";
 "settings.contact.desc" = "遇到问题或有建议，欢迎联系我们";
+"contact.page.title" = "有什么可以帮你？";
+"contact.page.subtitle" = "遇到问题、发现 Bug，或有功能建议，欢迎通过邮件或微信联系我。通常会在 1–2 个工作日内回复。";
+"contact.email.label" = "联系邮箱";
+"contact.wechat.label" = "微信";
+"contact.copy.accessibility" = "复制%@";
+"contact.copy.success" = "已复制%@";
 "settings.email" = "邮箱";
 "settings.wechat" = "微信";
 "settings.rate" = "去 App Store 评分";

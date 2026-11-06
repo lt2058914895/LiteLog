@@ -69,7 +69,10 @@ final class SettingsManager: ObservableObject {
     @Published private(set) var avatarUpdatedToken = UUID()
     
     private var avatarDirectoryURL: URL {
-        let supportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let supportDirectory = FileManager.default.urls(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask
+        ).first ?? FileManager.default.temporaryDirectory
         return supportDirectory.appendingPathComponent("LiteLog", isDirectory: true)
     }
 
@@ -78,7 +81,10 @@ final class SettingsManager: ObservableObject {
     }
 
     private var legacyAvatarFileURL: URL {
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let documentsDirectory = FileManager.default.urls(
+            for: .documentDirectory,
+            in: .userDomainMask
+        ).first ?? FileManager.default.temporaryDirectory
         return documentsDirectory.appendingPathComponent("cached_avatar.png")
     }
     

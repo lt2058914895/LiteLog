@@ -499,6 +499,12 @@ struct BMIInfoView: View {
                     url: URL(string: "https://www.acsm.org")!
                 )
             }
+
+            Text(NSLocalizedString("bmi.info.disclaimer", comment: ""))
+                .font(.caption2)
+                .foregroundColor(.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 4)
         }
         .padding()
         .cardStyle()

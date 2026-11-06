@@ -52,6 +52,15 @@ extension Color {
         )
     }
 }
+
+extension LinearGradient {
+    static let profileHeader = LinearGradient(
+        colors: [Color.primaryBlue, Color(hex: "4FB6A8")],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+}
+
 struct AdaptiveCardBackground: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
 
@@ -262,7 +271,9 @@ extension UIImage {
         UIGraphicsBeginImageContextWithOptions(self.size, false, self.scale)
         defer { UIGraphicsEndImageContext() }
         
-        let context = UIGraphicsGetCurrentContext()!
+        guard let context = UIGraphicsGetCurrentContext() else {
+            return self
+        }
         context.translateBy(x: self.size.width / 2, y: self.size.height / 2)
         
         switch self.imageOrientation {

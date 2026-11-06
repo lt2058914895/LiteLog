@@ -34,7 +34,9 @@ struct CalendarView: View {
 
     private var daysInMonth: [Date] {
         guard let range = calendar.range(of: .day, in: .month, for: currentMonth) else { return [] }
-        let firstDayOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth))!
+        let firstDayOfMonth = calendar.date(
+            from: calendar.dateComponents([.year, .month], from: currentMonth)
+        ) ?? currentMonth.startOfDay
 
         return range.compactMap { day -> Date? in
             calendar.date(byAdding: .day, value: day - 1, to: firstDayOfMonth)
@@ -42,7 +44,9 @@ struct CalendarView: View {
     }
 
     private var firstWeekdayOfMonth: Int {
-        let firstDayOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth))!
+        let firstDayOfMonth = calendar.date(
+            from: calendar.dateComponents([.year, .month], from: currentMonth)
+        ) ?? currentMonth.startOfDay
         return (calendar.component(.weekday, from: firstDayOfMonth) - calendar.firstWeekday + 7) % 7
     }
 

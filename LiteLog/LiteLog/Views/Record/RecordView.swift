@@ -18,10 +18,6 @@ struct RecordView: View {
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { viewModel.unit }
-    private var displayName: String {
-        !settingsManager.nickname.isEmpty ? settingsManager.nickname : NSLocalizedString("tab.record", comment: "")
-    }
-    
     init() {
         self._viewModel = StateObject(wrappedValue: RecordViewModel(
             context: PersistenceController.shared.viewContext,
@@ -52,15 +48,8 @@ struct RecordView: View {
             .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 800 : 600, alignment: .center)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
+                    ProfileToolbarChip {
                         showingProfileEditor = true
-                    }) {
-                        HStack(spacing: 12) {
-                            avatarImageView
-                            Text(displayName)
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                        }
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -271,20 +260,4 @@ struct RecordView: View {
         viewModel.refresh()
     }
     
-    @ViewBuilder
-    private var avatarImageView: some View {
-        if let image = settingsManager.avatarImage {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 36, height: 36)
-                .clipShape(Circle())
-                .id(settingsManager.avatarUpdatedToken)
-        } else {
-            Image(systemName: "person.circle.fill")
-                .resizable()
-                .frame(width: 36, height: 36)
-                .foregroundColor(.gray)
-        }
-    }
 }

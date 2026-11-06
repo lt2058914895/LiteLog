@@ -32,10 +32,6 @@ struct StatisticsView: View {
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
-    private var displayName: String {
-        !settingsManager.nickname.isEmpty ? settingsManager.nickname : NSLocalizedString("tab.statistics", comment: "")
-    }
-
     enum Period: String, CaseIterable {
         case week = "stats.week"
         case month = "stats.month"
@@ -117,9 +113,9 @@ struct StatisticsView: View {
     }
 
     private var weightChange: Double {
-        guard filteredRecords.count >= 2 else { return 0 }
-        let first = filteredRecords.first!.weight
-        let last = filteredRecords.last!.weight
+        guard filteredRecords.count >= 2,
+              let first = filteredRecords.first?.weight,
+              let last = filteredRecords.last?.weight else { return 0 }
         return last - first
     }
 
@@ -152,7 +148,9 @@ struct StatisticsView: View {
             
             cachedFilteredRecords = grouped.compactMap { weekStart, weekRecords in
                 let avgWeight = weekRecords.reduce(0) { $0 + $1.weight } / Double(weekRecords.count)
-                let representativeRecord = weekRecords.max(by: { $0.date < $1.date })!
+                guard let representativeRecord = weekRecords.max(by: { $0.date < $1.date }) else {
+                    return nil
+                }
                 return WeightData(
                     id: representativeRecord.id,
                     date: weekStart,
@@ -222,9 +220,9 @@ struct StatisticsView: View {
     }
 
     private var currentMetricChange: Double {
-        guard currentMetricData.count >= 2 else { return 0 }
-        let first = currentMetricData.first!.1
-        let last = currentMetricData.last!.1
+        guard currentMetricData.count >= 2,
+              let first = currentMetricData.first?.1,
+              let last = currentMetricData.last?.1 else { return 0 }
         return last - first
     }
 
@@ -264,15 +262,8 @@ struct StatisticsView: View {
             .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 900 : 800, alignment: .center)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
+                    ProfileToolbarChip {
                         showingProfileEditor = true
-                    }) {
-                        HStack(spacing: 12) {
-                            avatarImageView
-                            Text(displayName)
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                        }
                     }
                 }
             }
@@ -298,23 +289,6 @@ struct StatisticsView: View {
             .sheet(isPresented: $showYearPicker) {
                 yearPickerSheet
             }
-        }
-    }
-    
-    @ViewBuilder
-    private var avatarImageView: some View {
-        if let image = settingsManager.avatarImage {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 36, height: 36)
-                .clipShape(Circle())
-                .id(settingsManager.avatarUpdatedToken)
-        } else {
-            Image(systemName: "person.circle.fill")
-                .resizable()
-                .frame(width: 36, height: 36)
-                .foregroundColor(.gray)
         }
     }
     

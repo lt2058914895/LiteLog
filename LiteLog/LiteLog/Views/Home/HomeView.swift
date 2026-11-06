@@ -30,10 +30,6 @@ struct HomeView: View {
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
-    private var displayName: String {
-        !settingsManager.nickname.isEmpty ? settingsManager.nickname : NSLocalizedString("tab.home", comment: "")
-    }
-    
     private func computeCachedData() {
         latestWeight = records.first?.weight
         
@@ -68,9 +64,9 @@ struct HomeView: View {
                     bmiProgressSection
 
                     goalWeightCard
-                    
+
                     goalBodyFatCard
-                    
+
                     goalMeasurementsCard
                 }
                 .padding()
@@ -84,15 +80,8 @@ struct HomeView: View {
             .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 800 : 600, alignment: .center)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
+                    ProfileToolbarChip {
                         showingProfileEditor = true
-                    }) {
-                        HStack(spacing: 12) {
-                            avatarImageView
-                            Text(displayName)
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                        }
                     }
                 }
             }
@@ -564,20 +553,4 @@ struct HomeView: View {
     
 
 
-    @ViewBuilder
-    private var avatarImageView: some View {
-        if let image = settingsManager.avatarImage {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 36, height: 36)
-                .clipShape(Circle())
-                .id(settingsManager.avatarUpdatedToken)
-        } else {
-            Image(systemName: "person.circle.fill")
-                .resizable()
-                .frame(width: 36, height: 36)
-                .foregroundColor(.gray)
-        }
-    }
 }

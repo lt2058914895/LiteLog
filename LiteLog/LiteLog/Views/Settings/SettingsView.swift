@@ -33,7 +33,6 @@ struct SettingsView: View {
                     healthProfileSection
                     notificationSection
                     dataSection
-                    supportSection
                     aboutSection
                 }
                 .padding(.horizontal, 16)
@@ -125,7 +124,8 @@ struct SettingsView: View {
                     Text(settingsManager.displayName)
                         .font(.title2.weight(.bold))
                         .foregroundColor(.white)
-                        .lineLimit(1)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer()
@@ -135,13 +135,7 @@ struct SettingsView: View {
                     .foregroundColor(.white.opacity(0.8))
             }
             .padding(20)
-            .background(
-                LinearGradient(
-                    colors: [Color.primaryBlue, Color(hex: "4FB6A8")],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
+            .background(LinearGradient.profileHeader)
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .shadow(color: Color.primaryBlue.opacity(0.22), radius: 14, x: 0, y: 8)
         }
@@ -271,6 +265,53 @@ struct SettingsView: View {
             settingsCard {
                 Button {
                     HapticManager.light()
+                    shareApp()
+                } label: {
+                    SettingsRowLabel(
+                        icon: "person.2.fill",
+                        tint: .purple,
+                        title: NSLocalizedString("settings.share", comment: ""),
+                        subtitle: NSLocalizedString("settings.share.desc", comment: ""),
+                        showsChevron: false
+                    )
+                }
+                .buttonStyle(.plain)
+
+                divider
+
+                Button {
+                    HapticManager.light()
+                    openAppStore()
+                } label: {
+                    SettingsRowLabel(
+                        icon: "star.fill",
+                        tint: .orange,
+                        title: NSLocalizedString("settings.rate", comment: ""),
+                        subtitle: NSLocalizedString("settings.rate.desc", comment: ""),
+                        showsChevron: false
+                    )
+                }
+                .buttonStyle(.plain)
+
+                divider
+
+                Button {
+                    HapticManager.light()
+                    showingContact = true
+                } label: {
+                    SettingsRowLabel(
+                        icon: "envelope.fill",
+                        tint: .primaryBlue,
+                        title: NSLocalizedString("settings.contact", comment: ""),
+                        subtitle: NSLocalizedString("settings.contact.desc", comment: "")
+                    )
+                }
+                .buttonStyle(.plain)
+
+                divider
+
+                Button {
+                    HapticManager.light()
                     showingExportOptions = true
                 } label: {
                     SettingsRowLabel(
@@ -296,7 +337,6 @@ struct SettingsView: View {
                     )
                 }
                 .buttonStyle(.plain)
-
             }
 
             Label(
@@ -306,59 +346,6 @@ struct SettingsView: View {
             .font(.caption)
             .foregroundColor(.secondaryText)
             .padding(.horizontal, 4)
-        }
-    }
-
-    private var supportSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("settings.section.support")
-
-            settingsCard {
-                Button {
-                    HapticManager.light()
-                    showingContact = true
-                } label: {
-                    SettingsRowLabel(
-                        icon: "envelope.fill",
-                        tint: .primaryBlue,
-                        title: NSLocalizedString("settings.contact", comment: ""),
-                        subtitle: NSLocalizedString("settings.contact.desc", comment: "")
-                    )
-                }
-                .buttonStyle(.plain)
-
-                divider
-
-                Button {
-                    HapticManager.light()
-                    openAppStore()
-                } label: {
-                    SettingsRowLabel(
-                        icon: "star.fill",
-                        tint: .orange,
-                        title: NSLocalizedString("settings.rate", comment: ""),
-                        subtitle: NSLocalizedString("settings.rate.desc", comment: ""),
-                        showsChevron: false
-                    )
-                }
-                .buttonStyle(.plain)
-
-                divider
-
-                Button {
-                    HapticManager.light()
-                    shareApp()
-                } label: {
-                    SettingsRowLabel(
-                        icon: "person.2.fill",
-                        tint: .purple,
-                        title: NSLocalizedString("settings.share", comment: ""),
-                        subtitle: NSLocalizedString("settings.share.desc", comment: ""),
-                        showsChevron: false
-                    )
-                }
-                .buttonStyle(.plain)
-            }
         }
     }
 

@@ -144,6 +144,52 @@ struct ErrorView: View {
     }
 }
 
+struct ProfileToolbarChip: View {
+    @EnvironmentObject private var settingsManager: SettingsManager
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(alignment: .center, spacing: 8) {
+                avatar
+                    .overlay(Circle().stroke(Color.white.opacity(0.85), lineWidth: 1))
+
+                Text(settingsManager.displayName)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.white)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .layoutPriority(1)
+            }
+            .padding(.leading, 5)
+            .padding(.trailing, 10)
+            .padding(.vertical, 5)
+            .background(LinearGradient.profileHeader)
+            .clipShape(Capsule())
+            .shadow(color: Color.primaryBlue.opacity(0.18), radius: 4, x: 0, y: 2)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(NSLocalizedString("profile.title", comment: ""))
+    }
+
+    @ViewBuilder
+    private var avatar: some View {
+        if let image = settingsManager.avatarImage {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 28, height: 28)
+                .clipShape(Circle())
+                .id(settingsManager.avatarUpdatedToken)
+        } else {
+            Image(systemName: "person.crop.circle.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 28, height: 28)
+                .foregroundColor(.white.opacity(0.9))
+        }
+    }
+}
+
 struct ClearTextView: UIViewRepresentable {
     @Binding var text: String
     let placeholder: String
