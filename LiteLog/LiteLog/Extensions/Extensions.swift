@@ -149,7 +149,8 @@ extension Date {
 
     var shortDateString: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = NSLocalizedString("date.format.short", comment: "")
+        formatter.locale = .autoupdatingCurrent
+        formatter.setLocalizedDateFormatFromTemplate("MMMd")
         return formatter.string(from: self)
     }
 
@@ -161,7 +162,8 @@ extension Date {
 
     var monthYearString: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = NSLocalizedString("date.format.month.year", comment: "")
+        formatter.locale = .autoupdatingCurrent
+        formatter.setLocalizedDateFormatFromTemplate("yMMMM")
         return formatter.string(from: self)
     }
 

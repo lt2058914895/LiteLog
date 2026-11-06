@@ -16,11 +16,12 @@ struct BMIInfoView: View {
     }
     
     private var bmiCategories: [(range: ClosedRange<Double>, name: String, color: Color)] {
-        [
+        let standard = BMIStandard.current
+        return [
             (0...18.4, NSLocalizedString("bmi.underweight", comment: ""), Color.blue),
-            (18.5...23.9, NSLocalizedString("bmi.normal", comment: ""), Color.green),
-            (24.0...27.9, NSLocalizedString("bmi.overweight", comment: ""), Color.orange),
-            (28.0...Double.infinity, NSLocalizedString("bmi.obese", comment: ""), Color.red)
+            (18.5...standard.normalUpperBound, NSLocalizedString("bmi.normal", comment: ""), Color.green),
+            (standard.overweightThreshold...(standard.obesityThreshold - 0.1), NSLocalizedString("bmi.overweight", comment: ""), Color.orange),
+            (standard.obesityThreshold...Double.infinity, NSLocalizedString("bmi.obese", comment: ""), Color.red)
         ]
     }
     
@@ -228,7 +229,7 @@ struct BMIInfoView: View {
     
     private var bmiStandardSection: some View {
         VStack(spacing: 12) {
-            Text(NSLocalizedString("bmi.info.standard.bmi", comment: ""))
+            Text(NSLocalizedString(BMIStandard.current.titleKey, comment: ""))
                 .font(.headline)
                 .foregroundColor(.primaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -256,7 +257,7 @@ struct BMIInfoView: View {
                 }
             }
             
-            Text(NSLocalizedString("bmi.info.bmi.note", comment: ""))
+            Text(NSLocalizedString(BMIStandard.current.noteKey, comment: ""))
                 .font(.caption)
                 .foregroundColor(.secondaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -395,8 +396,7 @@ struct BMIInfoView: View {
     }
     
     private func referenceRangeSection(gender: UserProfile.Gender, age: Int, height: Double) -> some View {
-        let idealWeightRange = calculateIdealWeightRange(height: height)
-        let healthyBMI = 18.5...23.9
+        let healthyBMI = 18.5...BMIStandard.current.normalUpperBound
         let minHealthyWeight = healthyBMI.lowerBound * (height / 100.0) * (height / 100.0)
         let maxHealthyWeight = healthyBMI.upperBound * (height / 100.0) * (height / 100.0)
         
@@ -423,11 +423,6 @@ struct BMIInfoView: View {
                 )
                 
                 referenceRow(
-                    label: NSLocalizedString("reference.ideal.weight", comment: ""),
-                    value: String(format: "%.1f - %.1f kg", idealWeightRange.lowerBound, idealWeightRange.upperBound)
-                )
-                
-                referenceRow(
                     label: NSLocalizedString("reference.healthy.weight", comment: ""),
                     value: String(format: "%.1f - %.1f kg", minHealthyWeight, maxHealthyWeight)
                 )
@@ -450,11 +445,6 @@ struct BMIInfoView: View {
                 .fontWeight(.medium)
                 .foregroundColor(.primaryText)
         }
-    }
-    
-    private func calculateIdealWeightRange(height: Double) -> ClosedRange<Double> {
-        let baseWeight = height - 105
-        return (baseWeight * 0.9)...(baseWeight * 1.1)
     }
     
     private func formatRange(_ range: ClosedRange<Double>) -> String {
@@ -500,13 +490,8 @@ struct BMIInfoView: View {
             
             VStack(spacing: 8) {
                 citationLink(
-                    title: NSLocalizedString("bmi.info.citation.bmi.source", comment: ""),
-                    url: URL(string: "https://www.chinacdc.cn")!
-                )
-                
-                citationLink(
-                    title: NSLocalizedString("bmi.info.citation.bmi.who", comment: ""),
-                    url: URL(string: "https://www.who.int")!
+                    title: NSLocalizedString(BMIStandard.current.citationKey, comment: ""),
+                    url: BMIStandard.current.citationURL
                 )
                 
                 citationLink(

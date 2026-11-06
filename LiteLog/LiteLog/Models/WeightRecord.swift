@@ -32,12 +32,9 @@ final class WeightRecord: NSManagedObject, Identifiable {
     @NSManaged var chestCircumference: NSNumber?
     @NSManaged var thighCircumference: NSNumber?
     @NSManaged var note: String?
-    @NSManaged var imageUrl: String? // Legacy Core Data field, no longer displayed.
     @NSManaged var measurementTimePeriod: String?
     @NSManaged var createdAt: Date
     @NSManaged var updatedAt: Date
-    @NSManaged var syncStatus: Int16 // Legacy Core Data field, no longer synced.
-    @NSManaged var deleteImage: Bool // Legacy Core Data field, no longer used.
 
     static func fetchRequest() -> NSFetchRequest<WeightRecord> {
         NSFetchRequest<WeightRecord>(entityName: "WeightRecord")
@@ -109,12 +106,9 @@ extension WeightRecord {
         record.chestCircumferenceValue = nil
         record.thighCircumferenceValue = nil
         record.note = nil
-        record.imageUrl = nil
         record.measurementTimePeriod = nil
         record.createdAt = Date()
         record.updatedAt = Date()
-        record.syncStatus = 0
-        record.deleteImage = false
         return record
     }
 

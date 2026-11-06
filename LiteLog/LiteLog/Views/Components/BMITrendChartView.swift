@@ -11,14 +11,20 @@ struct BMITrendChartView: View {
     private let pointSize: CGFloat = 6
     private let chartPadding: CGFloat = 8
     
-    private let bmiCriticalPoints: [Double] = [18.5, 24.0, 28.0]
+    private var bmiCriticalPoints: [Double] {
+        let standard = BMIStandard.current
+        return [18.5, standard.overweightThreshold, standard.obesityThreshold]
+    }
     
-    private let bmiRanges: [(range: ClosedRange<Double>, color: Color, name: String)] = [
-        (0...18.5, Color(hex: "60A5FA"), NSLocalizedString("bmi.underweight", comment: "")),
-        (18.5...24.0, Color(hex: "34D399"), NSLocalizedString("bmi.normal", comment: "")),
-        (24.0...28.0, Color(hex: "FBBF24"), NSLocalizedString("bmi.overweight", comment: "")),
-        (28.0...Double.infinity, Color(hex: "F87171"), NSLocalizedString("bmi.obese", comment: ""))
-    ]
+    private var bmiRanges: [(range: ClosedRange<Double>, color: Color, name: String)] {
+        let standard = BMIStandard.current
+        return [
+            (0...18.5, Color(hex: "60A5FA"), "bmi.underweight"),
+            (18.5...standard.overweightThreshold, Color(hex: "34D399"), "bmi.normal"),
+            (standard.overweightThreshold...standard.obesityThreshold, Color(hex: "FBBF24"), "bmi.overweight"),
+            (standard.obesityThreshold...Double.infinity, Color(hex: "F87171"), "bmi.obese")
+        ]
+    }
     
     private var chartData: ChartData {
         ChartData(data: data)
@@ -309,18 +315,19 @@ struct BMITrendChartView: View {
     }
     
     private func formatDate(_ date: Date) -> String {
-        let calendar = Calendar.current
-        let month = calendar.component(.month, from: date)
-        let day = calendar.component(.day, from: date)
-        return "\(month)/\(day)"
+        let formatter = DateFormatter()
+        formatter.locale = .autoupdatingCurrent
+        formatter.setLocalizedDateFormatFromTemplate("Md")
+        return formatter.string(from: date)
     }
     
     private func bmiColor(for bmi: Double) -> Color {
+        let standard = BMIStandard.current
         if bmi <= 18.5 {
             return Color(hex: "60A5FA")
-        } else if bmi <= 24.0 {
+        } else if bmi < standard.overweightThreshold {
             return Color(hex: "34D399")
-        } else if bmi <= 28.0 {
+        } else if bmi < standard.obesityThreshold {
             return Color(hex: "FBBF24")
         } else {
             return Color(hex: "F87171")

@@ -13,8 +13,18 @@ class PersistenceController {
     init(inMemory: Bool = false) {
         container = NSPersistentContainer(name: "LiteLog")
         
-        if inMemory {
-            container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
+        if let storeDescription = container.persistentStoreDescriptions.first {
+            storeDescription.shouldMigrateStoreAutomatically = true
+            storeDescription.shouldInferMappingModelAutomatically = true
+
+            if inMemory {
+                storeDescription.url = URL(fileURLWithPath: "/dev/null")
+            } else {
+                storeDescription.setOption(
+                    FileProtectionType.completeUntilFirstUserAuthentication.rawValue as NSObject,
+                    forKey: NSPersistentStoreFileProtectionKey
+                )
+            }
         }
         
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in

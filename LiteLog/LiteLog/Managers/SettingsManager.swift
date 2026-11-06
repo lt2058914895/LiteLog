@@ -20,8 +20,6 @@ final class SettingsManager: ObservableObject {
         static let weightUnit = "weightUnit"
         static let notificationsEnabled = "notificationsEnabled"
         static let notificationTime = "notificationTime"
-        static let language = "language"
-        static let hasCompletedOnboarding = "hasCompletedOnboarding"
         static let nickname = "nickname"
     }
     
@@ -66,23 +64,32 @@ final class SettingsManager: ObservableObject {
         }
     }
 
-    @AppStorage(Keys.language) var language: String = "system"
-
-    @AppStorage(Keys.hasCompletedOnboarding) var hasCompletedOnboarding: Bool = false
-    
     @AppStorage(Keys.nickname) var nickname: String = ""
     
     @Published private(set) var avatarUpdatedToken = UUID()
     
+    private var avatarDirectoryURL: URL {
+        let supportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return supportDirectory.appendingPathComponent("LiteLog", isDirectory: true)
+    }
+
     private var avatarFileURL: URL {
-        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        return documentsDir.appendingPathComponent("cached_avatar.png")
+        avatarDirectoryURL.appendingPathComponent("avatar.png")
+    }
+
+    private var legacyAvatarFileURL: URL {
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        return documentsDirectory.appendingPathComponent("cached_avatar.png")
     }
     
     var avatarImage: UIImage? {
-        guard FileManager.default.fileExists(atPath: avatarFileURL.path) else { return nil }
-        guard let data = try? Data(contentsOf: avatarFileURL) else { return nil }
-        return UIImage(data: data)
+        if let data = try? Data(contentsOf: avatarFileURL) {
+            return UIImage(data: data)
+        }
+        if let data = try? Data(contentsOf: legacyAvatarFileURL) {
+            return UIImage(data: data)
+        }
+        return nil
     }
     
     @discardableResult
@@ -93,7 +100,12 @@ final class SettingsManager: ObservableObject {
         }
 
         do {
-            try data.write(to: avatarFileURL, options: .atomic)
+            try FileManager.default.createDirectory(
+                at: avatarDirectoryURL,
+                withIntermediateDirectories: true
+            )
+            try data.write(to: avatarFileURL, options: [.atomic, .completeFileProtection])
+            try? FileManager.default.removeItem(at: legacyAvatarFileURL)
             avatarUpdatedToken = UUID()
             return true
         } catch {
@@ -104,13 +116,16 @@ final class SettingsManager: ObservableObject {
     
     @discardableResult
     func removeAvatar() -> Bool {
-        guard FileManager.default.fileExists(atPath: avatarFileURL.path) else {
+        let files = [avatarFileURL, legacyAvatarFileURL]
+        guard files.contains(where: { FileManager.default.fileExists(atPath: $0.path) }) else {
             avatarUpdatedToken = UUID()
             return true
         }
 
         do {
-            try FileManager.default.removeItem(at: avatarFileURL)
+            for file in files where FileManager.default.fileExists(atPath: file.path) {
+                try FileManager.default.removeItem(at: file)
+            }
             avatarUpdatedToken = UUID()
             return true
         } catch {
@@ -125,12 +140,15 @@ final class SettingsManager: ObservableObject {
         defaults.removeObject(forKey: "iCloudSyncEnabled")
         defaults.removeObject(forKey: "appEnvironment")
         defaults.removeObject(forKey: "dev_server_url")
+        defaults.removeObject(forKey: "hasCompletedOnboarding")
+        defaults.removeObject(forKey: "language")
 
         let savedUnit = defaults.string(forKey: Keys.weightUnit) ?? WeightUnit.kg.rawValue
         self.weightUnit = WeightUnit(rawValue: savedUnit) ?? .kg
 
         self.notificationsEnabled = defaults.bool(forKey: Keys.notificationsEnabled)
         self.notificationTime = defaults.object(forKey: Keys.notificationTime) as? Date ?? Self.defaultNotificationTime()
+        migrateLegacyAvatarIfNeeded()
     }
 
     static func defaultNotificationTime() -> Date {
@@ -140,15 +158,17 @@ final class SettingsManager: ObservableObject {
         return Calendar.current.date(from: components) ?? Date()
     }
 
-    func resetToDefaults() {
-        weightUnit = .kg
-        notificationsEnabled = false
-        notificationTime = Self.defaultNotificationTime()
+    private func migrateLegacyAvatarIfNeeded() {
+        guard !FileManager.default.fileExists(atPath: avatarFileURL.path),
+              let image = UIImage(contentsOfFile: legacyAvatarFileURL.path) else {
+            return
+        }
+        _ = saveAvatar(image)
     }
     
     var displayName: String {
         guard !nickname.isEmpty else {
-            return "User"
+            return NSLocalizedString("common.user", comment: "")
         }
         return nickname
     }

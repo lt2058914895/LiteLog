@@ -17,6 +17,7 @@ struct LiteLogApp: App {
                 .environmentObject(settingsManager)
                 .environment(\.managedObjectContext, persistenceController.viewContext)
                 .onAppear {
+                    LegacyLocalDataCleanup.runIfNeeded()
                     settingsManager.setContext(persistenceController.viewContext)
 
                     #if DEBUG

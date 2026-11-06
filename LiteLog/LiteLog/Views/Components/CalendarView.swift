@@ -43,7 +43,7 @@ struct CalendarView: View {
 
     private var firstWeekdayOfMonth: Int {
         let firstDayOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth))!
-        return calendar.component(.weekday, from: firstDayOfMonth) - 1
+        return (calendar.component(.weekday, from: firstDayOfMonth) - calendar.firstWeekday + 7) % 7
     }
 
     var body: some View {
@@ -84,13 +84,14 @@ struct CalendarView: View {
 
     private var monthYearString: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy 年 M 月"
+        formatter.locale = .autoupdatingCurrent
+        formatter.setLocalizedDateFormatFromTemplate("yMMMM")
         return formatter.string(from: currentMonth)
     }
 
     private var weekdayHeaderView: some View {
         HStack(spacing: 0) {
-            ForEach(["日", "一", "二", "三", "四", "五", "六"], id: \.self) { day in
+            ForEach(Array(localizedWeekdaySymbols.enumerated()), id: \.offset) { _, day in
                 Text(day)
                     .font(.caption)
                     .fontWeight(.medium)
@@ -98,6 +99,17 @@ struct CalendarView: View {
                     .frame(maxWidth: .infinity)
             }
         }
+    }
+
+    private var localizedWeekdaySymbols: [String] {
+        let formatter = DateFormatter()
+        formatter.locale = .autoupdatingCurrent
+        let symbols = formatter.veryShortStandaloneWeekdaySymbols ?? []
+        guard symbols.count == 7 else {
+            return Calendar.current.veryShortStandaloneWeekdaySymbols
+        }
+        let firstIndex = calendar.firstWeekday - 1
+        return (0..<7).map { symbols[(firstIndex + $0) % 7] }
     }
 
     private var daysGridView: some View {

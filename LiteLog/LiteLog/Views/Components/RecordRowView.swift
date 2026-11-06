@@ -3,20 +3,22 @@ import CoreData
 
 private let dayFormatter: DateFormatter = {
     let formatter = DateFormatter()
-    formatter.dateFormat = "d"
+    formatter.locale = .autoupdatingCurrent
+    formatter.setLocalizedDateFormatFromTemplate("d")
     return formatter
 }()
 
 private let monthFormatter: DateFormatter = {
     let formatter = DateFormatter()
-    formatter.dateFormat = "M月"
+    formatter.locale = .autoupdatingCurrent
+    formatter.setLocalizedDateFormatFromTemplate("MMM")
     return formatter
 }()
 
 private let weekdayFormatter: DateFormatter = {
     let formatter = DateFormatter()
-    formatter.dateFormat = "EEE"
-    formatter.locale = Locale(identifier: "zh_CN")
+    formatter.locale = .autoupdatingCurrent
+    formatter.setLocalizedDateFormatFromTemplate("EEE")
     return formatter
 }()
 

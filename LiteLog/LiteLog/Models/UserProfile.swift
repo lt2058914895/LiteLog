@@ -2,6 +2,63 @@ import Foundation
 import SwiftUI
 import CoreData
 
+enum BMIStandard {
+    case china
+    case who
+
+    static var current: BMIStandard {
+        let region = Locale.current.region?.identifier
+        let language = Locale.current.language.languageCode?.identifier
+        return region == "CN" || language == "zh" ? .china : .who
+    }
+
+    var overweightThreshold: Double {
+        switch self {
+        case .china: return 24
+        case .who: return 25
+        }
+    }
+
+    var obesityThreshold: Double {
+        switch self {
+        case .china: return 28
+        case .who: return 30
+        }
+    }
+
+    var normalUpperBound: Double {
+        overweightThreshold - 0.1
+    }
+
+    var noteKey: String {
+        switch self {
+        case .china: return "bmi.info.bmi.note.china"
+        case .who: return "bmi.info.bmi.note.who"
+        }
+    }
+
+    var titleKey: String {
+        switch self {
+        case .china: return "bmi.info.standard.bmi.china"
+        case .who: return "bmi.info.standard.bmi.who"
+        }
+    }
+
+    var citationKey: String {
+        switch self {
+        case .china: return "bmi.info.citation.bmi.source"
+        case .who: return "bmi.info.citation.bmi.who"
+        }
+    }
+
+    var citationURL: URL {
+        switch self {
+        case .china: return URL(string: "https://www.chinacdc.cn")!
+        case .who: return URL(string: "https://www.who.int")!
+        }
+    }
+}
+
 @objc(UserProfile)
 final class UserProfile: NSManagedObject {
     @NSManaged var id: UUID
@@ -17,7 +74,6 @@ final class UserProfile: NSManagedObject {
     @NSManaged var weightUnit: String
     @NSManaged var createdAt: Date
     @NSManaged var updatedAt: Date
-    @NSManaged var syncStatus: Int16 // Legacy Core Data field, no longer synced.
 
     @objc(Gender)
     enum Gender: Int16, CaseIterable {
@@ -86,16 +142,7 @@ final class UserProfile: NSManagedObject {
     }
 
     func bmiCategory(bmi: Double) -> BMICategory {
-        switch bmi {
-        case ..<18.5:
-            return .underweight
-        case 18.5..<24:
-            return .normal
-        case 24..<28:
-            return .overweight
-        default:
-            return .obese
-        }
+        BMICategory.from(bmi: bmi, standard: .current)
     }
 
     enum BMICategory: String {
@@ -104,13 +151,13 @@ final class UserProfile: NSManagedObject {
         case overweight
         case obese
         
-        static func from(bmi: Double) -> BMICategory {
+        static func from(bmi: Double, standard: BMIStandard = .current) -> BMICategory {
             switch bmi {
             case ..<18.5:
                 return .underweight
-            case 18.5..<24:
+            case 18.5..<standard.overweightThreshold:
                 return .normal
-            case 24..<28:
+            case standard.overweightThreshold..<standard.obesityThreshold:
                 return .overweight
             default:
                 return .obese
@@ -157,7 +204,6 @@ extension UserProfile {
         profile.weightUnit = "kg"
         profile.createdAt = Date()
         profile.updatedAt = Date()
-        profile.syncStatus = 0
         return profile
     }
 

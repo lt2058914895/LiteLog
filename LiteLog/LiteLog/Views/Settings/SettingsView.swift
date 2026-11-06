@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreData
 import os
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "SettingsView")
@@ -13,12 +14,10 @@ struct SettingsView: View {
 
     @State private var showingProfileEditor = false
     @State private var showingUserInfoEditor = false
-    @State private var showingExportSheet = false
-    @State private var showingDeleteAlert = false
-    @State private var showExportFormatPicker = false
     @State private var exportURL: IdentifiableURL?
-    @State private var showingExportError = false
-    @State private var notificationTime = SettingsManager.defaultNotificationTime()
+    @State private var showingRestorePicker = false
+    @State private var dataConfirmation: DataConfirmation?
+    @State private var dataOperationAlert: DataOperationAlert?
     @State private var showingContact = false
     
     private var profile: UserProfile? { userProfile.first }
@@ -56,14 +55,52 @@ struct SettingsView: View {
                 .adaptiveSheet(item: $exportURL) { url in
                     ShareSheet(items: [url.url])
                 }
-                .alert(NSLocalizedString("settings.delete.confirm", comment: ""), isPresented: $showingDeleteAlert) {
-                    Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-                    Button(NSLocalizedString("action.delete", comment: ""), role: .destructive) {
-                        deleteAllData()
-                    }
+                .alert(item: $dataOperationAlert) { alert in
+                    Alert(
+                        title: Text(alert.title),
+                        message: Text(alert.message),
+                        dismissButton: .default(Text(NSLocalizedString("action.ok", comment: "")))
+                    )
                 }
-                .alert(NSLocalizedString("settings.export.error", comment: ""), isPresented: $showingExportError) {
-                    Button(NSLocalizedString("action.confirm", comment: ""), role: .cancel) {}
+                .confirmationDialog(
+                    dataConfirmation?.title ?? "",
+                    isPresented: Binding(
+                        get: { dataConfirmation != nil },
+                        set: { if !$0 { dataConfirmation = nil } }
+                    ),
+                    titleVisibility: .visible
+                ) {
+                    switch dataConfirmation {
+                    case .restore:
+                        Button(NSLocalizedString("settings.restore.continue", comment: "")) {
+                            dataConfirmation = nil
+                            showingRestorePicker = true
+                        }
+                    case .delete:
+                        Button(NSLocalizedString("action.delete", comment: ""), role: .destructive) {
+                            dataConfirmation = nil
+                            deleteAllData()
+                        }
+                    case nil:
+                        EmptyView()
+                    }
+                    Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+                } message: {
+                    Text(dataConfirmation?.message ?? "")
+                }
+                .fileImporter(
+                    isPresented: $showingRestorePicker,
+                    allowedContentTypes: [.json],
+                    allowsMultipleSelection: false
+                ) { result in
+                    switch result {
+                    case .success(let urls):
+                        if let url = urls.first {
+                            restoreBackup(from: url)
+                        }
+                    case .failure(let error):
+                        dataOperationAlert = .restoreFailed(error.localizedDescription)
+                    }
                 }
         }
     }
@@ -319,7 +356,22 @@ struct SettingsView: View {
                 }
             }
 
-            Button(role: .destructive, action: { showingDeleteAlert = true }) {
+            Button(action: { dataConfirmation = .restore }) {
+                HStack {
+                    Image(systemName: "arrow.down.doc.fill")
+                        .foregroundColor(.primaryBlue)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(NSLocalizedString("settings.restore", comment: ""))
+                            .foregroundColor(.primary)
+                        Text(NSLocalizedString("settings.restore.desc", comment: ""))
+                            .font(.caption)
+                            .foregroundColor(.secondaryText)
+                    }
+                    Spacer()
+                }
+            }
+
+            Button(role: .destructive, action: { dataConfirmation = .delete }) {
                 HStack {
                     Image(systemName: "trash.fill")
                         .foregroundColor(.red)
@@ -327,6 +379,8 @@ struct SettingsView: View {
                         .foregroundColor(.primary)
                 }
             }
+        } footer: {
+            Text(NSLocalizedString("settings.backup.hint", comment: ""))
         }
     }
 
@@ -345,7 +399,7 @@ struct SettingsView: View {
             }
 
             Button(action: {
-                if let url = URL(string: "https://apps.apple.com/cn/app/6768547821") {
+                if let url = URL(string: "https://apps.apple.com/app/id6768547821") {
                     UIApplication.shared.open(url)
                 }
             }) {
@@ -366,7 +420,7 @@ struct SettingsView: View {
             }
 
             Button(action: {
-                if let url = URL(string: "https://apps.apple.com/cn/app/6768547821") {
+                if let url = URL(string: "https://apps.apple.com/app/id6768547821") {
                     let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
                     if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                    let rootViewController = windowScene.windows.first?.rootViewController {
@@ -398,15 +452,34 @@ struct SettingsView: View {
     }
 
     private func exportData(format: ExportManager.ExportFormat) {
-        guard !records.isEmpty else {
-            showingExportError = true
+        guard format != .csv || !records.isEmpty else {
+            dataOperationAlert = .exportFailed
             return
         }
         
-        if let url = ExportManager.shared.export(records: Array(records), unit: unit, format: format) {
+        if let url = ExportManager.shared.export(
+            records: Array(records),
+            profile: profile,
+            settings: settingsManager,
+            unit: unit,
+            format: format
+        ) {
             exportURL = IdentifiableURL(url)
         } else {
-            showingExportError = true
+            dataOperationAlert = .exportFailed
+        }
+    }
+
+    private func restoreBackup(from url: URL) {
+        do {
+            let recordCount = try LocalBackupManager.shared.restoreBackup(
+                from: url,
+                context: context,
+                settings: settingsManager
+            )
+            dataOperationAlert = .restoreSucceeded(recordCount)
+        } catch {
+            dataOperationAlert = .restoreFailed(error.localizedDescription)
         }
     }
 
@@ -465,5 +538,70 @@ struct IdentifiableURL: Identifiable {
     
     init(_ url: URL) {
         self.url = url
+    }
+}
+
+private enum DataOperationAlert: Identifiable {
+    case exportFailed
+    case restoreSucceeded(Int)
+    case restoreFailed(String)
+
+    var id: String {
+        switch self {
+        case .exportFailed:
+            return "exportFailed"
+        case .restoreSucceeded:
+            return "restoreSucceeded"
+        case .restoreFailed:
+            return "restoreFailed"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .exportFailed:
+            return NSLocalizedString("settings.export.error", comment: "")
+        case .restoreSucceeded:
+            return NSLocalizedString("settings.restore.success.title", comment: "")
+        case .restoreFailed:
+            return NSLocalizedString("settings.restore.error.title", comment: "")
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .exportFailed:
+            return NSLocalizedString("settings.export.error.message", comment: "")
+        case .restoreSucceeded(let count):
+            return String(
+                format: NSLocalizedString("settings.restore.success.message", comment: ""),
+                count
+            )
+        case .restoreFailed(let message):
+            return message
+        }
+    }
+}
+
+private enum DataConfirmation {
+    case restore
+    case delete
+
+    var title: String {
+        switch self {
+        case .restore:
+            return NSLocalizedString("settings.restore", comment: "")
+        case .delete:
+            return NSLocalizedString("settings.delete.all", comment: "")
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .restore:
+            return NSLocalizedString("settings.restore.confirm", comment: "")
+        case .delete:
+            return NSLocalizedString("settings.delete.confirm", comment: "")
+        }
     }
 }
