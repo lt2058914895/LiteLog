@@ -148,7 +148,6 @@ final class SettingsManager: ObservableObject {
 
         self.notificationsEnabled = defaults.bool(forKey: Keys.notificationsEnabled)
         self.notificationTime = defaults.object(forKey: Keys.notificationTime) as? Date ?? Self.defaultNotificationTime()
-        migrateLegacyAvatarIfNeeded()
     }
 
     static func defaultNotificationTime() -> Date {
@@ -158,7 +157,7 @@ final class SettingsManager: ObservableObject {
         return Calendar.current.date(from: components) ?? Date()
     }
 
-    private func migrateLegacyAvatarIfNeeded() {
+    func performStartupMaintenance() {
         guard !FileManager.default.fileExists(atPath: avatarFileURL.path),
               let image = UIImage(contentsOfFile: legacyAvatarFileURL.path) else {
             return

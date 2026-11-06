@@ -95,31 +95,76 @@ struct iPhoneLayout: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeView()
+            LazyTabContent(tab: 0, selectedTab: $selectedTab) {
+                HomeView()
+            }
                 .tabItem {
                     Label(NSLocalizedString("tab.home", comment: ""), systemImage: "house.fill")
                 }
                 .tag(0)
 
-            StatisticsView()
+            LazyTabContent(tab: 1, selectedTab: $selectedTab) {
+                StatisticsView()
+            }
                 .tabItem {
                     Label(NSLocalizedString("tab.statistics", comment: ""), systemImage: "chart.bar.fill")
                 }
                 .tag(1)
 
-            RecordView()
+            LazyTabContent(tab: 2, selectedTab: $selectedTab) {
+                RecordView()
+            }
                 .tabItem {
                     Label(NSLocalizedString("tab.record", comment: ""), systemImage: "plus.circle.fill")
                 }
                 .tag(2)
 
-            SettingsView()
+            LazyTabContent(tab: 3, selectedTab: $selectedTab) {
+                SettingsView()
+            }
                 .tabItem {
                     Label(NSLocalizedString("tab.settings", comment: ""), systemImage: "gearshape.fill")
                 }
                 .tag(3)
         }
         .tint(.primaryBlue)
+    }
+}
+
+private struct LazyTabContent<Content: View>: View {
+    let tab: Int
+    @Binding var selectedTab: Int
+    let content: () -> Content
+    @State private var hasLoaded = false
+
+    init(
+        tab: Int,
+        selectedTab: Binding<Int>,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.tab = tab
+        self._selectedTab = selectedTab
+        self.content = content
+    }
+
+    var body: some View {
+        Group {
+            if hasLoaded {
+                content()
+            } else {
+                Color.clear
+            }
+        }
+        .onAppear {
+            if selectedTab == tab {
+                hasLoaded = true
+            }
+        }
+        .onChange(of: selectedTab) { newValue in
+            if newValue == tab {
+                hasLoaded = true
+            }
+        }
     }
 }
 

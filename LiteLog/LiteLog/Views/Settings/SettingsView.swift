@@ -1,11 +1,10 @@
 import SwiftUI
 import CoreData
-import os
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
-    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "SettingsView")
     @Environment(\.managedObjectContext) private var context
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var settingsManager: SettingsManager
     @StateObject private var notificationManager = NotificationManager.shared
 
@@ -14,32 +13,37 @@ struct SettingsView: View {
 
     @State private var showingProfileEditor = false
     @State private var showingUserInfoEditor = false
-    @State private var exportURL: IdentifiableURL?
-    @State private var showingRestorePicker = false
-    @State private var dataConfirmation: DataConfirmation?
-    @State private var dataOperationAlert: DataOperationAlert?
     @State private var showingContact = false
-    
+    @State private var showingExportOptions = false
+    @State private var showingRestoreSheet = false
+    @State private var showingRestorePicker = false
+    @State private var pendingExportFormat: ExportManager.ExportFormat?
+    @State private var restoreRequested = false
+    @State private var exportURL: IdentifiableURL?
+    @State private var settingsAlert: SettingsAlert?
+
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
 
     var body: some View {
         NavigationStack {
-            List {
-                userHeaderSection
-                
-                profileSection
-
-                notificationSection
-
-                actionSection
-                
-                dataSection
-
-                aboutSection
+            ScrollView {
+                LazyVStack(spacing: 24) {
+                    profileHero
+                    healthProfileSection
+                    notificationSection
+                    dataSection
+                    supportSection
+                    aboutSection
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 32)
+                .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 720 : .infinity)
+                .frame(maxWidth: .infinity)
             }
+            .background(Color(.systemGroupedBackground))
             .navigationBarHidden(true)
-            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 800 : 600, alignment: .center)
             .navigationDestination(isPresented: $showingProfileEditor) {
                 ProfileEditorView()
             }
@@ -50,413 +54,465 @@ struct SettingsView: View {
                 ContactView()
             }
             .onReceive(NotificationCenter.default.publisher(for: .showProfileEditor)) { _ in
-                    showingProfileEditor = true
+                showingProfileEditor = true
+            }
+            .adaptiveSheet(item: $exportURL) { item in
+                ShareSheet(items: [item.url])
+            }
+            .sheet(isPresented: $showingExportOptions, onDismiss: handleExportSheetDismissed) {
+                ExportOptionsSheet { format in
+                    pendingExportFormat = format
+                    showingExportOptions = false
                 }
-                .adaptiveSheet(item: $exportURL) { url in
-                    ShareSheet(items: [url.url])
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $showingRestoreSheet, onDismiss: handleRestoreSheetDismissed) {
+                RestoreBackupSheet {
+                    restoreRequested = true
+                    showingRestoreSheet = false
                 }
-                .alert(item: $dataOperationAlert) { alert in
-                    Alert(
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+            }
+            .alert(item: $settingsAlert) { alert in
+                if case .notificationPermissionDenied = alert {
+                    return Alert(
                         title: Text(alert.title),
                         message: Text(alert.message),
-                        dismissButton: .default(Text(NSLocalizedString("action.ok", comment: "")))
+                        primaryButton: .default(Text(NSLocalizedString("settings.open.settings", comment: ""))) {
+                            openNotificationSettings()
+                        },
+                        secondaryButton: .cancel(Text(NSLocalizedString("action.cancel", comment: "")))
                     )
                 }
-                .confirmationDialog(
-                    dataConfirmation?.title ?? "",
-                    isPresented: Binding(
-                        get: { dataConfirmation != nil },
-                        set: { if !$0 { dataConfirmation = nil } }
-                    ),
-                    titleVisibility: .visible
-                ) {
-                    switch dataConfirmation {
-                    case .restore:
-                        Button(NSLocalizedString("settings.restore.continue", comment: "")) {
-                            dataConfirmation = nil
-                            showingRestorePicker = true
-                        }
-                    case .delete:
-                        Button(NSLocalizedString("action.delete", comment: ""), role: .destructive) {
-                            dataConfirmation = nil
-                            deleteAllData()
-                        }
-                    case nil:
-                        EmptyView()
+                return Alert(
+                    title: Text(alert.title),
+                    message: Text(alert.message),
+                    dismissButton: .default(Text(NSLocalizedString("action.ok", comment: "")))
+                )
+            }
+            .fileImporter(
+                isPresented: $showingRestorePicker,
+                allowedContentTypes: [.json],
+                allowsMultipleSelection: false
+            ) { result in
+                switch result {
+                case .success(let urls):
+                    if let url = urls.first {
+                        restoreBackup(from: url)
                     }
-                    Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-                } message: {
-                    Text(dataConfirmation?.message ?? "")
-                }
-                .fileImporter(
-                    isPresented: $showingRestorePicker,
-                    allowedContentTypes: [.json],
-                    allowsMultipleSelection: false
-                ) { result in
-                    switch result {
-                    case .success(let urls):
-                        if let url = urls.first {
-                            restoreBackup(from: url)
-                        }
-                    case .failure(let error):
-                        dataOperationAlert = .restoreFailed(error.localizedDescription)
-                    }
-                }
-        }
-    }
-
-    private var userHeaderSection: some View {
-            Section {
-                Button(action: {
-                    showingUserInfoEditor = true
-                }) {
-                    HStack(alignment: .center, spacing: 16) {
-                        avatarImageView
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(settingsManager.displayName)
-                                .font(.title3)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.primary)
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondaryText)
-                    }
-                    .padding(.vertical, 8)
+                case .failure(let error):
+                    settingsAlert = .restoreFailed(error.localizedDescription)
                 }
             }
-        }
-        
-        @ViewBuilder
-        private var avatarImageView: some View {
-            if let image = settingsManager.avatarImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 54, height: 54)
-                    .clipShape(Circle())
-                    .id(settingsManager.avatarUpdatedToken)
-            } else {
-                Image(systemName: "person.circle.fill")
-                    .resizable()
-                    .frame(width: 54, height: 54)
-                    .foregroundColor(.gray)
-            }
-        }
-        
-        private var profileSection: some View {
-        Section(NSLocalizedString("settings.profile", comment: "")) {
-            if let profile = profile {
-                Button(action: { showingProfileEditor = true }) {
-                    VStack(spacing: 12) {
-                        HStack(spacing: 16) {
-                            Text(UserProfile.Gender(rawValue: profile.gender)?.displayName ?? "")
-                                .font(.body)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.primaryText)
-                            Text("\(profile.age) \(NSLocalizedString("common.years", comment: ""))")
-                                .font(.body)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.primaryText)
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text(NSLocalizedString("common.height", comment: ""))
-                                    .font(.caption)
-                                    .foregroundColor(.secondaryText)
-                                Text("\(profile.height.smartFormatted) \(NSLocalizedString("unit.cm", comment: ""))")
-                                    .font(.body)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.primaryText)
-                            }
-                        }
-                        
-                        Divider()
-                        
-                        VStack(spacing: 10) {
-                            HStack(spacing: 16) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(NSLocalizedString("goal.weight", comment: ""))
-                                        .font(.caption)
-                                        .foregroundColor(.secondaryText)
-                                    Text("\(profile.goalWeightValue.map { unit.convertFromKg($0).smartFormatted } ?? "--") \(unit.shortName)")
-                                        .font(.body)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.primaryBlue)
-                                }
-                                
-                                Spacer()
-                                
-                                if let goalBodyFat = profile.goalBodyFatPercentage {
-                                    VStack(alignment: .trailing, spacing: 4) {
-                                        Text(NSLocalizedString("goal.body.fat", comment: ""))
-                                            .font(.caption)
-                                            .foregroundColor(.secondaryText)
-                                        Text("\(goalBodyFat.smartFormatted)%")
-                                            .font(.body)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(.primaryText)
-                                    }
-                                }
-                            }
-                            
-                            if profile.hasGoalMeasurements {
-                                VStack(spacing: 8) {
-                                    Divider()
-                                    
-                                    HStack(spacing: 16) {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(NSLocalizedString("measure.waist", comment: ""))
-                                                .font(.caption)
-                                                .foregroundColor(.secondaryText)
-                                            if let waist = profile.goalWaistCircumferenceValue {
-                                                Text("\(waist.smartFormatted) cm")
-                                                    .font(.body)
-                                                    .fontWeight(.medium)
-                                                    .foregroundColor(.primaryText)
-                                            }
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        VStack(alignment: .trailing, spacing: 4) {
-                                            Text(NSLocalizedString("measure.hip", comment: ""))
-                                                .font(.caption)
-                                                .foregroundColor(.secondaryText)
-                                            if let hip = profile.goalHipCircumferenceValue {
-                                                Text("\(hip.smartFormatted) cm")
-                                                    .font(.body)
-                                                    .fontWeight(.medium)
-                                                    .foregroundColor(.primaryText)
-                                            }
-                                        }
-                                    }
-                                    
-                                    HStack(spacing: 16) {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(NSLocalizedString("measure.chest", comment: ""))
-                                                .font(.caption)
-                                                .foregroundColor(.secondaryText)
-                                            if let chest = profile.goalChestCircumferenceValue {
-                                                Text("\(chest.smartFormatted) cm")
-                                                    .font(.body)
-                                                    .fontWeight(.medium)
-                                                    .foregroundColor(.primaryText)
-                                            }
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        VStack(alignment: .trailing, spacing: 4) {
-                                            Text(NSLocalizedString("measure.thigh", comment: ""))
-                                                .font(.caption)
-                                                .foregroundColor(.secondaryText)
-                                            if let thigh = profile.goalThighCircumferenceValue {
-                                                Text("\(thigh.smartFormatted) cm")
-                                                    .font(.body)
-                                                    .fontWeight(.medium)
-                                                    .foregroundColor(.primaryText)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .padding(.vertical, 12)
-                }
-            }
-            
-            Button(action: { showingProfileEditor = true }) {
-                HStack(spacing: 12) {
-                    Image(systemName: "pencil")
-                        .foregroundColor(.primaryBlue)
-                        .font(.title3)
-                    Text(NSLocalizedString("action.edit", comment: ""))
-                        .foregroundColor(.primaryBlue)
-                        .font(.body)
-                        .fontWeight(.medium)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(.secondaryText)
-                }
-                .padding(.vertical, 8)
+            .task {
+                await refreshNotificationAuthorization()
             }
         }
     }
 
+    private var profileHero: some View {
+        Button {
+            HapticManager.light()
+            showingUserInfoEditor = true
+        } label: {
+            HStack(spacing: 16) {
+                avatarView(size: 68)
+                    .overlay(Circle().stroke(Color.white.opacity(0.8), lineWidth: 2))
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(settingsManager.displayName)
+                        .font(.title2.weight(.bold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            .padding(20)
+            .background(
+                LinearGradient(
+                    colors: [Color.primaryBlue, Color(hex: "4FB6A8")],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .shadow(color: Color.primaryBlue.opacity(0.22), radius: 14, x: 0, y: 8)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(NSLocalizedString("profile.title", comment: ""))
+    }
+
+    private var healthProfileSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle("settings.section.health")
+
+            settingsCard {
+                Button {
+                    HapticManager.light()
+                    showingProfileEditor = true
+                } label: {
+                    SettingsRowLabel(
+                        icon: "heart.text.square.fill",
+                        tint: .pink,
+                        title: NSLocalizedString("settings.profile", comment: ""),
+                        subtitle: profileSummary
+                    )
+                }
+                .buttonStyle(.plain)
+
+                if let profile {
+                    divider
+
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.flexible(), spacing: 10),
+                            GridItem(.flexible(), spacing: 10)
+                        ],
+                        spacing: 10
+                    ) {
+                        profileMetric(
+                            title: NSLocalizedString("common.age", comment: ""),
+                            value: "\(profile.age) \(NSLocalizedString("common.years", comment: ""))"
+                        )
+                        profileMetric(
+                            title: NSLocalizedString("common.height", comment: ""),
+                            value: "\(profile.height.smartFormatted) \(NSLocalizedString("unit.cm", comment: ""))"
+                        )
+                        profileMetric(
+                            title: NSLocalizedString("goal.weight", comment: ""),
+                            value: goalWeightText(profile)
+                        )
+                        profileMetric(
+                            title: NSLocalizedString("goal.body.fat", comment: ""),
+                            value: profile.goalBodyFatPercentage.map { "\($0.smartFormatted)%" } ??
+                                NSLocalizedString("common.no.data", comment: "")
+                        )
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
+                }
+            }
+        }
+    }
 
     private var notificationSection: some View {
-        Section {
-            Toggle(isOn: $settingsManager.notificationsEnabled) {
-                Label {
-                    VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle("settings.section.notifications")
+
+            settingsCard {
+                HStack(spacing: 14) {
+                    SettingsIcon(systemName: "bell.badge.fill", tint: .orange)
+
+                    VStack(alignment: .leading, spacing: 3) {
                         Text(NSLocalizedString("settings.notification", comment: ""))
+                            .font(.body.weight(.medium))
+                            .foregroundColor(.primary)
                         Text(NSLocalizedString("settings.notification.desc", comment: ""))
                             .font(.caption)
-                            .foregroundColor(.secondaryText)
+                            .foregroundColor(.secondary)
                     }
-                } icon: {
-                    Image(systemName: "bell.fill")
-                        .foregroundColor(.orange)
+
+                    Spacer()
+
+                    Toggle(
+                        NSLocalizedString("settings.notification", comment: ""),
+                        isOn: $settingsManager.notificationsEnabled
+                    )
+                    .labelsHidden()
+                    .tint(.primaryBlue)
                 }
-            }
-            .onChange(of: settingsManager.notificationsEnabled) { newValue in
-                if newValue {
-                    Task {
-                        try? await notificationManager.requestAuthorization()
-                        if notificationManager.isAuthorized {
-                            try? await notificationManager.scheduleDailyReminder(at: settingsManager.notificationTime)
+                .padding(16)
+                .onChange(of: settingsManager.notificationsEnabled) { enabled in
+                    updateNotifications(enabled: enabled)
+                }
+
+                if settingsManager.notificationsEnabled {
+                    divider
+
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "clock.fill", tint: .primaryBlue)
+
+                        Text(NSLocalizedString("settings.notification.time", comment: ""))
+                            .font(.body)
+                            .foregroundColor(.primary)
+
+                        Spacer()
+
+                        DatePicker(
+                            NSLocalizedString("settings.notification.time", comment: ""),
+                            selection: $settingsManager.notificationTime,
+                            displayedComponents: .hourAndMinute
+                        )
+                        .labelsHidden()
+                        .datePickerStyle(.compact)
+                        .onChange(of: settingsManager.notificationTime) { date in
+                            Task {
+                                try? await notificationManager.scheduleDailyReminder(at: date)
+                            }
                         }
                     }
-                } else {
-                    Task {
-                        await notificationManager.cancelDailyReminder()
-                    }
-                }
-            }
-
-            if settingsManager.notificationsEnabled {
-                DatePicker(
-                    NSLocalizedString("settings.notification.time", comment: ""),
-                    selection: $settingsManager.notificationTime,
-                    displayedComponents: .hourAndMinute
-                )
-                .onChange(of: settingsManager.notificationTime) { newValue in
-                    Task {
-                        try? await notificationManager.scheduleDailyReminder(at: newValue)
-                    }
+                    .padding(16)
                 }
             }
         }
     }
 
     private var dataSection: some View {
-        Section {
-            Menu {
-                Button(action: { exportData(format: .csv) }) {
-                    Label(NSLocalizedString("settings.export.csv", comment: ""), systemImage: "filetype.csv")
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle("settings.section.data")
+
+            settingsCard {
+                Button {
+                    HapticManager.light()
+                    showingExportOptions = true
+                } label: {
+                    SettingsRowLabel(
+                        icon: "square.and.arrow.up.fill",
+                        tint: .green,
+                        title: NSLocalizedString("settings.export", comment: ""),
+                        subtitle: NSLocalizedString("settings.export.desc", comment: "")
+                    )
                 }
-                Button(action: { exportData(format: .json) }) {
-                    Label(NSLocalizedString("settings.export.json", comment: ""), systemImage: "filetype.json")
+                .buttonStyle(.plain)
+
+                divider
+
+                Button {
+                    HapticManager.light()
+                    showingRestoreSheet = true
+                } label: {
+                    SettingsRowLabel(
+                        icon: "arrow.counterclockwise.circle.fill",
+                        tint: .primaryBlue,
+                        title: NSLocalizedString("settings.restore", comment: ""),
+                        subtitle: NSLocalizedString("settings.restore.desc", comment: "")
+                    )
                 }
-            } label: {
-                HStack {
-                    Image(systemName: "square.and.arrow.up.fill")
-                        .foregroundColor(.primaryBlue)
-                    Text(NSLocalizedString("settings.export", comment: ""))
-                        .foregroundColor(.primary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(.secondaryText)
-                }
+                .buttonStyle(.plain)
+
             }
 
-            Button(action: { dataConfirmation = .restore }) {
-                HStack {
-                    Image(systemName: "arrow.down.doc.fill")
-                        .foregroundColor(.primaryBlue)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(NSLocalizedString("settings.restore", comment: ""))
-                            .foregroundColor(.primary)
-                        Text(NSLocalizedString("settings.restore.desc", comment: ""))
-                            .font(.caption)
-                            .foregroundColor(.secondaryText)
-                    }
-                    Spacer()
-                }
-            }
-
-            Button(role: .destructive, action: { dataConfirmation = .delete }) {
-                HStack {
-                    Image(systemName: "trash.fill")
-                        .foregroundColor(.red)
-                    Text(NSLocalizedString("settings.delete.all", comment: ""))
-                        .foregroundColor(.primary)
-                }
-            }
-        } footer: {
-            Text(NSLocalizedString("settings.backup.hint", comment: ""))
+            Label(
+                NSLocalizedString("settings.backup.hint", comment: ""),
+                systemImage: "info.circle"
+            )
+            .font(.caption)
+            .foregroundColor(.secondaryText)
+            .padding(.horizontal, 4)
         }
     }
 
-    private var actionSection: some View {
-        Section {
-            Button(action: {
-                showingContact = true
-            }) {
-                HStack {
-                    Image(systemName: "envelope.fill")
-                        .foregroundColor(.primaryBlue)
-                    Text(NSLocalizedString("settings.contact", comment: ""))
-                        .foregroundColor(.primary)
-                    Spacer()
-                }
-            }
+    private var supportSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle("settings.section.support")
 
-            Button(action: {
-                if let url = URL(string: "https://apps.apple.com/app/id6768547821") {
-                    UIApplication.shared.open(url)
+            settingsCard {
+                Button {
+                    HapticManager.light()
+                    showingContact = true
+                } label: {
+                    SettingsRowLabel(
+                        icon: "envelope.fill",
+                        tint: .primaryBlue,
+                        title: NSLocalizedString("settings.contact", comment: ""),
+                        subtitle: NSLocalizedString("settings.contact.desc", comment: "")
+                    )
                 }
-            }) {
-                HStack {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(.orange)
-                    Text(NSLocalizedString("settings.rate", comment: ""))
-                        .foregroundColor(.primary)
-                    Spacer()
-                    HStack(spacing: 1) {
-                        ForEach(0..<5) { _ in
-                            Image(systemName: "star.fill")
-                                .foregroundColor(.yellow)
-                                .font(.caption)
-                        }
-                    }
-                }
-            }
+                .buttonStyle(.plain)
 
-            Button(action: {
-                if let url = URL(string: "https://apps.apple.com/app/id6768547821") {
-                    let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let rootViewController = windowScene.windows.first?.rootViewController {
-                    rootViewController.present(activityVC, animated: true)
+                divider
+
+                Button {
+                    HapticManager.light()
+                    openAppStore()
+                } label: {
+                    SettingsRowLabel(
+                        icon: "star.fill",
+                        tint: .orange,
+                        title: NSLocalizedString("settings.rate", comment: ""),
+                        subtitle: NSLocalizedString("settings.rate.desc", comment: ""),
+                        showsChevron: false
+                    )
                 }
+                .buttonStyle(.plain)
+
+                divider
+
+                Button {
+                    HapticManager.light()
+                    shareApp()
+                } label: {
+                    SettingsRowLabel(
+                        icon: "person.2.fill",
+                        tint: .purple,
+                        title: NSLocalizedString("settings.share", comment: ""),
+                        subtitle: NSLocalizedString("settings.share.desc", comment: ""),
+                        showsChevron: false
+                    )
                 }
-            }) {
-                HStack {
-                    Image(systemName: "arrowshape.turn.up.right.fill")
-                        .foregroundColor(.primaryBlue)
-                    Text(NSLocalizedString("settings.share", comment: ""))
-                        .foregroundColor(.primary)
-                }
+                .buttonStyle(.plain)
             }
         }
     }
 
     private var aboutSection: some View {
-        Section {
-            HStack {
-                Image(systemName: "info.circle.fill")
-                    .foregroundColor(.gray)
-                Text(NSLocalizedString("settings.version", comment: ""))
-                Spacer()
-                Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0")
-                    .foregroundColor(.secondaryText)
+        Text(
+            String(
+                format: NSLocalizedString("settings.version.format", comment: ""),
+                Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.3"
+            )
+        )
+        .font(.caption)
+        .foregroundColor(.secondaryText)
+        .frame(maxWidth: .infinity)
+        .padding(.top, 4)
+    }
+
+    private var profileSummary: String {
+        guard profile != nil else {
+            return NSLocalizedString("settings.profile.incomplete", comment: "")
+        }
+        return NSLocalizedString("settings.profile.edit.hint", comment: "")
+    }
+
+    private func goalWeightText(_ profile: UserProfile) -> String {
+        guard let goal = profile.goalWeightValue else {
+            return NSLocalizedString("common.no.data", comment: "")
+        }
+        return "\(unit.convertFromKg(goal).smartFormatted) \(unit.shortName)"
+    }
+
+    private func profileMetric(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondaryText)
+                .lineLimit(1)
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(.primaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(colorScheme == .dark ? Color(.tertiarySystemGroupedBackground) : Color(.secondarySystemGroupedBackground))
+        )
+    }
+
+    @ViewBuilder
+    private func avatarView(size: CGFloat) -> some View {
+        if let image = settingsManager.avatarImage {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: size, height: size)
+                .clipShape(Circle())
+                .id(settingsManager.avatarUpdatedToken)
+        } else {
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.2))
+                Image(systemName: "person.crop.circle.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .padding(8)
+                    .foregroundColor(.white)
             }
+            .frame(width: size, height: size)
+        }
+    }
+
+    private func sectionTitle(_ key: String) -> some View {
+        Text(NSLocalizedString(key, comment: ""))
+            .font(.footnote.weight(.semibold))
+            .foregroundColor(.secondaryText)
+            .padding(.horizontal, 4)
+    }
+
+    private func settingsCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(spacing: 0) {
+            content()
+        }
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color(.separator).opacity(0.16), lineWidth: 1)
+            )
+    }
+
+    private var divider: some View {
+        Divider()
+            .padding(.leading, 58)
+    }
+
+    private func updateNotifications(enabled: Bool) {
+        HapticManager.light()
+        guard enabled else {
+            Task {
+                await notificationManager.cancelDailyReminder()
+            }
+            return
+        }
+
+        Task {
+            do {
+                try await notificationManager.requestAuthorization()
+                await notificationManager.checkAuthorizationStatus()
+                if notificationManager.isAuthorized {
+                    try await notificationManager.scheduleDailyReminder(at: settingsManager.notificationTime)
+                    HapticManager.success()
+                } else {
+                    settingsManager.notificationsEnabled = false
+                    settingsAlert = .notificationPermissionDenied
+                }
+            } catch {
+                settingsManager.notificationsEnabled = false
+                settingsAlert = .notificationFailed(error.localizedDescription)
+            }
+        }
+    }
+
+    private func refreshNotificationAuthorization() async {
+        guard settingsManager.notificationsEnabled else { return }
+        await notificationManager.checkAuthorizationStatus()
+        if !notificationManager.isAuthorized {
+            settingsManager.notificationsEnabled = false
+        }
+    }
+
+    private func handleExportSheetDismissed() {
+        guard let format = pendingExportFormat else { return }
+        pendingExportFormat = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            exportData(format: format)
+        }
+    }
+
+    private func handleRestoreSheetDismissed() {
+        guard restoreRequested else { return }
+        restoreRequested = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            showingRestorePicker = true
         }
     }
 
     private func exportData(format: ExportManager.ExportFormat) {
         guard format != .csv || !records.isEmpty else {
-            dataOperationAlert = .exportFailed
+            settingsAlert = .exportFailed
             return
         }
-        
+
         if let url = ExportManager.shared.export(
             records: Array(records),
             profile: profile,
@@ -466,7 +522,7 @@ struct SettingsView: View {
         ) {
             exportURL = IdentifiableURL(url)
         } else {
-            dataOperationAlert = .exportFailed
+            settingsAlert = .exportFailed
         }
     }
 
@@ -477,40 +533,208 @@ struct SettingsView: View {
                 context: context,
                 settings: settingsManager
             )
-            dataOperationAlert = .restoreSucceeded(recordCount)
+            HapticManager.success()
+            settingsAlert = .restoreSucceeded(recordCount)
         } catch {
-            dataOperationAlert = .restoreFailed(error.localizedDescription)
+            settingsAlert = .restoreFailed(error.localizedDescription)
         }
     }
 
-    private func deleteAllData() {
-        for record in records {
-            context.delete(record)
-        }
-        
-        let profileFetch = UserProfile.fetchRequest()
-        if let profiles = try? context.fetch(profileFetch) {
-            for profile in profiles {
-                context.delete(profile)
-            }
-        }
-
-        do {
-            try context.save()
-            settingsManager.removeAvatar()
-            settingsManager.nickname = ""
-            removeLegacyRecordImages()
-        } catch {
-            Self.logger.error("Failed to delete all data: \(error.localizedDescription)")
-        }
+    private func openAppStore() {
+        guard let url = URL(string: "https://apps.apple.com/app/id6768547821") else { return }
+        UIApplication.shared.open(url)
     }
 
-    private func removeLegacyRecordImages() {
-        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+    private func shareApp() {
+        guard let url = URL(string: "https://apps.apple.com/app/id6768547821"),
+              let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController else {
             return
         }
-        let imagesDirectory = documentsDirectory.appendingPathComponent("images")
-        try? FileManager.default.removeItem(at: imagesDirectory)
+        let activity = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        if let popover = activity.popoverPresentationController {
+            popover.sourceView = rootViewController.view
+            popover.sourceRect = CGRect(
+                x: rootViewController.view.bounds.midX,
+                y: rootViewController.view.bounds.midY,
+                width: 0,
+                height: 0
+            )
+            popover.permittedArrowDirections = []
+        }
+        rootViewController.present(activity, animated: true)
+    }
+
+    private func openNotificationSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+    }
+}
+
+private struct SettingsIcon: View {
+    let systemName: String
+    let tint: Color
+
+    var body: some View {
+        Image(systemName: systemName)
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundColor(tint)
+            .frame(width: 32, height: 32)
+            .background(tint.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+    }
+}
+
+private struct SettingsRowLabel: View {
+    let icon: String
+    let tint: Color
+    let title: String
+    let subtitle: String
+    var showsChevron = true
+    var titleColor: Color = .primary
+
+    var body: some View {
+        HStack(spacing: 14) {
+            SettingsIcon(systemName: icon, tint: tint)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.body.weight(.medium))
+                    .foregroundColor(titleColor)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer(minLength: 8)
+
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.secondaryText)
+            }
+        }
+        .padding(16)
+        .contentShape(Rectangle())
+    }
+}
+
+private struct ExportOptionsSheet: View {
+    let onSelect: (ExportManager.ExportFormat) -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    Text(NSLocalizedString("settings.export.sheet.desc", comment: ""))
+                        .font(.subheadline)
+                        .foregroundColor(.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    VStack(spacing: 12) {
+                        exportOption(
+                            format: .json,
+                            icon: "externaldrive.fill.badge.checkmark",
+                            tint: .primaryBlue,
+                            titleKey: "settings.export.json",
+                            descriptionKey: "settings.export.json.desc"
+                        )
+
+                        exportOption(
+                            format: .csv,
+                            icon: "tablecells",
+                            tint: .green,
+                            titleKey: "settings.export.csv",
+                            descriptionKey: "settings.export.csv.desc"
+                        )
+                    }
+                }
+                .padding(20)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle(NSLocalizedString("settings.export", comment: ""))
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private func exportOption(
+        format: ExportManager.ExportFormat,
+        icon: String,
+        tint: Color,
+        titleKey: String,
+        descriptionKey: String
+    ) -> some View {
+        Button {
+            onSelect(format)
+        } label: {
+            HStack(spacing: 14) {
+                SettingsIcon(systemName: icon, tint: tint)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(NSLocalizedString(titleKey, comment: ""))
+                        .font(.body.weight(.semibold))
+                        .foregroundColor(.primary)
+                    Text(NSLocalizedString(descriptionKey, comment: ""))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.secondaryText)
+            }
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color(.separator).opacity(0.16), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct RestoreBackupSheet: View {
+    let onChooseBackup: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 22) {
+                HStack(spacing: 14) {
+                    SettingsIcon(systemName: "arrow.counterclockwise.circle.fill", tint: .primaryBlue)
+                    Text(NSLocalizedString("settings.restore.desc", comment: ""))
+                        .font(.subheadline)
+                        .foregroundColor(.primaryText)
+                }
+
+                Label(
+                    NSLocalizedString("settings.restore.confirm", comment: ""),
+                    systemImage: "exclamationmark.triangle.fill"
+                )
+                .font(.footnote)
+                .foregroundColor(.orange)
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.orange.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                Spacer()
+
+                Button(action: onChooseBackup) {
+                    Text(NSLocalizedString("settings.restore.continue", comment: ""))
+                        .primaryButtonStyle()
+                }
+            }
+            .padding(20)
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle(NSLocalizedString("settings.restore", comment: ""))
+            .navigationBarTitleDisplayMode(.inline)
+        }
     }
 }
 
@@ -519,13 +743,18 @@ struct ShareSheet: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
         let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        
+
         if let popover = controller.popoverPresentationController {
             popover.sourceView = UIView()
-            popover.sourceRect = CGRect(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY, width: 0, height: 0)
+            popover.sourceRect = CGRect(
+                x: UIScreen.main.bounds.midX,
+                y: UIScreen.main.bounds.midY,
+                width: 0,
+                height: 0
+            )
             popover.permittedArrowDirections = []
         }
-        
+
         return controller
     }
 
@@ -535,25 +764,26 @@ struct ShareSheet: UIViewControllerRepresentable {
 struct IdentifiableURL: Identifiable {
     let id = UUID()
     let url: URL
-    
+
     init(_ url: URL) {
         self.url = url
     }
 }
 
-private enum DataOperationAlert: Identifiable {
+private enum SettingsAlert: Identifiable {
     case exportFailed
     case restoreSucceeded(Int)
     case restoreFailed(String)
+    case notificationPermissionDenied
+    case notificationFailed(String)
 
     var id: String {
         switch self {
-        case .exportFailed:
-            return "exportFailed"
-        case .restoreSucceeded:
-            return "restoreSucceeded"
-        case .restoreFailed:
-            return "restoreFailed"
+        case .exportFailed: return "exportFailed"
+        case .restoreSucceeded: return "restoreSucceeded"
+        case .restoreFailed: return "restoreFailed"
+        case .notificationPermissionDenied: return "notificationPermissionDenied"
+        case .notificationFailed: return "notificationFailed"
         }
     }
 
@@ -565,6 +795,10 @@ private enum DataOperationAlert: Identifiable {
             return NSLocalizedString("settings.restore.success.title", comment: "")
         case .restoreFailed:
             return NSLocalizedString("settings.restore.error.title", comment: "")
+        case .notificationPermissionDenied:
+            return NSLocalizedString("settings.notification.denied.title", comment: "")
+        case .notificationFailed:
+            return NSLocalizedString("settings.notification.error.title", comment: "")
         }
     }
 
@@ -577,31 +811,10 @@ private enum DataOperationAlert: Identifiable {
                 format: NSLocalizedString("settings.restore.success.message", comment: ""),
                 count
             )
-        case .restoreFailed(let message):
+        case .restoreFailed(let message), .notificationFailed(let message):
             return message
-        }
-    }
-}
-
-private enum DataConfirmation {
-    case restore
-    case delete
-
-    var title: String {
-        switch self {
-        case .restore:
-            return NSLocalizedString("settings.restore", comment: "")
-        case .delete:
-            return NSLocalizedString("settings.delete.all", comment: "")
-        }
-    }
-
-    var message: String {
-        switch self {
-        case .restore:
-            return NSLocalizedString("settings.restore.confirm", comment: "")
-        case .delete:
-            return NSLocalizedString("settings.delete.confirm", comment: "")
+        case .notificationPermissionDenied:
+            return NSLocalizedString("settings.notification.denied.message", comment: "")
         }
     }
 }

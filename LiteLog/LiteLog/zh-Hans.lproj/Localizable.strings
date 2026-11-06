@@ -140,6 +140,12 @@
 "stats.metric" = "指标";
 // 设置页
 "settings.profile" = "个人资料";
+"settings.profile.incomplete" = "完善健康资料后即可查看 BMI 和目标进度";
+"settings.profile.edit.hint" = "查看并修改身高、年龄和目标";
+"settings.section.health" = "健康档案";
+"settings.section.notifications" = "提醒";
+"settings.section.data" = "数据与隐私";
+"settings.section.support" = "支持";
 "settings.height.required" = "请输入身高";
 "settings.height.invalid" = "请输入有效的身高";
 "settings.male" = "男";
@@ -158,8 +164,12 @@
 "settings.notification.desc" = "每日提醒记录体重";
 "settings.notification.time" = "提醒时间";
 "settings.export" = "导出数据";
+"settings.export.desc" = "创建可恢复的 JSON 备份，或导出 CSV 表格";
+"settings.export.sheet.desc" = "选择数据的使用方式。";
 "settings.export.csv" = "导出CSV";
+"settings.export.csv.desc" = "适合在表格软件中查看或整理记录。";
 "settings.export.json" = "导出 JSON 备份";
+"settings.export.json.desc" = "包含资料、记录、昵称和头像，可在 LiteLog 中恢复。";
 "settings.export.error" = "导出失败";
 "settings.export.error.message" = "无法创建备份文件，请重试。";
 "settings.restore" = "从备份恢复";
@@ -176,14 +186,20 @@
 "backup.error.record" = "备份中包含无效记录。";
 "backup.error.avatar" = "备份中的头像无法读取。";
 "backup.error.size" = "所选备份文件过大。";
-"settings.delete.all" = "删除全部数据";
-"settings.delete.confirm" = "确定要删除所有数据吗？此操作不可撤销。";
 "settings.contact" = "联系我们";
+"settings.contact.desc" = "遇到问题或有建议，欢迎联系我们";
 "settings.email" = "邮箱";
 "settings.wechat" = "微信";
 "settings.rate" = "去 App Store 评分";
+"settings.rate.desc" = "你的评价能帮助 LiteLog 继续改进";
 "settings.share" = "推荐给好友";
+"settings.share.desc" = "把 LiteLog 分享给需要的人";
 "settings.version" = "版本";
+"settings.version.format" = "版本 %@";
+"settings.notification.denied.title" = "通知权限未开启";
+"settings.notification.denied.message" = "请前往 iOS 设置允许 LiteLog 发送通知，才能使用每日提醒。";
+"settings.open.settings" = "打开设置";
+"settings.notification.error.title" = "提醒更新失败";
 
 // 用户信息编辑
 "profile.title" = "用户信息";
