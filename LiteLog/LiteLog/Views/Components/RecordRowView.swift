@@ -36,11 +36,9 @@ struct RecordRowView: View, Equatable {
         lhs.record.thighCircumferenceValue == rhs.record.thighCircumferenceValue &&
         lhs.record.date == rhs.record.date &&
         lhs.record.note == rhs.record.note &&
-        lhs.record.imageUrl == rhs.record.imageUrl &&
         lhs.unit == rhs.unit &&
         lhs.showDate == rhs.showDate &&
-        lhs.weightChange == rhs.weightChange &&
-        lhs.record.syncStatus == rhs.record.syncStatus
+        lhs.weightChange == rhs.weightChange
     }
     
     @Environment(\.colorScheme) private var colorScheme
@@ -97,10 +95,6 @@ struct RecordRowView: View, Equatable {
             
             if let note = record.note, !note.isEmpty {
                 noteView(note)
-            }
-            
-            if record.hasImage {
-                imageView
             }
         }
         .padding(.vertical, 16)
@@ -251,34 +245,6 @@ struct RecordRowView: View, Equatable {
             .padding(.vertical, 4)
             .background(Color.primaryBlue.opacity(0.1))
             .cornerRadius(8)
-    }
-    
-    private var imageView: some View {
-        HStack(alignment: .top) {
-            if showDate {
-                Spacer().frame(width: 56)
-            }
-            
-            if let url = record.imageUrl {
-                if ImageStorageManager.shared.isLocalImageUrl(url), let localImage = ImageStorageManager.shared.loadImage(from: url) {
-                    Image(uiImage: localImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxHeight: 120)
-                        .cornerRadius(8)
-                } else if let imageUrl = URL(string: url) {
-                    AsyncImageView(
-                        url: imageUrl,
-                        placeholder: { AnyView(Color(.secondarySystemBackground).aspectRatio(4/3, contentMode: .fit).frame(maxHeight: 120)) },
-                        errorPlaceholder: { AnyView(EmptyView()) },
-                        contentMode: .fit,
-                        cacheKey: url
-                    )
-                    .frame(maxHeight: 120)
-                    .cornerRadius(8)
-                }
-            }
-        }
     }
 }
 

@@ -19,10 +19,7 @@ struct SettingsView: View {
     @State private var exportURL: IdentifiableURL?
     @State private var showingExportError = false
     @State private var notificationTime = SettingsManager.defaultNotificationTime()
-    @State private var showingFeedback = false
     @State private var showingContact = false
-    @State private var versionTapCount = 0
-    @State private var showingEnvPicker = false
     
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -34,7 +31,7 @@ struct SettingsView: View {
                 
                 profileSection
 
-                syncNotificationSection
+                notificationSection
 
                 actionSection
                 
@@ -49,9 +46,6 @@ struct SettingsView: View {
             }
             .navigationDestination(isPresented: $showingUserInfoEditor) {
                 UserInfoEditorView()
-            }
-            .navigationDestination(isPresented: $showingFeedback) {
-                FeedbackView()
             }
             .navigationDestination(isPresented: $showingContact) {
                 ContactView()
@@ -101,63 +95,18 @@ struct SettingsView: View {
         
         @ViewBuilder
         private var avatarImageView: some View {
-            if !settingsManager.avatarUrl.isEmpty {
-                if let cachedImage = settingsManager.cachedAvatarImage {
-                    Image(uiImage: cachedImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 54, height: 54)
-                        .clipShape(Circle())
-                } else {
-                    ZStack {
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .frame(width: 54, height: 54)
-                            .foregroundColor(.primaryBlue)
-                        
-                        AsyncImage(url: URL(string: settingsManager.avatarUrl)) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 54, height: 54)
-                                    .clipShape(Circle())
-                            case .failure, .empty:
-                                EmptyView()
-                            @unknown default:
-                                EmptyView()
-                            }
-                        }
-                        .onAppear {
-                            Task {
-                                await loadAndCacheAvatar()
-                            }
-                        }
-                    }
-                }
+            if let image = settingsManager.avatarImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 54, height: 54)
+                    .clipShape(Circle())
+                    .id(settingsManager.avatarUpdatedToken)
             } else {
                 Image(systemName: "person.circle.fill")
                     .resizable()
                     .frame(width: 54, height: 54)
                     .foregroundColor(.gray)
-            }
-        }
-        
-        private func loadAndCacheAvatar() async {
-            guard !settingsManager.avatarUrl.isEmpty, settingsManager.cachedAvatarImage == nil else { return }
-            
-            guard let url = URL(string: settingsManager.avatarUrl) else { return }
-            
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                if let image = UIImage(data: data) {
-                    await MainActor.run {
-                        settingsManager.updateCachedAvatar(with: image)
-                    }
-                }
-            } catch {
-                Self.logger.error("Failed to load avatar: \(error.localizedDescription)")
             }
         }
         
@@ -304,22 +253,8 @@ struct SettingsView: View {
     }
 
 
-    private var syncNotificationSection: some View {
+    private var notificationSection: some View {
         Section {
-            Toggle(isOn: $settingsManager.iCloudSyncEnabled) {
-                Label {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(NSLocalizedString("settings.icloud", comment: ""))
-                        Text(NSLocalizedString("settings.icloud.desc", comment: ""))
-                            .font(.caption)
-                            .foregroundColor(.secondaryText)
-                    }
-                } icon: {
-                    Image(systemName: "icloud.fill")
-                        .foregroundColor(.primaryBlue)
-                }
-            }
-
             Toggle(isOn: $settingsManager.notificationsEnabled) {
                 Label {
                     VStack(alignment: .leading, spacing: 2) {
@@ -398,18 +333,6 @@ struct SettingsView: View {
     private var actionSection: some View {
         Section {
             Button(action: {
-                showingFeedback = true
-            }) {
-                HStack {
-                    Image(systemName: "message.badge.filled.fill")
-                        .foregroundColor(.green)
-                    Text(NSLocalizedString("settings.send.feedback", comment: ""))
-                        .foregroundColor(.primary)
-                    Spacer()
-                }
-            }
-
-            Button(action: {
                 showingContact = true
             }) {
                 HStack {
@@ -471,36 +394,6 @@ struct SettingsView: View {
                 Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0")
                     .foregroundColor(.secondaryText)
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                versionTapCount += 1
-                if versionTapCount >= 30 {
-                    versionTapCount = 0
-                    showingEnvPicker = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    versionTapCount = 0
-                }
-            }
-            .confirmationDialog(
-                NSLocalizedString("settings.env", value: "服务器环境", comment: ""),
-                isPresented: $showingEnvPicker,
-                titleVisibility: .visible
-            ) {
-                ForEach(AppEnvironment.allCases, id: \.self) { env in
-                    Button(action: {
-                        settingsManager.appEnvironment = env
-                    }) {
-                        HStack {
-                            Text(env.displayName)
-                            if settingsManager.appEnvironment == env {
-                                Text("✓")
-                            }
-                        }
-                    }
-                }
-                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-            }
         }
     }
 
@@ -518,7 +411,6 @@ struct SettingsView: View {
     }
 
     private func deleteAllData() {
-        let recordIds = records.map { $0.id.uuidString }
         for record in records {
             context.delete(record)
         }
@@ -532,12 +424,20 @@ struct SettingsView: View {
 
         do {
             try context.save()
-            Task {
-                await DataSyncManager.shared.syncDeletedRecords(recordIds: recordIds)
-            }
+            settingsManager.removeAvatar()
+            settingsManager.nickname = ""
+            removeLegacyRecordImages()
         } catch {
             Self.logger.error("Failed to delete all data: \(error.localizedDescription)")
         }
+    }
+
+    private func removeLegacyRecordImages() {
+        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            return
+        }
+        let imagesDirectory = documentsDirectory.appendingPathComponent("images")
+        try? FileManager.default.removeItem(at: imagesDirectory)
     }
 }
 

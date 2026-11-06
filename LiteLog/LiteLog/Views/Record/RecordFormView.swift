@@ -13,7 +13,6 @@ struct RecordFormData: Equatable {
     var chestString: String
     var thighString: String
     var note: String
-    var imageUrl: String?
     var measurementTimePeriod: MeasurementTimePeriod
     
     static func == (lhs: RecordFormData, rhs: RecordFormData) -> Bool {
@@ -76,7 +75,6 @@ struct RecordFormView: View {
     @State private var selectedTimePeriod: MeasurementTimePeriod = .random
     
     @State private var showAdvancedFields = false
-    @State private var showPhotoSection = false
     
     @Environment(\.colorScheme) private var colorScheme
     
@@ -84,13 +82,6 @@ struct RecordFormView: View {
         colorScheme == .dark ? Color(.secondarySystemBackground) : .white
     }
     
-    @State private var selectedImage: UIImage?
-    @State private var imageUrl: String?
-    @State private var showingImagePicker = false
-    @State private var showingImageSourcePicker = false
-    @State private var imageSourceType: UIImagePickerController.SourceType = .camera
-    @State private var deleteImage = false
-
     private var unit: WeightUnit { settingsManager.weightUnit }
     private var isEditMode: Bool { recordData != nil }
 
@@ -146,10 +137,8 @@ struct RecordFormView: View {
             self._chestString = State(initialValue: recordData.chestString)
             self._thighString = State(initialValue: recordData.thighString)
             self._note = State(initialValue: recordData.note)
-            self._imageUrl = State(initialValue: recordData.imageUrl)
             self._selectedTimePeriod = State(initialValue: recordData.measurementTimePeriod)
             self._showAdvancedFields = State(initialValue: true)
-            self._showPhotoSection = State(initialValue: recordData.imageUrl != nil)
         } else {
             self._date = State(initialValue: Date())
             self._weightString = State(initialValue: "")
@@ -159,10 +148,8 @@ struct RecordFormView: View {
             self._chestString = State(initialValue: "")
             self._thighString = State(initialValue: "")
             self._note = State(initialValue: "")
-            self._imageUrl = State(initialValue: nil)
             self._selectedTimePeriod = State(initialValue: .random)
             self._showAdvancedFields = State(initialValue: false)
-            self._showPhotoSection = State(initialValue: false)
         }
     }
 
@@ -173,8 +160,6 @@ struct RecordFormView: View {
                 weightCard
                 
                 dateAndPeriodSection
-                
-                photoSection
                 
                 VStack {
                     advancedSectionHeader
@@ -214,22 +199,6 @@ struct RecordFormView: View {
             }
         } message: {
             Text(NSLocalizedString("record.duplicate.message", comment: ""))
-        }
-        .confirmationDialog(NSLocalizedString("record.select.source", comment: ""), isPresented: $showingImageSourcePicker) {
-            Button(NSLocalizedString("record.take.photo", comment: "")) {
-                imageSourceType = .camera
-                showingImagePicker = true
-            }
-            Button(NSLocalizedString("record.upload.image", comment: "")) {
-                imageSourceType = .photoLibrary
-                showingImagePicker = true
-            }
-            Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-        }
-        .fullScreenCover(isPresented: $showingImagePicker) {
-            ImagePicker(image: $selectedImage, isPresented: $showingImagePicker, sourceType: imageSourceType)
-                .ignoresSafeArea(.all)
-                .background(Color.black)
         }
         .dismissKeyboardOnTapOutside()
     }
@@ -302,80 +271,6 @@ struct RecordFormView: View {
                     .font(.headline)
                 
                 MeasurementPeriodSelector(selectedPeriod: $selectedTimePeriod)
-            }
-        }
-        .padding(16)
-        .background(cardBackgroundColor)
-        .cornerRadius(12)
-    }
-    
-    private var photoSection: some View {
-        VStack(spacing: 12) {
-            if selectedImage != nil || imageUrl != nil {
-                HStack(alignment: .top, spacing: 12) {
-                    if let image = selectedImage {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 80, height: 80)
-                            .cornerRadius(8)
-                    } else if let url = imageUrl {
-                        if ImageStorageManager.shared.isLocalImageUrl(url), let localImage = ImageStorageManager.shared.loadImage(from: url) {
-                            Image(uiImage: localImage)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 80, height: 80)
-                                .cornerRadius(8)
-                        } else if let remoteUrl = URL(string: url) {
-                            AsyncImageView(
-                                url: remoteUrl,
-                                placeholder: { AnyView(Image(systemName: "photo").resizable().scaledToFit().frame(width: 80, height: 80).foregroundColor(.secondaryText)) },
-                                errorPlaceholder: { AnyView(Image(systemName: "photo").resizable().scaledToFit().frame(width: 80, height: 80).foregroundColor(.secondaryText)) },
-                                contentMode: .fit,
-                                cacheKey: url
-                            )
-                            .frame(width: 80, height: 80)
-                            .cornerRadius(8)
-                        }
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(NSLocalizedString("record.photo.attached", comment: ""))
-                            .font(.subheadline)
-                        Button(NSLocalizedString("record.change.photo", comment: "")) {
-                            showingImageSourcePicker = true
-                        }
-                        .font(.caption)
-                        .foregroundColor(.primaryBlue)
-                    }
-                    
-                    Spacer()
-                    
-                    Button(role: .destructive) {
-                        selectedImage = nil
-                        imageUrl = nil
-                        deleteImage = true
-                    } label: {
-                        Image(systemName: "x.circle.fill")
-                            .foregroundColor(.red)
-                            .frame(width: 24, height: 24)
-                    }
-                    .buttonStyle(.plain)
-                }
-            } else {
-                Button(action: { showingImageSourcePicker = true }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "camera")
-                            .foregroundColor(.primaryBlue)
-                        Text(NSLocalizedString("record.add.photo", comment: ""))
-                            .font(.subheadline)
-                            .foregroundColor(.primaryBlue)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(16)
-                    .background(Color.primaryBlue.opacity(0.05))
-                    .cornerRadius(8)
-                }
             }
         }
         .padding(16)
@@ -539,12 +434,6 @@ struct RecordFormView: View {
         newRecord.chestCircumferenceValue = chestCircumference
         newRecord.thighCircumferenceValue = thighCircumference
         newRecord.note = note.isEmpty ? nil : note
-        if let selectedImage = selectedImage {
-            let localImageUrl = ImageStorageManager.shared.saveImage(selectedImage, for: newRecord.id.uuidString)
-            newRecord.imageUrl = localImageUrl
-        } else {
-            newRecord.imageUrl = imageUrl
-        }
         newRecord.measurementTimePeriod = selectedTimePeriod.rawValue
 
         do {
@@ -556,7 +445,6 @@ struct RecordFormView: View {
         }
 
         HapticManager.success()
-        DataSyncManager.shared.triggerWeightRecordSync(context: context)
         onSave?()
         dismiss()
     }
@@ -583,16 +471,7 @@ struct RecordFormView: View {
         record.thighCircumferenceValue = Double(thighString)
         record.measurementTimePeriod = selectedTimePeriod.rawValue
         record.note = note.isEmpty ? nil : note
-        if let selectedImage = selectedImage {
-            let localImageUrl = ImageStorageManager.shared.saveImage(selectedImage, for: record.id.uuidString)
-            record.imageUrl = localImageUrl
-            record.deleteImage = false
-        } else {
-            record.imageUrl = imageUrl
-            record.deleteImage = deleteImage
-        }
         record.updatedAt = Date()
-        record.syncStatusEnum = .pending
         
         do {
             try context.save()
@@ -603,7 +482,6 @@ struct RecordFormView: View {
         }
 
         HapticManager.success()
-        DataSyncManager.shared.triggerWeightRecordSync(context: context)
         onSave?()
         dismiss()
     }
@@ -634,16 +512,12 @@ struct RecordFormView: View {
 
     private func deleteRecordsForSelectedDate() {
         let dateRecords = records.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
-        let recordIds = dateRecords.map { $0.id.uuidString }
         for record in dateRecords {
             context.delete(record)
         }
         
         do {
             try context.save()
-            Task {
-                await DataSyncManager.shared.syncDeletedRecords(recordIds: recordIds)
-            }
         } catch {
             logger.error("Failed to delete records for selected date: \(error.localizedDescription)")
         }

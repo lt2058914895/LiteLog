@@ -6,15 +6,8 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		8DB6FDC705A66B57F5BDAE12 /* Pods_LiteLog.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE8CD2287ACBFDAD83150554 /* Pods_LiteLog.framework */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
-		42AAD4914F471E44E5DA045E /* Pods-LiteLog.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LiteLog.release.xcconfig"; path = "Target Support Files/Pods-LiteLog/Pods-LiteLog.release.xcconfig"; sourceTree = "<group>"; };
 		697F4C632FB1D12F009B7420 /* LiteLog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LiteLog.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A11CF410C782957457740088 /* Pods-LiteLog.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LiteLog.debug.xcconfig"; path = "Target Support Files/Pods-LiteLog/Pods-LiteLog.debug.xcconfig"; sourceTree = "<group>"; };
-		FE8CD2287ACBFDAD83150554 /* Pods_LiteLog.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LiteLog.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -43,7 +36,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8DB6FDC705A66B57F5BDAE12 /* Pods_LiteLog.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,8 +47,6 @@
 			children = (
 				697F4C652FB1D12F009B7420 /* LiteLog */,
 				697F4C642FB1D12F009B7420 /* Products */,
-				B3FABC2390C392E5337255A7 /* Pods */,
-				FD3E9896B467B97C71AA0D36 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -68,23 +58,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		B3FABC2390C392E5337255A7 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				A11CF410C782957457740088 /* Pods-LiteLog.debug.xcconfig */,
-				42AAD4914F471E44E5DA045E /* Pods-LiteLog.release.xcconfig */,
-			);
-			path = Pods;
-			sourceTree = "<group>";
-		};
-		FD3E9896B467B97C71AA0D36 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				FE8CD2287ACBFDAD83150554 /* Pods_LiteLog.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -92,11 +65,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 697F4C6E2FB1D131009B7420 /* Build configuration list for PBXNativeTarget "LiteLog" */;
 			buildPhases = (
-				3E86E3BA98552CD6882BC978 /* [CP] Check Pods Manifest.lock */,
 				697F4C5F2FB1D12F009B7420 /* Sources */,
 				697F4C602FB1D12F009B7420 /* Frameworks */,
 				697F4C612FB1D12F009B7420 /* Resources */,
-				0C1CB578C490330EB67C3E27 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -154,52 +125,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		0C1CB578C490330EB67C3E27 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-LiteLog/Pods-LiteLog-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			inputPaths = (
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-LiteLog/Pods-LiteLog-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-LiteLog/Pods-LiteLog-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		3E86E3BA98552CD6882BC978 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-LiteLog-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		697F4C5F2FB1D12F009B7420 /* Sources */ = {
@@ -335,11 +260,9 @@
 		};
 		697F4C6F2FB1D131009B7420 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A11CF410C782957457740088 /* Pods-LiteLog.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = LiteLog/LiteLog.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 14;
@@ -348,8 +271,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiteLog/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "身体日记";
-				INFOPLIST_KEY_NSCameraUsageDescription = "需要访问相机以拍摄体重秤照片";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "用于上传照片场景";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "用于选择并保存本地头像";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen";
@@ -376,11 +298,9 @@
 		};
 		697F4C702FB1D131009B7420 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 42AAD4914F471E44E5DA045E /* Pods-LiteLog.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = LiteLog/LiteLog.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 14;
@@ -389,8 +309,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiteLog/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "身体日记";
-				INFOPLIST_KEY_NSCameraUsageDescription = "需要访问相机以拍摄体重秤照片";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "用于上传照片场景";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "用于选择并保存本地头像";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen";

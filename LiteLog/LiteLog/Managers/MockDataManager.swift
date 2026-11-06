@@ -36,7 +36,6 @@ class MockDataManager {
         profile.weightUnit = WeightUnit.kg.rawValue
         profile.createdAt = Date().addingTimeInterval(-30 * 24 * 60 * 60)
         profile.updatedAt = Date()
-        profile.syncStatus = UserProfile.SyncStatus.synced.rawValue
     }
     
     private func createMockRecords(context: NSManagedObjectContext, calendar: Calendar) {
@@ -87,7 +86,6 @@ class MockDataManager {
             record.measurementTimePeriod = measurementTimePeriod
             record.createdAt = date
             record.updatedAt = date
-            record.syncStatus = WeightRecord.SyncStatus.synced.rawValue
             
             // 每天减少一点体重
             currentWeight -= dailyDecrease

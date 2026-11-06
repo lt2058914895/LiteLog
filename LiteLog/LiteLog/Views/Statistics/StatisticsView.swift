@@ -303,20 +303,13 @@ struct StatisticsView: View {
     
     @ViewBuilder
     private var avatarImageView: some View {
-        if !settingsManager.avatarUrl.isEmpty {
-            if let cachedImage = settingsManager.cachedAvatarImage {
-                Image(uiImage: cachedImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 36, height: 36)
-                    .clipShape(Circle())
-                    .id(settingsManager.avatarCacheUpdated)
-            } else {
-                Image(systemName: "person.circle.fill")
-                    .resizable()
-                    .frame(width: 36, height: 36)
-                    .foregroundColor(.primaryBlue)
-            }
+        if let image = settingsManager.avatarImage {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 36, height: 36)
+                .clipShape(Circle())
+                .id(settingsManager.avatarUpdatedToken)
         } else {
             Image(systemName: "person.circle.fill")
                 .resizable()

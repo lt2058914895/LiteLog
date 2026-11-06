@@ -2,11 +2,6 @@ import Foundation
 import SwiftUI
 import CoreData
 
-enum UserProfileSyncStatus: Int, Codable {
-    case pending = 0
-    case synced = 1
-}
-
 @objc(UserProfile)
 final class UserProfile: NSManagedObject {
     @NSManaged var id: UUID
@@ -22,7 +17,7 @@ final class UserProfile: NSManagedObject {
     @NSManaged var weightUnit: String
     @NSManaged var createdAt: Date
     @NSManaged var updatedAt: Date
-    @NSManaged var syncStatus: Int16
+    @NSManaged var syncStatus: Int16 // Legacy Core Data field, no longer synced.
 
     @objc(Gender)
     enum Gender: Int16, CaseIterable {
@@ -35,12 +30,6 @@ final class UserProfile: NSManagedObject {
             case .female: return NSLocalizedString("settings.female", comment: "")
             }
         }
-    }
-
-    @objc(SyncStatus)
-    enum SyncStatus: Int16 {
-        case pending = 0
-        case synced = 1
     }
 
     static func fetchRequest() -> NSFetchRequest<UserProfile> {
@@ -86,11 +75,6 @@ final class UserProfile: NSManagedObject {
     var genderEnum: Gender {
         get { Gender(rawValue: gender) ?? .male }
         set { gender = newValue.rawValue }
-    }
-
-    var syncStatusEnum: SyncStatus {
-        get { SyncStatus(rawValue: syncStatus) ?? .pending }
-        set { syncStatus = newValue.rawValue }
     }
 
     func calculateBMI(weight: Double) -> Double {
@@ -173,7 +157,7 @@ extension UserProfile {
         profile.weightUnit = "kg"
         profile.createdAt = Date()
         profile.updatedAt = Date()
-        profile.syncStatus = SyncStatus.pending.rawValue
+        profile.syncStatus = 0
         return profile
     }
 

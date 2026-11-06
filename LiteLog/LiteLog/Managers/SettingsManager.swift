@@ -4,27 +4,6 @@ import Combine
 import CoreData
 import os
 
-enum AppEnvironment: String, CaseIterable {
-    case development
-    case production
-    
-    var displayName: String {
-        switch self {
-        case .development: return NSLocalizedString("settings.env.dev", value: "开发环境", comment: "")
-        case .production: return NSLocalizedString("settings.env.prod", value: "正式环境", comment: "")
-        }
-    }
-    
-    var baseURL: URL {
-        switch self {
-        case .development:
-            let custom = UserDefaults.standard.string(forKey: "dev_server_url") ?? "http://10.226.220.119:8080"
-            return URL(string: custom)!
-        case .production: return URL(string: "https://litelog.com.cn")!
-        }
-    }
-}
-
 final class SettingsManager: ObservableObject {
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "SettingsManager")
     static let shared = SettingsManager()
@@ -39,23 +18,11 @@ final class SettingsManager: ObservableObject {
 
     private enum Keys {
         static let weightUnit = "weightUnit"
-        static let iCloudSyncEnabled = "iCloudSyncEnabled"
         static let notificationsEnabled = "notificationsEnabled"
         static let notificationTime = "notificationTime"
-        static let reminderTime = "reminderTime"
         static let language = "language"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
         static let nickname = "nickname"
-        static let avatarUrl = "avatarUrl"
-        static let avatarData = "avatarData"
-        static let avatarUrlHash = "avatarUrlHash"
-        static let appEnvironment = "appEnvironment"
-    }
-
-    @Published var appEnvironment: AppEnvironment {
-        didSet {
-            defaults.set(appEnvironment.rawValue, forKey: Keys.appEnvironment)
-        }
     }
     
     @Published var weightUnit: WeightUnit {
@@ -67,7 +34,7 @@ final class SettingsManager: ObservableObject {
     
     private func updateWeightUnitInDatabase() {
         guard let context = context else { return }
-        
+
         Task { @MainActor in
             let request = UserProfile.fetchRequest()
             do {
@@ -75,10 +42,7 @@ final class SettingsManager: ObservableObject {
                 if let profile = profiles.first {
                     profile.weightUnit = weightUnit.rawValue
                     profile.updatedAt = Date()
-                    profile.syncStatus = UserProfile.SyncStatus.pending.rawValue
                     try context.save()
-                    
-                    DataSyncManager.shared.triggerProfileSync(context: context)
                 } else {
                     let newProfile = UserProfile.create(in: context)
                     newProfile.weightUnit = weightUnit.rawValue
@@ -86,46 +50,6 @@ final class SettingsManager: ObservableObject {
                 }
             } catch {
                 Self.logger.error("Failed to update weight unit in database: \(error.localizedDescription)")
-            }
-        }
-    }
-
-    @Published var iCloudSyncEnabled: Bool {
-        didSet {
-            defaults.set(iCloudSyncEnabled, forKey: Keys.iCloudSyncEnabled)
-            if iCloudSyncEnabled && !oldValue {
-                Task { @MainActor in
-                    await handleCloudSyncEnabled()
-                }
-            }
-        }
-    }
-    
-    private func handleCloudSyncEnabled() async {
-        guard let context = context else { return }
-        
-        let maybeOldDeviceId = UserIdentifierManager.shared.checkForSyncedDeviceId()
-        if let oldDeviceId = maybeOldDeviceId,
-           oldDeviceId != UserIdentifierManager.shared.deviceId {
-            
-            do {
-                let response = try await APIService.shared.fetchAllData()
-                
-                if let syncContext = PersistenceController.shared.container.viewContext as? NSManagedObjectContext {
-                    if let profile = response.profile {
-                        try await DataSyncManager.shared.mergeProfileFromCloud(profile, context: syncContext)
-                    }
-                    if let records = response.records {
-                        try await DataSyncManager.shared.mergeRecordsFromCloud(records, context: syncContext)
-                    }
-                }
-                
-                UserIdentifierManager.shared.switchToDeviceId(oldDeviceId)
-                
-                await DataSyncManager.shared.syncLocalDataToCloud(context: context)
-                
-            } catch {
-                Self.logger.error("Failed to merge data from synced device: \(error.localizedDescription)")
             }
         }
     }
@@ -148,51 +72,63 @@ final class SettingsManager: ObservableObject {
     
     @AppStorage(Keys.nickname) var nickname: String = ""
     
-    @AppStorage(Keys.avatarUrl) var avatarUrl: String = ""
+    @Published private(set) var avatarUpdatedToken = UUID()
     
-    @Published var avatarCacheUpdated = false
-    
-    private var avatarCacheURL: URL {
+    private var avatarFileURL: URL {
         let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         return documentsDir.appendingPathComponent("cached_avatar.png")
     }
     
-    var cachedAvatarImage: UIImage? {
-        guard FileManager.default.fileExists(atPath: avatarCacheURL.path) else { return nil }
-        guard let data = try? Data(contentsOf: avatarCacheURL) else { return nil }
+    var avatarImage: UIImage? {
+        guard FileManager.default.fileExists(atPath: avatarFileURL.path) else { return nil }
+        guard let data = try? Data(contentsOf: avatarFileURL) else { return nil }
         return UIImage(data: data)
     }
     
-    func updateCachedAvatar(with image: UIImage) {
+    @discardableResult
+    func saveAvatar(_ image: UIImage) -> Bool {
         let scaledImage = image.scaledToSize(CGSize(width: 120, height: 120))
-        if let data = scaledImage.pngData() {
-            try? data.write(to: avatarCacheURL)
-            defaults.set(avatarUrl.hashValue, forKey: Keys.avatarUrlHash)
-            avatarCacheUpdated.toggle()
+        guard let data = scaledImage.pngData() else {
+            return false
+        }
+
+        do {
+            try data.write(to: avatarFileURL, options: .atomic)
+            avatarUpdatedToken = UUID()
+            return true
+        } catch {
+            Self.logger.error("Failed to save local avatar: \(error.localizedDescription)")
+            return false
         }
     }
     
-    func clearCachedAvatar() {
-        try? FileManager.default.removeItem(at: avatarCacheURL)
-        defaults.removeObject(forKey: Keys.avatarUrlHash)
-    }
-    
-    var isAvatarCached: Bool {
-        let cachedHash = defaults.integer(forKey: Keys.avatarUrlHash)
-        if cachedHash == avatarUrl.hashValue {
-            return cachedAvatarImage != nil
+    @discardableResult
+    func removeAvatar() -> Bool {
+        guard FileManager.default.fileExists(atPath: avatarFileURL.path) else {
+            avatarUpdatedToken = UUID()
+            return true
         }
-        return false
+
+        do {
+            try FileManager.default.removeItem(at: avatarFileURL)
+            avatarUpdatedToken = UUID()
+            return true
+        } catch {
+            Self.logger.error("Failed to remove local avatar: \(error.localizedDescription)")
+            return false
+        }
     }
 
     private init() {
-        let savedEnv = defaults.string(forKey: Keys.appEnvironment) ?? AppEnvironment.production.rawValue
-        self.appEnvironment = AppEnvironment(rawValue: savedEnv) ?? .production
+        defaults.removeObject(forKey: "avatarUrl")
+        defaults.removeObject(forKey: "avatarUrlHash")
+        defaults.removeObject(forKey: "iCloudSyncEnabled")
+        defaults.removeObject(forKey: "appEnvironment")
+        defaults.removeObject(forKey: "dev_server_url")
 
         let savedUnit = defaults.string(forKey: Keys.weightUnit) ?? WeightUnit.kg.rawValue
         self.weightUnit = WeightUnit(rawValue: savedUnit) ?? .kg
 
-        self.iCloudSyncEnabled = defaults.bool(forKey: Keys.iCloudSyncEnabled) || defaults.object(forKey: Keys.iCloudSyncEnabled) == nil
         self.notificationsEnabled = defaults.bool(forKey: Keys.notificationsEnabled)
         self.notificationTime = defaults.object(forKey: Keys.notificationTime) as? Date ?? Self.defaultNotificationTime()
     }
@@ -206,7 +142,6 @@ final class SettingsManager: ObservableObject {
 
     func resetToDefaults() {
         weightUnit = .kg
-        iCloudSyncEnabled = true
         notificationsEnabled = false
         notificationTime = Self.defaultNotificationTime()
     }

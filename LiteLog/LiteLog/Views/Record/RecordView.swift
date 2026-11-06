@@ -151,7 +151,6 @@ struct RecordView: View {
                                             chestString: item.record.chestCircumferenceValue?.smartFormatted ?? "",
                                             thighString: item.record.thighCircumferenceValue?.smartFormatted ?? "",
                                             note: item.record.note ?? "",
-                                            imageUrl: item.record.imageUrl,
                                             measurementTimePeriod: item.record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random
                                         )
                                     }
@@ -170,8 +169,6 @@ struct RecordView: View {
             }
         }
         .refreshable {
-            await DataSyncManager.shared.syncFromCloud(context: context)
-            await DataSyncManager.shared.syncLocalDataToCloud(context: context)
             viewModel.forceRefresh()
         }
     }
@@ -224,7 +221,6 @@ struct RecordView: View {
                                 chestString: item.record.chestCircumferenceValue?.smartFormatted ?? "",
                                 thighString: item.record.thighCircumferenceValue?.smartFormatted ?? "",
                                 note: item.record.note ?? "",
-                                imageUrl: item.record.imageUrl,
                                 measurementTimePeriod: item.record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random
                             )
                         }
@@ -266,7 +262,6 @@ struct RecordView: View {
     }
 
     private func deleteRecord(_ record: WeightRecord) {
-        let recordId = record.id.uuidString
         HapticManager.warning()
         withAnimation {
             context.delete(record)
@@ -274,53 +269,22 @@ struct RecordView: View {
         }
 
         viewModel.refresh()
-
-        Task {
-            await DataSyncManager.shared.syncDeletedRecords(recordIds: [recordId])
-        }
     }
     
     @ViewBuilder
     private var avatarImageView: some View {
-        if !settingsManager.avatarUrl.isEmpty {
-            if let cachedImage = settingsManager.cachedAvatarImage {
-                Image(uiImage: cachedImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 36, height: 36)
-                    .clipShape(Circle())
-            } else if let avatarUrl = resolveAvatarUrl() {
-                AsyncImageView(
-                    url: avatarUrl,
-                    placeholder: { AnyView(Image(systemName: "person.circle.fill").resizable().foregroundColor(.primaryBlue)) },
-                    errorPlaceholder: { AnyView(Image(systemName: "person.circle.fill").resizable().foregroundColor(.gray)) },
-                    contentMode: .fill,
-                    cacheKey: settingsManager.avatarUrl
-                )
+        if let image = settingsManager.avatarImage {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
                 .frame(width: 36, height: 36)
                 .clipShape(Circle())
-            } else {
-                Image(systemName: "person.circle.fill")
-                    .resizable()
-                    .frame(width: 36, height: 36)
-                    .foregroundColor(.gray)
-            }
+                .id(settingsManager.avatarUpdatedToken)
         } else {
             Image(systemName: "person.circle.fill")
                 .resizable()
                 .frame(width: 36, height: 36)
                 .foregroundColor(.gray)
         }
-    }
-    
-    private func resolveAvatarUrl() -> URL? {
-        let avatarUrlString = settingsManager.avatarUrl
-        guard !avatarUrlString.isEmpty else { return nil }
-        
-        if let url = URL(string: avatarUrlString), url.scheme != nil {
-            return url
-        }
-        
-        return APIService.shared.baseURL.appendingPathComponent(avatarUrlString)
     }
 }

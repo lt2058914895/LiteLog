@@ -117,7 +117,6 @@ struct WaistCircumferenceView: View {
                                             chestString: item.record.chestCircumferenceValue?.smartFormatted ?? "",
                                             thighString: item.record.thighCircumferenceValue?.smartFormatted ?? "",
                                             note: item.record.note ?? "",
-                                            imageUrl: item.record.imageUrl,
                                             measurementTimePeriod: item.record.measurementTimePeriod.flatMap { MeasurementTimePeriod(rawValue: $0) } ?? .random
                                         )
                                     }

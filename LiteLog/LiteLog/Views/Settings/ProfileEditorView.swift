@@ -438,7 +438,6 @@ struct ProfileEditorView: View {
             existing.goalChestCircumferenceValue = goalChestCircumference
             existing.goalThighCircumferenceValue = goalThighCircumference
             existing.updatedAt = Date()
-            existing.syncStatusEnum = .pending
         } else {
             let newProfile = UserProfile.create(in: context)
             newProfile.height = heightInCm
@@ -454,7 +453,6 @@ struct ProfileEditorView: View {
         
         do {
             try context.save()
-            DataSyncManager.shared.triggerProfileSync(context: context)
             
             showingSuccessToast = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {

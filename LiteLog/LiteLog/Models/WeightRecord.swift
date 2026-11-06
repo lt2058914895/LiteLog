@@ -1,12 +1,6 @@
 import Foundation
 import CoreData
 
-enum WeightRecordSyncStatus: Int, Codable {
-    case pending
-    case synced
-    case failed
-}
-
 enum MeasurementTimePeriod: String, Codable, CaseIterable {
     case morningFasting = "morning_fasting"
     case afterExercise = "after_exercise"
@@ -38,31 +32,15 @@ final class WeightRecord: NSManagedObject, Identifiable {
     @NSManaged var chestCircumference: NSNumber?
     @NSManaged var thighCircumference: NSNumber?
     @NSManaged var note: String?
-    @NSManaged var imageUrl: String?
+    @NSManaged var imageUrl: String? // Legacy Core Data field, no longer displayed.
     @NSManaged var measurementTimePeriod: String?
     @NSManaged var createdAt: Date
     @NSManaged var updatedAt: Date
-    @NSManaged var syncStatus: Int16
-    @NSManaged var deleteImage: Bool
-
-    @objc(SyncStatus)
-    enum SyncStatus: Int16 {
-        case pending
-        case synced
-        case failed
-    }
+    @NSManaged var syncStatus: Int16 // Legacy Core Data field, no longer synced.
+    @NSManaged var deleteImage: Bool // Legacy Core Data field, no longer used.
 
     static func fetchRequest() -> NSFetchRequest<WeightRecord> {
         NSFetchRequest<WeightRecord>(entityName: "WeightRecord")
-    }
-
-    var syncStatusEnum: SyncStatus {
-        get { SyncStatus(rawValue: syncStatus) ?? .pending }
-        set { syncStatus = newValue.rawValue }
-    }
-    
-    var hasImage: Bool {
-        imageUrl != nil
     }
 
     // Double? 桥接计算属性（CoreData @NSManaged 不支持 Double?，需用 NSNumber? 存储）
@@ -120,28 +98,6 @@ extension Array where Element == WeightRecord {
 }
 
 extension WeightRecord {
-    /// 将WeightRecord转换为WeightRecordRequest用于同步
-    func toRequest(imageUrl: String? = nil, imageFileName: String? = nil, deleteImage: Bool? = nil) -> WeightRecordRequest {
-        WeightRecordRequest(
-            recordId: id.uuidString,
-            weight: weight,
-            bodyFatPercentage: bodyFatPercentageValue,
-            waistCircumference: waistCircumferenceValue,
-            hipCircumference: hipCircumferenceValue,
-            chestCircumference: chestCircumferenceValue,
-            thighCircumference: thighCircumferenceValue,
-            note: note,
-            date: date.timeIntervalSince1970,
-            createdAt: createdAt.timeIntervalSince1970,
-            updatedAt: updatedAt.timeIntervalSince1970,
-            deleted: false,
-            imageUrl: imageUrl,
-            imageFileName: imageFileName,
-            measurementTimePeriod: measurementTimePeriod,
-            deleteImage: deleteImage
-        )
-    }
-
     static func create(in context: NSManagedObjectContext, weight: Double) -> WeightRecord {
         let record = WeightRecord(context: context)
         record.id = UUID()
@@ -157,7 +113,7 @@ extension WeightRecord {
         record.measurementTimePeriod = nil
         record.createdAt = Date()
         record.updatedAt = Date()
-        record.syncStatus = SyncStatus.pending.rawValue
+        record.syncStatus = 0
         record.deleteImage = false
         return record
     }
