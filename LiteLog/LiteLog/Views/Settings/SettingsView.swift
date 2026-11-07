@@ -38,7 +38,6 @@ struct SettingsView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
                 .padding(.bottom, 32)
-                .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 720 : .infinity)
                 .frame(maxWidth: .infinity)
             }
             .background(Color(.systemGroupedBackground))

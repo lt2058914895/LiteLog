@@ -45,7 +45,6 @@ struct RecordView: View {
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 800 : 600, alignment: .center)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     ProfileToolbarChip {

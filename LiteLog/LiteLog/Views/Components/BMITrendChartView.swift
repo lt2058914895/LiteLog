@@ -335,7 +335,14 @@ struct BMITrendChartView: View {
     }
     
     private var bmiLegend: some View {
-        HStack(spacing: 12) {
+        LazyVGrid(
+            columns: [
+                GridItem(.flexible(), alignment: .leading),
+                GridItem(.flexible(), alignment: .leading)
+            ],
+            alignment: .leading,
+            spacing: 8
+        ) {
             ForEach(bmiRanges, id: \.name) { range in
                 HStack(spacing: 4) {
                     Circle()
@@ -348,7 +355,7 @@ struct BMITrendChartView: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 12)
     }
 }

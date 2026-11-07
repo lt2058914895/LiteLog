@@ -42,7 +42,6 @@ struct ContactView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 24)
                 .padding(.bottom, 40)
-                .frame(maxWidth: 560)
                 .frame(maxWidth: .infinity)
             }
 
