@@ -53,6 +53,30 @@ struct HomeView: View {
         )
     }
 
+    private var earliestWeight: Double? {
+        allDailyEntries.first?.weight
+    }
+
+    private var earliestBodyFat: Double? {
+        records.filter { $0.bodyFatPercentageValue != nil }.last?.bodyFatPercentageValue
+    }
+
+    private var earliestWaist: Double? {
+        records.filter { $0.waistCircumferenceValue != nil }.last?.waistCircumferenceValue
+    }
+
+    private var earliestHip: Double? {
+        records.filter { $0.hipCircumferenceValue != nil }.last?.hipCircumferenceValue
+    }
+
+    private var earliestChest: Double? {
+        records.filter { $0.chestCircumferenceValue != nil }.last?.chestCircumferenceValue
+    }
+
+    private var earliestThigh: Double? {
+        records.filter { $0.thighCircumferenceValue != nil }.last?.thighCircumferenceValue
+    }
+
     private func computeCachedData() {
         latestWeight = records.first?.weight
         
@@ -232,6 +256,18 @@ struct HomeView: View {
         }
     }
 
+    private var achievedGoalLabel: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "checkmark")
+                .font(.caption)
+                .foregroundColor(.green)
+
+            Text(NSLocalizedString("home.goal.achieved", comment: ""))
+                .font(.caption)
+                .foregroundColor(.green)
+        }
+    }
+
     private var goalWeightCard: some View {
         VStack(spacing: 12) {
             HStack(alignment: .top, spacing: 8) {
@@ -247,7 +283,6 @@ struct HomeView: View {
             
             if let profile = profile, let goalWeight = profile.goalWeightValue {
                 let currentWeight = latestWeight ?? 0
-                let difference = goalWeight - currentWeight
                 
                 // 目标体重和进度一行显示
                 HStack(alignment: .lastTextBaseline, spacing: 12) {
@@ -269,33 +304,30 @@ struct HomeView: View {
                     
                     // 进度提示
                     if latestWeight != nil {
-                        let absDifference = abs(difference)
-                        // 将差值四舍五入到两位小数后判断，避免显示"还需减重0.0kg"的情况
-                        let roundedDifference = round(absDifference * 100) / 100
-                        
-                        if roundedDifference > 0 {
-                            let isLosingWeight = currentWeight > goalWeight  // 当前体重大于目标体重，需要减重
+                        let direction = GoalDirection.infer(
+                            target: goalWeight,
+                            baseline: earliestWeight,
+                            current: currentWeight
+                        )
+
+                        if direction.isAchieved(current: currentWeight, target: goalWeight) {
+                            achievedGoalLabel
+                        } else {
+                            let remaining = direction.remaining(
+                                current: currentWeight,
+                                target: goalWeight
+                            )
                             HStack(spacing: 4) {
-                                Image(systemName: isLosingWeight ? "arrow.down" : "arrow.up")
+                                Image(systemName: direction == .decrease ? "arrow.down" : "arrow.up")
                                     .font(.caption)
-                                    .foregroundColor(isLosingWeight ? .orange : .green)
+                                    .foregroundColor(.orange)
                                 
                                 Text(String(format: NSLocalizedString("home.goal.progress", comment: ""), 
-                                           isLosingWeight ? NSLocalizedString("home.goal.to.lose", comment: "") : NSLocalizedString("home.goal.to.gain", comment: ""),
-                                           unit.convertFromKg(roundedDifference).smartFormatted,
+                                           direction == .decrease ? NSLocalizedString("home.goal.to.lose", comment: "") : NSLocalizedString("home.goal.to.gain", comment: ""),
+                                           unit.convertFromKg(remaining).smartFormatted,
                                            unit.shortName))
                                     .font(.caption)
-                                    .foregroundColor(isLosingWeight ? .orange : .green)
-                            }
-                        } else {
-                            HStack(spacing: 4) {
-                                Image(systemName: "checkmark")
-                                    .font(.caption)
-                                    .foregroundColor(.green)
-                                
-                                Text(NSLocalizedString("home.goal.achieved", comment: ""))
-                                    .font(.caption)
-                                    .foregroundColor(.green)
+                                    .foregroundColor(.orange)
                             }
                         }
                     }
@@ -486,34 +518,31 @@ struct HomeView: View {
                         Spacer()
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             // 进度提示（只有当两者都有值时才显示）
-                            if let goal = goalBodyFat, latestBodyFat != nil {
-                                let difference = abs(goal - currentBodyFat)
-                                // 将差值四舍五入到两位小数后判断，避免显示"还需降低0.0%"的情况
-                                let roundedDifference = round(difference * 100) / 100
-                                
-                                if roundedDifference > 0 {
-                                    let isReducing = currentBodyFat > goal  // 当前体脂率大于目标体脂率，需要降低
+                            if let goal = goalBodyFat, let bodyFat = latestBodyFat {
+                                let direction = GoalDirection.infer(
+                                    target: goal,
+                                    baseline: earliestBodyFat,
+                                    current: bodyFat
+                                )
+
+                                if direction.isAchieved(current: bodyFat, target: goal) {
+                                    achievedGoalLabel
+                                } else {
+                                    let remaining = direction.remaining(
+                                        current: bodyFat,
+                                        target: goal
+                                    )
                                     HStack(spacing: 4) {
-                                        Image(systemName: isReducing ? "arrow.down" : "arrow.up")
+                                        Image(systemName: direction == .decrease ? "arrow.down" : "arrow.up")
                                             .font(.caption)
-                                            .foregroundColor(isReducing ? .orange : .green)
+                                            .foregroundColor(.orange)
                                         
                                         Text(String(format: NSLocalizedString("home.goal.progress", comment: ""), 
-                                                   isReducing ? NSLocalizedString("home.goal.to.reduce", comment: "") : NSLocalizedString("home.goal.to.increase", comment: ""),
-                                                   roundedDifference.smartFormatted,
+                                                   direction == .decrease ? NSLocalizedString("home.goal.to.reduce", comment: "") : NSLocalizedString("home.goal.to.increase", comment: ""),
+                                                   remaining.smartFormatted,
                                                    "%"))
                                             .font(.caption)
-                                            .foregroundColor(isReducing ? .orange : .green)
-                                    }
-                                } else {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "checkmark")
-                                            .font(.caption)
-                                            .foregroundColor(.green)
-                                        
-                                        Text(NSLocalizedString("home.goal.achieved", comment: ""))
-                                            .font(.caption)
-                                            .foregroundColor(.green)
+                                            .foregroundColor(.orange)
                                     }
                                 }
                             }
@@ -557,22 +586,26 @@ struct HomeView: View {
                         // 腰围
                         measurementRow(title: NSLocalizedString("measure.waist", comment: ""),
                                        goal: profile.goalWaistCircumferenceValue,
-                                       current: latestWaist)
+                                       current: latestWaist,
+                                       baseline: earliestWaist)
                         
                         // 臀围
                         measurementRow(title: NSLocalizedString("measure.hip", comment: ""),
                                        goal: profile.goalHipCircumferenceValue,
-                                       current: latestHip)
+                                       current: latestHip,
+                                       baseline: earliestHip)
                         
                         // 胸围
                         measurementRow(title: NSLocalizedString("measure.chest", comment: ""),
                                        goal: profile.goalChestCircumferenceValue,
-                                       current: latestChest)
+                                       current: latestChest,
+                                       baseline: earliestChest)
                         
                         // 大腿围
                         measurementRow(title: NSLocalizedString("measure.thigh", comment: ""),
                                        goal: profile.goalThighCircumferenceValue,
-                                       current: latestThigh)
+                                       current: latestThigh,
+                                       baseline: earliestThigh)
                     }
                 } else {
                     Text(NSLocalizedString("common.no.data", comment: ""))
@@ -589,7 +622,12 @@ struct HomeView: View {
         .cardStyle()
     }
     
-    private func measurementRow(title: String, goal: Double?, current: Double?) -> some View {
+    private func measurementRow(
+        title: String,
+        goal: Double?,
+        current: Double?,
+        baseline: Double?
+    ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             // 第一行：标题（无图标，无前缀）
             Text(title)
@@ -638,34 +676,31 @@ struct HomeView: View {
 
                     // 进度提示 - 只有当目标和当前都有值时才显示
                     if let goal = goal {
-                        let difference = abs(goal - current)
-                        // 将差值四舍五入到两位小数后判断
-                        let roundedDifference = round(difference * 100) / 100
-                        
-                        if roundedDifference > 0 {
-                            let isDecreasing = current > goal  // 当前大于目标，需要减小围度
+                        let direction = GoalDirection.infer(
+                            target: goal,
+                            baseline: baseline,
+                            current: current
+                        )
+
+                        if direction.isAchieved(current: current, target: goal) {
+                            achievedGoalLabel
+                        } else {
+                            let remaining = direction.remaining(
+                                current: current,
+                                target: goal
+                            )
                             HStack(spacing: 4) {
-                                Image(systemName: isDecreasing ? "arrow.down" : "arrow.up")
+                                Image(systemName: direction == .decrease ? "arrow.down" : "arrow.up")
                                     .font(.caption)
-                                    .foregroundColor(isDecreasing ? .orange : .green)
+                                    .foregroundColor(.orange)
                                 
                                 // 围度使用"减小/增加"更合适
                                 Text(String(format: NSLocalizedString("home.goal.progress", comment: ""), 
-                                           isDecreasing ? NSLocalizedString("home.goal.to.decrease", comment: "") : NSLocalizedString("home.goal.to.add", comment: ""),
-                                           roundedDifference.smartFormatted,
+                                           direction == .decrease ? NSLocalizedString("home.goal.to.decrease", comment: "") : NSLocalizedString("home.goal.to.add", comment: ""),
+                                           remaining.smartFormatted,
                                            "cm"))
                                     .font(.caption)
-                                    .foregroundColor(isDecreasing ? .orange : .green)
-                            }
-                        } else {
-                            HStack(spacing: 4) {
-                                Image(systemName: "checkmark")
-                                    .font(.caption)
-                                    .foregroundColor(.green)
-                                
-                                Text(NSLocalizedString("home.goal.achieved", comment: ""))
-                                    .font(.caption)
-                                    .foregroundColor(.green)
+                                    .foregroundColor(.orange)
                             }
                         }
                     }

@@ -101,6 +101,46 @@ struct WeightGoalEstimate {
     }
 }
 
+enum GoalDirection: Equatable {
+    case decrease
+    case increase
+
+    private static let tolerance = 0.005
+
+    static func infer(
+        target: Double,
+        baseline: Double?,
+        current: Double
+    ) -> GoalDirection {
+        let reference = baseline ?? current
+        if target < reference - tolerance {
+            return .decrease
+        }
+        if target > reference + tolerance {
+            return .increase
+        }
+        return current < target ? .decrease : .increase
+    }
+
+    func isAchieved(current: Double, target: Double) -> Bool {
+        switch self {
+        case .decrease:
+            return current <= target + Self.tolerance
+        case .increase:
+            return current >= target - Self.tolerance
+        }
+    }
+
+    func remaining(current: Double, target: Double) -> Double {
+        switch self {
+        case .decrease:
+            return max(current - target, 0)
+        case .increase:
+            return max(target - current, 0)
+        }
+    }
+}
+
 enum TrendAnalytics {
     @MainActor
     static func entries(from records: [WeightRecord]) -> [TrendEntry] {
