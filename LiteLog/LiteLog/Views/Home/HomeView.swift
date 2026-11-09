@@ -30,6 +30,29 @@ struct HomeView: View {
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
+
+    private var trendEntries: [TrendEntry] {
+        TrendAnalytics.entries(from: Array(records))
+    }
+
+    private var allDailyEntries: [TrendEntry] {
+        TrendAnalytics.dailyEntries(from: trendEntries, scope: .all)
+    }
+
+    private var periodChanges: [PeriodChange] {
+        [7, 30, 90].map { days in
+            PeriodChange(days: days, change: weightChange(lastDays: days))
+        }
+    }
+
+    private var goalEstimate: WeightGoalEstimate? {
+        guard let target = profile?.goalWeightValue else { return nil }
+        return TrendAnalytics.estimateWeightGoal(
+            from: allDailyEntries,
+            targetWeight: target
+        )
+    }
+
     private func computeCachedData() {
         latestWeight = records.first?.weight
         
@@ -61,7 +84,7 @@ struct HomeView: View {
                 VStack(spacing: 20) {
                     todayWeightCard
 
-                    bmiProgressSection
+                    periodChangesCard
 
                     goalWeightCard
 
@@ -136,6 +159,10 @@ struct HomeView: View {
                 Spacer()
             }
 
+            Divider()
+
+            bmiInlineRow
+
             Button(action: { showingAddSheet = true }) {
                 HStack {
                     Image(systemName: "plus")
@@ -146,6 +173,63 @@ struct HomeView: View {
         }
         .padding()
         .cardStyle()
+    }
+
+    @ViewBuilder
+    private var bmiInlineRow: some View {
+        if let profile, profile.height > 0, let latestWeight {
+            BMIProgressView(
+                currentWeight: latestWeight,
+                height: profile.height,
+                onInfoTapped: { showingBMIInfo = true }
+            )
+        } else if let profile, profile.height > 0 {
+            bmiUnavailableRow(
+                message: NSLocalizedString("home.bmi.needs.weight", comment: "")
+            )
+        } else {
+            Button(action: { showingProfileEditor = true }) {
+                HStack(spacing: 10) {
+                    Text(NSLocalizedString("home.bmi", comment: ""))
+                        .font(.subheadline)
+                        .foregroundColor(.secondaryText)
+
+                    Text("--")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(.secondaryText)
+
+                    Spacer()
+
+                    Text(NSLocalizedString("home.bmi.needs.profile", comment: ""))
+                        .font(.caption)
+                        .foregroundColor(.primaryBlue)
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundColor(.primaryBlue)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func bmiUnavailableRow(message: String) -> some View {
+        HStack(spacing: 10) {
+            Text(NSLocalizedString("home.bmi", comment: ""))
+                .font(.subheadline)
+                .foregroundColor(.secondaryText)
+
+            Text("--")
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundColor(.secondaryText)
+
+            Spacer()
+
+            Text(message)
+                .font(.caption)
+                .foregroundColor(.secondaryText)
+        }
     }
 
     private var goalWeightCard: some View {
@@ -216,6 +300,7 @@ struct HomeView: View {
                         }
                     }
                 }
+
             } else {
                 Text(NSLocalizedString("home.goal.no.profile", comment: ""))
                     .font(.subheadline)
@@ -224,6 +309,115 @@ struct HomeView: View {
         }
         .padding()
         .cardStyle()
+    }
+
+    private var periodChangesCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .foregroundColor(.primaryBlue)
+
+                    Text(NSLocalizedString("home.trend.title", comment: ""))
+                        .font(.headline)
+                        .foregroundColor(.primaryText)
+                }
+
+                Spacer()
+            }
+
+            if periodChanges.allSatisfy({ $0.change == nil }) {
+                Text(NSLocalizedString("home.trend.empty", comment: ""))
+                    .font(.subheadline)
+                    .foregroundColor(.secondaryText)
+            } else {
+                HStack(spacing: 10) {
+                    ForEach(periodChanges) { item in
+                        trendMetric(
+                            title: String(
+                                format: NSLocalizedString("home.trend.days", comment: ""),
+                                item.days
+                            ),
+                            value: formattedWeightChange(item.change),
+                            color: periodChangeColor(item.change)
+                        )
+                    }
+                }
+
+            }
+
+            if let estimate = goalEstimate {
+                Divider()
+
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "scope")
+                        .font(.caption)
+                        .foregroundColor(.primaryBlue)
+
+                    Text(estimate.summaryText)
+                        .font(.caption)
+                        .foregroundColor(.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+        .padding()
+        .cardStyle()
+    }
+
+    private struct PeriodChange: Identifiable {
+        let days: Int
+        let change: Double?
+
+        var id: Int { days }
+    }
+
+    private func trendMetric(title: String, value: String, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(.caption2)
+                .foregroundColor(.secondaryText)
+
+            Text(value)
+                .font(.subheadline.weight(.bold))
+                .foregroundColor(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.primaryBlue.opacity(0.05))
+        .cornerRadius(10)
+    }
+
+    private func weightChange(lastDays days: Int) -> Double? {
+        let entries = TrendAnalytics.entries(
+            from: allDailyEntries,
+            lastDays: days
+        )
+        guard entries.count >= 2,
+              let first = entries.first?.weight,
+              let last = entries.last?.weight else {
+            return nil
+        }
+        return last - first
+    }
+
+    private func formattedWeightChange(_ change: Double?) -> String {
+        guard let change else { return "--" }
+        let converted = unit.convertFromKg(change)
+        let sign = converted > 0 ? "+" : ""
+        return "\(sign)\(converted.smartFormatted) \(unit.shortName)"
+    }
+
+    private func periodChangeColor(_ change: Double?) -> Color {
+        guard let change,
+              abs(unit.convertFromKg(change)) >= 0.005 else {
+            return .secondaryText
+        }
+        return change > 0 ? .red : .green
     }
 
     private var goalBodyFatCard: some View {
@@ -482,71 +676,6 @@ struct HomeView: View {
                     Spacer()
                 }
             }
-        }
-    }
-    
-    private var bmiCard: some View {
-        if let profile = profile {
-            if let latest = latestWeight {
-                return AnyView(BMIProgressView(
-                    currentWeight: latest,
-                    height: profile.height,
-                    onInfoTapped: { showingBMIInfo = true }
-                ))
-            } else {
-                return AnyView(
-                    VStack(spacing: 8) {
-                        HStack {
-                            Text(NSLocalizedString("home.bmi", comment: ""))
-                                .font(.subheadline)
-                                .foregroundColor(.primaryText)
-                            
-                            Spacer()
-                        }
-                        
-                        Text(NSLocalizedString("common.no.data", comment: ""))
-                            .font(.subheadline)
-                            .foregroundColor(.secondaryText)
-                            .padding(.vertical, 20)
-                    }
-                    .padding()
-                    .cardStyle()
-                )
-            }
-        } else {
-            return AnyView(
-                VStack(spacing: 8) {
-                    HStack {
-                        Text(NSLocalizedString("home.bmi", comment: ""))
-                            .font(.subheadline)
-                            .foregroundColor(.primaryText)
-                        
-                        Spacer()
-                    }
-                    
-                    VStack(spacing: 8) {
-                        Text(NSLocalizedString("home.bmi.no.profile", comment: ""))
-                            .font(.subheadline)
-                            .foregroundColor(.secondaryText)
-                        
-                        Button(NSLocalizedString("action.edit", comment: "")) {
-                            showingProfileEditor = true
-                        }
-                        .foregroundColor(.primaryBlue)
-                        .font(.subheadline)
-                    }
-                    .frame(height: 100)
-                    .frame(maxWidth: .infinity)
-                }
-                .padding()
-                .cardStyle()
-            )
-        }
-    }
-    
-    private var bmiProgressSection: some View {
-        VStack(spacing: 16) {
-            bmiCard
         }
     }
     

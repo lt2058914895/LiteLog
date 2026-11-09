@@ -94,7 +94,8 @@
 "home.no.records" = "暂无记录";
 "home.start.record" = "开始记录你的体重变化吧";
 "home.bmi" = "BMI";
-"home.bmi.no.profile" = "请先编辑个人资料以查看BMI";
+"home.bmi.needs.profile" = "完善资料后显示";
+"home.bmi.needs.weight" = "记录体重后显示";
 "home.goal.target" = "目标";
 "home.goal.current" = "当前";
 "home.goal.progress" = "还需%@%@%@";
@@ -107,6 +108,9 @@
 "home.goal.no.profile" = "请先编辑个人资料";
 "home.goal.achieved" = "已达成目标";
 "home.trend" = "趋势";
+"home.trend.title" = "阶段变化";
+"home.trend.days" = "%d天";
+"home.trend.empty" = "暂无阶段变化数据";
 
 // 记录页
 "record.calendar" = "日历";
@@ -115,7 +119,10 @@
 "record.note" = "备注";
 "record.note.placeholder" = "添加备注";
 "record.duplicate.title" = "重复记录";
-"record.duplicate.message" = "当天已有记录，是否确认修改？";
+"record.duplicate.message" = "该日期和时段的记录已存在。你可以编辑原记录，或用当前内容替换。";
+"record.duplicate.conflict.message" = "该日期和时段已有另一条记录。保存当前内容将替换冲突记录。";
+"record.duplicate.edit" = "编辑原记录";
+"record.duplicate.replace" = "替换记录";
 "record.more.measurements" = "更多测量数据";
 "record.has.data" = "已有数据";
 "view.mode" = "视图模式";
@@ -133,14 +140,17 @@
 "stats.year" = "年";
 "stats.average" = "平均";
 "stats.change" = "变化";
-"stats.bmi.trend" = "BMI趋势";
-"stats.bmi.no.profile" = "请先编辑个人资料以查看BMI趋势";
-"stats.bmi.no.data" = "暂无BMI数据";
 "stats.loss.speed" = "减重速度";
-"stats.per.week" = "/周";
 "stats.metric" = "指标";
 "stats.min" = "最小";
 "stats.max" = "最大";
+"stats.period" = "统计周期";
+"stats.scope" = "记录时段";
+"stats.scope.all" = "全部";
+"stats.records" = "有效记录";
+"goal.forecast.available" = "按最近28天趋势，约 %@–%@ 周接近目标。";
+"goal.forecast.insufficient" = "当前为 %d 天、%d 条同口径记录；累计满14天且7条记录后可生成预估。";
+"goal.forecast.diverging" = "近期趋势未朝目标变化，暂不预估。";
 // 设置页
 "settings.profile" = "个人资料";
 "settings.profile.incomplete" = "完善健康资料后即可查看 BMI 和目标进度";

@@ -37,6 +37,7 @@ struct RecordRowView: View, Equatable {
         lhs.record.chestCircumferenceValue == rhs.record.chestCircumferenceValue &&
         lhs.record.thighCircumferenceValue == rhs.record.thighCircumferenceValue &&
         lhs.record.date == rhs.record.date &&
+        lhs.record.measurementTimePeriod == rhs.record.measurementTimePeriod &&
         lhs.record.note == rhs.record.note &&
         lhs.unit == rhs.unit &&
         lhs.showDate == rhs.showDate &&
@@ -85,9 +86,17 @@ struct RecordRowView: View, Equatable {
                 
                 Spacer()
                 
-                if let timePeriod = record.measurementTimePeriod,
-                   let period = MeasurementTimePeriod(rawValue: timePeriod) {
-                    timePeriodView(period)
+                VStack(alignment: .trailing, spacing: 4) {
+                    if let timePeriod = record.measurementTimePeriod,
+                       let period = MeasurementTimePeriod(rawValue: timePeriod) {
+                        timePeriodView(period)
+                    }
+
+                    if record.date != record.date.startOfDay {
+                        Text(record.date.timeString)
+                            .font(.caption2)
+                            .foregroundColor(.secondaryText)
+                    }
                 }
             }
             

@@ -72,6 +72,8 @@ struct RecordFormView: View {
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var showingDuplicateAlert = false
+    @State private var duplicateRecordPending: WeightRecord?
+    @State private var editingRecordID: UUID?
     @State private var selectedTimePeriod: MeasurementTimePeriod = .random
     
     @State private var showAdvancedFields = false
@@ -83,15 +85,19 @@ struct RecordFormView: View {
     }
     
     private var unit: WeightUnit { settingsManager.weightUnit }
-    private var isEditMode: Bool { recordData != nil }
+    private var isEditMode: Bool { editingRecordID != nil }
 
     private var isValidWeight: Bool {
         guard let value = Double(weightString) else { return false }
         return value > 0 && value < 500
     }
 
-    private var selectedDateHasRecord: Bool {
-        records.contains { Calendar.current.isDate($0.date, inSameDayAs: date) }
+    private var duplicateRecordForSelection: WeightRecord? {
+        records.first { record in
+            record.id != editingRecordID &&
+            Calendar.current.isDate(record.date, inSameDayAs: date) &&
+            (record.measurementTimePeriod.flatMap(MeasurementTimePeriod.init(rawValue:)) ?? .random) == selectedTimePeriod
+        }
     }
 
     private var bodyFatPercentage: Double? {
@@ -129,6 +135,7 @@ struct RecordFormView: View {
         self.onSave = onSave
         
         if let recordData = recordData {
+            self._editingRecordID = State(initialValue: UUID(uuidString: recordData.id))
             self._date = State(initialValue: recordData.date)
             self._weightString = State(initialValue: recordData.weightString)
             self._bodyFatString = State(initialValue: recordData.bodyFatString)
@@ -140,6 +147,7 @@ struct RecordFormView: View {
             self._selectedTimePeriod = State(initialValue: recordData.measurementTimePeriod)
             self._showAdvancedFields = State(initialValue: true)
         } else {
+            self._editingRecordID = State(initialValue: nil)
             self._date = State(initialValue: Date())
             self._weightString = State(initialValue: "")
             self._bodyFatString = State(initialValue: "")
@@ -194,11 +202,25 @@ struct RecordFormView: View {
         }
         .alert(NSLocalizedString("record.duplicate.title", comment: ""), isPresented: $showingDuplicateAlert) {
             Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
-            Button(NSLocalizedString("action.confirm", comment: "")) {
-                confirmSaveRecord()
+            if !isEditMode, duplicateRecordPending != nil {
+                Button(NSLocalizedString("record.duplicate.edit", comment: "")) {
+                    editDuplicateRecord()
+                }
+            }
+            Button(NSLocalizedString("record.duplicate.replace", comment: "")) {
+                let duplicate = duplicateRecordPending
+                duplicateRecordPending = nil
+                confirmSaveRecord(replacing: duplicate)
             }
         } message: {
-            Text(NSLocalizedString("record.duplicate.message", comment: ""))
+            Text(
+                NSLocalizedString(
+                    isEditMode
+                        ? "record.duplicate.conflict.message"
+                        : "record.duplicate.message",
+                    comment: ""
+                )
+            )
         }
         .dismissKeyboardOnTapOutside()
     }
@@ -250,7 +272,7 @@ struct RecordFormView: View {
                     "",
                     selection: $date,
                     in: ...Date(),
-                    displayedComponents: [.date]
+                    displayedComponents: [.date, .hourAndMinute]
                 )
                 .datePickerStyle(.compact)
                 .labelsHidden()
@@ -405,15 +427,16 @@ struct RecordFormView: View {
         if isEditMode {
             updateRecord()
         } else {
-            if selectedDateHasRecord {
+            if let duplicate = duplicateRecordForSelection {
+                duplicateRecordPending = duplicate
                 showingDuplicateAlert = true
                 return
             }
-            confirmSaveRecord()
+            confirmSaveRecord(replacing: nil)
         }
     }
 
-    private func confirmSaveRecord() {
+    private func confirmSaveRecord(replacing existingRecord: WeightRecord?) {
         guard let weightValue = Double(weightString) else {
             errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
             showingError = true
@@ -421,20 +444,17 @@ struct RecordFormView: View {
         }
 
         let weightInKg = unit.convertToKg(weightValue)
-        
-        if !isEditMode && selectedDateHasRecord {
-            deleteRecordsForSelectedDate()
+        let record: WeightRecord
+        if let editingRecordID,
+           let currentRecord = records.first(where: { $0.id == editingRecordID }) {
+            if let existingRecord {
+                context.delete(existingRecord)
+            }
+            record = currentRecord
+        } else {
+            record = existingRecord ?? WeightRecord.create(in: context, weight: weightInKg)
         }
-        
-        let newRecord = WeightRecord.create(in: context, weight: weightInKg)
-        newRecord.date = date.startOfDay
-        newRecord.bodyFatPercentageValue = bodyFatPercentage
-        newRecord.waistCircumferenceValue = waistCircumference
-        newRecord.hipCircumferenceValue = hipCircumference
-        newRecord.chestCircumferenceValue = chestCircumference
-        newRecord.thighCircumferenceValue = thighCircumference
-        newRecord.note = note.isEmpty ? nil : note
-        newRecord.measurementTimePeriod = selectedTimePeriod.rawValue
+        applyFormValues(to: record, weightInKg: weightInKg)
 
         do {
             try context.save()
@@ -450,28 +470,25 @@ struct RecordFormView: View {
     }
 
     private func updateRecord() {
-        guard let recordData = recordData, let recordId = UUID(uuidString: recordData.id), let weightValue = Double(weightString) else {
+        guard let recordID = editingRecordID, let weightValue = Double(weightString) else {
             errorMessage = NSLocalizedString("error.weight.invalid", comment: "")
             showingError = true
             return
         }
 
-        guard let record = records.first(where: { $0.id == recordId }) else {
+        guard let record = records.first(where: { $0.id == recordID }) else {
             errorMessage = NSLocalizedString("error.record.not.found", comment: "")
             showingError = true
             return
         }
 
-        record.date = date.startOfDay
-        record.weight = unit.convertToKg(weightValue)
-        record.bodyFatPercentageValue = Double(bodyFatString)
-        record.waistCircumferenceValue = Double(waistString)
-        record.hipCircumferenceValue = Double(hipString)
-        record.chestCircumferenceValue = Double(chestString)
-        record.thighCircumferenceValue = Double(thighString)
-        record.measurementTimePeriod = selectedTimePeriod.rawValue
-        record.note = note.isEmpty ? nil : note
-        record.updatedAt = Date()
+        if let duplicate = duplicateRecordForSelection {
+            duplicateRecordPending = duplicate
+            showingDuplicateAlert = true
+            return
+        }
+
+        applyFormValues(to: record, weightInKg: unit.convertToKg(weightValue))
         
         do {
             try context.save()
@@ -484,6 +501,40 @@ struct RecordFormView: View {
         HapticManager.success()
         onSave?()
         dismiss()
+    }
+
+    private func applyFormValues(to record: WeightRecord, weightInKg: Double) {
+        record.date = date
+        record.weight = weightInKg
+        record.bodyFatPercentageValue = bodyFatPercentage
+        record.waistCircumferenceValue = waistCircumference
+        record.hipCircumferenceValue = hipCircumference
+        record.chestCircumferenceValue = chestCircumference
+        record.thighCircumferenceValue = thighCircumference
+        record.measurementTimePeriod = selectedTimePeriod.rawValue
+        record.note = note.isEmpty ? nil : note
+        record.updatedAt = Date()
+    }
+
+    private func editDuplicateRecord() {
+        guard let duplicate = duplicateRecordPending,
+              let period = duplicate.measurementTimePeriod.flatMap(MeasurementTimePeriod.init(rawValue:)) else {
+            duplicateRecordPending = nil
+            return
+        }
+
+        editingRecordID = duplicate.id
+        date = duplicate.date
+        weightString = unit.convertFromKg(duplicate.weight).smartFormatted
+        bodyFatString = duplicate.bodyFatPercentageValue?.smartFormatted ?? ""
+        waistString = duplicate.waistCircumferenceValue?.smartFormatted ?? ""
+        hipString = duplicate.hipCircumferenceValue?.smartFormatted ?? ""
+        chestString = duplicate.chestCircumferenceValue?.smartFormatted ?? ""
+        thighString = duplicate.thighCircumferenceValue?.smartFormatted ?? ""
+        note = duplicate.note ?? ""
+        selectedTimePeriod = period
+        showAdvancedFields = true
+        duplicateRecordPending = nil
     }
     
     private var backButton: some View {
@@ -510,18 +561,6 @@ struct RecordFormView: View {
         }
     }
 
-    private func deleteRecordsForSelectedDate() {
-        let dateRecords = records.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
-        for record in dateRecords {
-            context.delete(record)
-        }
-        
-        do {
-            try context.save()
-        } catch {
-            logger.error("Failed to delete records for selected date: \(error.localizedDescription)")
-        }
-    }
 }
 
 struct MeasurementRow: View {

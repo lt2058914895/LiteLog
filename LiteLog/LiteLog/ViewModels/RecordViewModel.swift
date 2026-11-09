@@ -40,7 +40,7 @@ class RecordViewModel: NSObject, ObservableObject, NSFetchedResultsControllerDel
         
         do {
             try fetchedResultsController?.performFetch()
-            records = fetchedResultsController?.fetchedObjects ?? []
+            records = sortedRecords(fetchedResultsController?.fetchedObjects ?? [])
             updateGroupedRecords()
         } catch {
             Self.logger.error("Error fetching records: \(error.localizedDescription)")
@@ -53,7 +53,7 @@ class RecordViewModel: NSObject, ObservableObject, NSFetchedResultsControllerDel
         #if DEBUG
         Self.logger.debug("FRC content changed, records count: \(controller.fetchedObjects?.count ?? 0)")
         #endif
-        records = controller.fetchedObjects as? [WeightRecord] ?? []
+        records = sortedRecords(controller.fetchedObjects as? [WeightRecord] ?? [])
         updateGroupedRecords()
     }
     
@@ -65,7 +65,7 @@ class RecordViewModel: NSObject, ObservableObject, NSFetchedResultsControllerDel
         context.refreshAllObjects()
         do {
             try fetchedResultsController?.performFetch()
-            records = fetchedResultsController?.fetchedObjects ?? []
+            records = sortedRecords(fetchedResultsController?.fetchedObjects ?? [])
             updateGroupedRecords()
         } catch {
             Self.logger.error("Error refreshing records: \(error.localizedDescription)")
@@ -104,5 +104,25 @@ class RecordViewModel: NSObject, ObservableObject, NSFetchedResultsControllerDel
     
     var sortedFilteredWaistRecords: [(Date, [WeightChangeRecord])] {
         groupedFilteredRecords(with: false, waist: true).sorted { $0.key > $1.key }
+    }
+
+    private func sortedRecords(_ records: [WeightRecord]) -> [WeightRecord] {
+        let calendar = Calendar.current
+        return records.sorted { lhs, rhs in
+            if !calendar.isDate(lhs.date, inSameDayAs: rhs.date) {
+                return lhs.date > rhs.date
+            }
+            let lhsOrder = lhs.measurementTimePeriod
+                .flatMap(MeasurementTimePeriod.init(rawValue:))?.sortOrder ?? .max
+            let rhsOrder = rhs.measurementTimePeriod
+                .flatMap(MeasurementTimePeriod.init(rawValue:))?.sortOrder ?? .max
+            if lhsOrder != rhsOrder {
+                return lhsOrder < rhsOrder
+            }
+            if lhs.date != rhs.date {
+                return lhs.date > rhs.date
+            }
+            return lhs.createdAt > rhs.createdAt
+        }
     }
 }

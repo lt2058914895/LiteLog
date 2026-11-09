@@ -28,41 +28,35 @@ struct BMIProgressView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(NSLocalizedString("home.bmi", comment: ""))
-                    .font(.subheadline)
-                    .foregroundColor(.primaryText)
-                
-                Spacer()
-                
-                Button(action: {
-                    onInfoTapped?()
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "info.circle")
-                        Text(NSLocalizedString("bmi.tips", comment: ""))
-                    }
-                    .font(.caption)
-                    .foregroundColor(.primaryBlue)
+        HStack(spacing: 10) {
+            Text(NSLocalizedString("home.bmi", comment: ""))
+                .font(.subheadline)
+                .foregroundColor(.secondaryText)
+
+            Text(currentBMI.smartFormatted)
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundColor(.primaryText)
+
+            Text(bmiCategory.displayName)
+                .font(.caption)
+                .foregroundColor(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(bmiCategoryColor)
+                .cornerRadius(8)
+
+            Spacer()
+
+            Button(action: {
+                onInfoTapped?()
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "info.circle")
+                    Text(NSLocalizedString("bmi.tips", comment: ""))
                 }
-            }
-
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(currentBMI.smartFormatted)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(.primaryText)
-
-                Text(bmiCategory.displayName)
-                    .font(.caption)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(bmiCategoryColor)
-                    .cornerRadius(8)
+                .font(.caption)
+                .foregroundColor(.primaryBlue)
             }
         }
-        .padding()
-        .cardStyle()
     }
 }

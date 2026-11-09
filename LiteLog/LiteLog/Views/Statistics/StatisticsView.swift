@@ -1,37 +1,23 @@
 import SwiftUI
 import CoreData
 
-struct WeightData: Identifiable {
-    let id: UUID
-    let date: Date
-    let weight: Double
-    let bodyFatPercentage: Double?
-    let waistCircumference: Double?
-    let hipCircumference: Double?
-    let chestCircumference: Double?
-    let thighCircumference: Double?
-}
-
 struct StatisticsView: View {
-    @Environment(\.managedObjectContext) private var context
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var settingsManager: SettingsManager
 
-    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: true)]) private var records: FetchedResults<WeightRecord>
-    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) private var userProfile: FetchedResults<UserProfile>
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: true)])
+    private var records: FetchedResults<WeightRecord>
 
     @State private var selectedPeriod: Period = .week
     @State private var selectedMetric: Metric = .weight
-    @State private var cachedFilteredRecords: [WeightData] = []
-    @State private var selectedYear: Int = Calendar.current.component(.year, from: Date())
-    @State private var showYearPicker: Bool = false
+    @State private var selectedScope: MeasurementScope = .all
+    @State private var selectedYear = Calendar.current.component(.year, from: Date())
+    @State private var showYearPicker = false
     @State private var showingProfileEditor = false
-    
+
     private let minYear = 2000
     private let maxYear = Calendar.current.component(.year, from: Date())
 
-    private var profile: UserProfile? { userProfile.first }
-    private var unit: WeightUnit { settingsManager.weightUnit }
     enum Period: String, CaseIterable {
         case week = "stats.week"
         case month = "stats.month"
@@ -51,13 +37,18 @@ struct StatisticsView: View {
 
         var id: String { rawValue }
         var localizedKey: String { rawValue }
-        var unit: String {
+
+        func unit(weightUnit: WeightUnit) -> String {
             switch self {
-            case .weight: return "kg"
-            case .bodyFat: return "%"
-            case .waist, .hip, .chest, .thigh: return "cm"
+            case .weight:
+                return weightUnit.shortName
+            case .bodyFat:
+                return "%"
+            case .waist, .hip, .chest, .thigh:
+                return "cm"
             }
         }
+
         var color: Color {
             switch self {
             case .weight: return .primaryBlue
@@ -68,17 +59,44 @@ struct StatisticsView: View {
             case .thigh: return .cyan
             }
         }
+
+        func value(in entry: TrendEntry, weightUnit: WeightUnit) -> Double? {
+            let value: Double?
+            switch self {
+            case .weight:
+                value = weightUnit.convertFromKg(entry.weight)
+            case .bodyFat:
+                value = entry.bodyFatPercentage
+            case .waist:
+                value = entry.waistCircumference
+            case .hip:
+                value = entry.hipCircumference
+            case .chest:
+                value = entry.chestCircumference
+            case .thigh:
+                value = entry.thighCircumference
+            }
+            return value.flatMap { $0 > 0 ? $0 : nil }
+        }
     }
 
-    private var startDate: Date {
+    private var allEntries: [TrendEntry] {
+        TrendAnalytics.entries(from: Array(records))
+    }
+
+    private var scopedDailyEntries: [TrendEntry] {
+        TrendAnalytics.dailyEntries(from: allEntries, scope: selectedScope)
+    }
+
+    private var rangeStartDate: Date {
         let calendar = Calendar.current
         switch selectedPeriod {
         case .week:
-            return (calendar.date(byAdding: .day, value: -7, to: Date()) ?? Date()).startOfDay
+            return calendar.date(byAdding: .day, value: -6, to: Date().startOfDay) ?? Date().startOfDay
         case .month:
-            return (calendar.date(byAdding: .month, value: -1, to: Date()) ?? Date()).startOfDay
+            return calendar.date(byAdding: .day, value: -29, to: Date().startOfDay) ?? Date().startOfDay
         case .quarter:
-            return (calendar.date(byAdding: .month, value: -3, to: Date()) ?? Date()).startOfDay
+            return calendar.date(byAdding: .day, value: -89, to: Date().startOfDay) ?? Date().startOfDay
         case .year:
             var components = DateComponents()
             components.year = selectedYear
@@ -88,7 +106,7 @@ struct StatisticsView: View {
         }
     }
 
-    private var endDate: Date {
+    private var rangeEndDate: Date {
         let calendar = Calendar.current
         switch selectedPeriod {
         case .week, .month, .quarter:
@@ -102,144 +120,40 @@ struct StatisticsView: View {
         }
     }
 
-    private var filteredRecords: [WeightData] {
-        cachedFilteredRecords
-    }
-
-    private var averageWeight: Double {
-        guard !filteredRecords.isEmpty else { return 0 }
-        let sum = filteredRecords.reduce(0) { $0 + $1.weight }
-        return sum / Double(filteredRecords.count)
-    }
-
-    private var weightChange: Double {
-        guard filteredRecords.count >= 2,
-              let first = filteredRecords.first?.weight,
-              let last = filteredRecords.last?.weight else { return 0 }
-        return last - first
-    }
-
-    private var weightChangeRate: Double {
-        guard filteredRecords.count >= 2, let firstRecord = filteredRecords.first else { return 0 }
-        let daysDiff = max(Calendar.current.dateComponents([.day], from: firstRecord.date, to: Date()).day ?? 1, 1)
-        let weeks = Double(daysDiff) / 7.0
-        guard weeks > 0 else { return 0 }
-        return weightChange / weeks
-    }
-
-    private var minWeight: Double {
-        filteredRecords.map { $0.weight }.min() ?? 0
-    }
-
-    private var maxWeight: Double {
-        filteredRecords.map { $0.weight }.max() ?? 0
-    }
-
-    // MARK: - Metric Data
-    
-    private func computeFilteredRecords() {
-        let filtered = records.filter { $0.date >= startDate && $0.date <= endDate }
-        let calendar = Calendar.current
-        
-        if selectedPeriod == .year {
-            let grouped = Dictionary(grouping: filtered) { record in
-                record.date.startOfWeek
-            }
-            
-            cachedFilteredRecords = grouped.compactMap { weekStart, weekRecords in
-                let avgWeight = weekRecords.reduce(0) { $0 + $1.weight } / Double(weekRecords.count)
-                guard let representativeRecord = weekRecords.max(by: { $0.date < $1.date }) else {
-                    return nil
-                }
-                return WeightData(
-                    id: representativeRecord.id,
-                    date: weekStart,
-                    weight: avgWeight,
-                    bodyFatPercentage: weekRecords.compactMap { $0.bodyFatPercentageValue }.average,
-                    waistCircumference: weekRecords.compactMap { $0.waistCircumferenceValue }.average,
-                    hipCircumference: weekRecords.compactMap { $0.hipCircumferenceValue }.average,
-                    chestCircumference: weekRecords.compactMap { $0.chestCircumferenceValue }.average,
-                    thighCircumference: weekRecords.compactMap { $0.thighCircumferenceValue }.average
-                )
-            }
-            .sorted { $0.date < $1.date }
-        } else {
-            let grouped = Dictionary(grouping: filtered) { record in
-                calendar.startOfDay(for: record.date)
-            }
-            
-            cachedFilteredRecords = grouped.compactMap { $0.value.max(by: { $0.date < $1.date }) }
-                .map { record in
-                    WeightData(
-                        id: record.id,
-                        date: record.date,
-                        weight: record.weight,
-                        bodyFatPercentage: record.bodyFatPercentageValue,
-                        waistCircumference: record.waistCircumferenceValue,
-                        hipCircumference: record.hipCircumferenceValue,
-                        chestCircumference: record.chestCircumferenceValue,
-                        thighCircumference: record.thighCircumferenceValue
-                    )
-                }
-                .sorted { $0.date < $1.date }
+    private var scopedRangeEntries: [TrendEntry] {
+        scopedDailyEntries.filter {
+            $0.date >= rangeStartDate && $0.date <= rangeEndDate
         }
     }
-    
-    private func metricData(for metric: Metric) -> [(Date, Double)] {
-        filteredRecords.compactMap { record in
-            let value: Double?
-            switch metric {
-            case .weight:
-                value = record.weight
-            case .bodyFat:
-                value = record.bodyFatPercentage
-            case .waist:
-                value = record.waistCircumference
-            case .hip:
-                value = record.hipCircumference
-            case .chest:
-                value = record.chestCircumference
-            case .thigh:
-                value = record.thighCircumference
-            }
-            if let value = value, value > 0 {
-                return (record.date.startOfDay, value)
-            }
+
+    private var originalMetricData: [(Date, Double)] {
+        metricData(for: selectedMetric, in: scopedRangeEntries)
+    }
+
+    private var currentMetricAverage: Double? {
+        originalMetricData.map(\.1).average
+    }
+
+    private var currentMetricChange: Double? {
+        guard originalMetricData.count >= 2,
+              let first = originalMetricData.first?.1,
+              let last = originalMetricData.last?.1 else {
             return nil
         }
-    }
-
-    private var currentMetricData: [(Date, Double)] {
-        metricData(for: selectedMetric)
-    }
-
-    private var currentMetricAverage: Double {
-        guard !currentMetricData.isEmpty else { return 0 }
-        let sum = currentMetricData.reduce(0) { $0 + $1.1 }
-        return sum / Double(currentMetricData.count)
-    }
-
-    private var currentMetricChange: Double {
-        guard currentMetricData.count >= 2,
-              let first = currentMetricData.first?.1,
-              let last = currentMetricData.last?.1 else { return 0 }
         return last - first
     }
 
     var body: some View {
         NavigationStack {
             GeometryReader { geometry in
-                let contentWidth = geometry.size.width
-
                 VStack(spacing: 0) {
-                    // 固定在顶部的周月季度选择器
                     periodPicker
                         .padding()
 
-                    // 可滚动的内容区域（包含指标选择器）
                     ScrollView {
                         VStack(spacing: 20) {
                             metricPicker
+                            scopePicker
 
                             if records.isEmpty {
                                 EmptyStateView(
@@ -248,23 +162,17 @@ struct StatisticsView: View {
                                     message: NSLocalizedString("home.start.record", comment: "")
                                 )
                             } else {
-                                metricSummaryCards
-
+                                metricSummarySection
                                 metricChart
-
-                                bmiChartSection
-
-                                statsDetails
                             }
                         }
                         .padding()
-                        .frame(width: contentWidth)
+                        .frame(width: geometry.size.width)
                     }
                     .frame(maxWidth: .infinity)
                     .background(Color(.systemGroupedBackground))
                 }
-                .frame(width: contentWidth, height: geometry.size.height, alignment: .top)
-                .frame(maxWidth: .infinity, alignment: .center)
+                .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
             }
             .background(Color(.systemGroupedBackground))
             .toolbar {
@@ -278,37 +186,27 @@ struct StatisticsView: View {
             .navigationDestination(isPresented: $showingProfileEditor) {
                 UserInfoEditorView()
             }
-            .onAppear {
-                computeFilteredRecords()
-            }
             .onChange(of: selectedPeriod) { newValue in
                 if newValue != .year {
                     selectedYear = maxYear
                 }
-                computeFilteredRecords()
-            }
-            .onChange(of: selectedYear) { _ in
-                computeFilteredRecords()
-            }
-            .onChange(of: records.count) { _ in
-                computeFilteredRecords()
             }
             .sheet(isPresented: $showYearPicker) {
                 yearPickerSheet
             }
         }
     }
-    
+
     private var periodPicker: some View {
         VStack(spacing: 12) {
-            Picker("Period", selection: $selectedPeriod) {
+            Picker(NSLocalizedString("stats.period", comment: ""), selection: $selectedPeriod) {
                 ForEach(Period.allCases, id: \.self) { period in
                     Text(NSLocalizedString(period.localizedKey, comment: ""))
                         .tag(period)
                 }
             }
             .pickerStyle(.segmented)
-            
+
             if selectedPeriod == .year {
                 yearPicker
             }
@@ -317,9 +215,7 @@ struct StatisticsView: View {
 
     private var yearPicker: some View {
         HStack(spacing: 12) {
-            Button(action: {
-                selectedYear -= 1
-            }) {
+            Button(action: { selectedYear -= 1 }) {
                 Image(systemName: "chevron.left")
                     .foregroundColor(selectedYear <= minYear ? .gray : .primaryBlue)
                     .frame(width: 32, height: 32)
@@ -327,20 +223,16 @@ struct StatisticsView: View {
                     .cornerRadius(8)
             }
             .disabled(selectedYear <= minYear)
-            
-            Button(action: {
-                showYearPicker = true
-            }) {
+
+            Button(action: { showYearPicker = true }) {
                 Text("\(selectedYear)")
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.primaryText)
                     .frame(maxWidth: .infinity)
             }
-            
-            Button(action: {
-                selectedYear += 1
-            }) {
+
+            Button(action: { selectedYear += 1 }) {
                 Image(systemName: "chevron.right")
                     .foregroundColor(selectedYear >= maxYear ? .gray : .primaryBlue)
                     .frame(width: 32, height: 32)
@@ -354,7 +246,7 @@ struct StatisticsView: View {
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : .white)
         .cornerRadius(12)
     }
-    
+
     private var yearPickerSheet: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -365,7 +257,7 @@ struct StatisticsView: View {
                 }
                 .pickerStyle(.wheel)
                 .padding()
-                
+
                 Button(NSLocalizedString("action.done", comment: "")) {
                     showYearPicker = false
                 }
@@ -399,7 +291,7 @@ struct StatisticsView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(selectedMetric == metric ? selectedMetric.color.opacity(0.2) : (colorScheme == .dark ? Color(.secondarySystemBackground) : .white))
+                                .background(selectedMetric == metric ? selectedMetric.color.opacity(0.2) : chipBackground)
                                 .foregroundColor(selectedMetric == metric ? selectedMetric.color : .secondaryText)
                                 .cornerRadius(8)
                         }
@@ -410,25 +302,141 @@ struct StatisticsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    private var scopePicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(NSLocalizedString("stats.scope", comment: ""))
+                .font(.caption)
+                .foregroundColor(.secondaryText)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(MeasurementScope.allCases) { scope in
+                        Button(action: { selectedScope = scope }) {
+                            Text(NSLocalizedString(scope.localizedKey, comment: ""))
+                                .font(.caption)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(selectedScope == scope ? Color.primaryBlue.opacity(0.18) : chipBackground)
+                                .foregroundColor(selectedScope == scope ? .primaryBlue : .secondaryText)
+                                .cornerRadius(8)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+
+        }
+    }
+
+    private var chipBackground: Color {
+        colorScheme == .dark ? Color(.secondarySystemBackground) : .white
+    }
+
+    private var metricSummarySection: some View {
+        let values = originalMetricData.map(\.1)
+        let metricUnit = selectedMetric.unit(weightUnit: settingsManager.weightUnit)
+
+        return VStack(spacing: 14) {
+            HStack(spacing: 12) {
+                summaryPrimaryMetric(
+                    title: NSLocalizedString("stats.average", comment: ""),
+                    value: currentMetricAverage?.smartFormatted ?? "--",
+                    unit: metricUnit,
+                    color: selectedMetric.color
+                )
+
+                Divider()
+                    .frame(height: 54)
+
+                summaryPrimaryMetric(
+                    title: NSLocalizedString("stats.change", comment: ""),
+                    value: formattedChange(currentMetricChange),
+                    unit: metricUnit,
+                    color: changeColor(currentMetricChange)
+                )
+            }
+
+            HStack(spacing: 8) {
+                summarySecondaryMetric(
+                    title: NSLocalizedString("stats.min", comment: ""),
+                    value: values.min()?.smartFormatted ?? "--",
+                    unit: metricUnit
+                )
+
+                summarySecondaryMetric(
+                    title: NSLocalizedString("stats.max", comment: ""),
+                    value: values.max()?.smartFormatted ?? "--",
+                    unit: metricUnit
+                )
+
+                summarySecondaryMetric(
+                    title: NSLocalizedString("stats.records", comment: ""),
+                    value: localizedRecordCount(originalMetricData.count),
+                    unit: ""
+                )
+            }
+        }
+        .padding()
+        .cardStyle()
+    }
+
+    private func summaryPrimaryMetric(
+        title: String,
+        value: String,
+        unit: String,
+        color: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondaryText)
+
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(value)
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundColor(color)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+
+                Text(unit)
+                    .font(.caption)
+                    .foregroundColor(.secondaryText)
+            }
+        }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var metricSummaryCards: some View {
-        HStack(spacing: 12) {
-            MetricSummaryCard(
-                title: NSLocalizedString("stats.average", comment: ""),
-                value: currentMetricAverage.smartFormatted,
-                unit: selectedMetric.unit,
-                color: selectedMetric.color
-            )
+    private func summarySecondaryMetric(
+        title: String,
+        value: String,
+        unit: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(.caption2)
+                .foregroundColor(.secondaryText)
 
-            MetricSummaryCard(
-                title: NSLocalizedString("stats.change", comment: ""),
-                value: (currentMetricChange >= 0 ? "+" : "") + currentMetricChange.smartFormatted,
-                unit: selectedMetric.unit,
-                color: currentMetricChange >= 0 ? .red : .green
-            )
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.65)
+
+                if !unit.isEmpty {
+                    Text(unit)
+                        .font(.caption2)
+                        .foregroundColor(.secondaryText)
+                }
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 9)
+        .background(selectedMetric.color.opacity(0.07))
+        .cornerRadius(10)
     }
 
     private var metricChart: some View {
@@ -437,13 +445,15 @@ struct StatisticsView: View {
                 Text(NSLocalizedString("home.trend", comment: ""))
                     .font(.headline)
                     .foregroundColor(.primaryText)
-                
+
                 Text(NSLocalizedString(selectedMetric.localizedKey, comment: ""))
                     .font(.subheadline)
                     .foregroundColor(selectedMetric.color)
+
+                Spacer()
             }
 
-            if currentMetricData.isEmpty {
+            if originalMetricData.isEmpty {
                 Text(NSLocalizedString("common.no.data", comment: ""))
                     .font(.subheadline)
                     .foregroundColor(.secondaryText)
@@ -453,9 +463,9 @@ struct StatisticsView: View {
                     .cardStyle()
             } else {
                 ModernTrendChartView(
-                    data: currentMetricData,
+                    data: originalMetricData,
                     color: selectedMetric.color,
-                    unit: selectedMetric.unit,
+                    unit: selectedMetric.unit(weightUnit: settingsManager.weightUnit),
                     title: "",
                     period: selectedPeriod
                 )
@@ -463,200 +473,29 @@ struct StatisticsView: View {
         }
     }
 
-    private var bmiChartSection: some View {
-        Group {
-            if let profile = profile {
-                if filteredRecords.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(NSLocalizedString("stats.bmi.trend", comment: ""))
-                            .font(.headline)
-                            .foregroundColor(.primaryText)
-                        
-                        Text(NSLocalizedString("common.no.data", comment: ""))
-                            .font(.subheadline)
-                            .foregroundColor(.secondaryText)
-                            .frame(height: 150)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .padding()
-                    .cardStyle()
-                } else {
-                    let bmiData = filteredRecords.compactMap { record -> (Date, Double)? in
-                        guard profile.height > 0 else {
-                            return nil
-                        }
-                        return (record.date.startOfDay, profile.calculateBMI(weight: record.weight))
-                    }
-                    
-                    if bmiData.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(NSLocalizedString("stats.bmi.trend", comment: ""))
-                                .font(.headline)
-                                .foregroundColor(.primaryText)
-                            
-                            Text(NSLocalizedString("stats.bmi.no.data", comment: ""))
-                                .font(.subheadline)
-                                .foregroundColor(.secondaryText)
-                                .frame(height: 150)
-                                .frame(maxWidth: .infinity)
-                        }
-                        .padding()
-                        .cardStyle()
-                    } else {
-                        BMITrendChartView(data: bmiData)
-                    }
-                }
-            } else {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(NSLocalizedString("stats.bmi.trend", comment: ""))
-                        .font(.headline)
-                        .foregroundColor(.primaryText)
-                    
-                    VStack(spacing: 8) {
-                        Text(NSLocalizedString("stats.bmi.no.profile", comment: ""))
-                            .font(.subheadline)
-                            .foregroundColor(.secondaryText)
-                        
-                        Button(NSLocalizedString("action.edit", comment: "")) {
-                            NotificationCenter.default.post(name: .showProfileEditor, object: nil)
-                        }
-                        .foregroundColor(.primaryBlue)
-                        .font(.subheadline)
-                    }
-                    .frame(height: 150)
-                    .frame(maxWidth: .infinity)
-                }
-                .padding()
-                .cardStyle()
+    private func metricData(for metric: Metric, in entries: [TrendEntry]) -> [(Date, Double)] {
+        entries.compactMap { entry in
+            metric.value(in: entry, weightUnit: settingsManager.weightUnit).map {
+                (entry.date, $0)
             }
         }
     }
 
-    private var statsDetails: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(NSLocalizedString("stats.loss.speed", comment: ""))
-                .font(.headline)
-                .foregroundColor(.primaryText)
-
-            VStack(spacing: 16) {
-                HStack {
-                    Text(NSLocalizedString("stats.loss.speed", comment: ""))
-                        .foregroundColor(.secondaryText)
-
-                    Spacer()
-
-                    Text("\(unit.convertFromKg(weightChangeRate).smartFormatted) \(NSLocalizedString("stats.per.week", comment: ""))")
-                        .fontWeight(.medium)
-                        .foregroundColor(.primaryText)
-                }
-
-                Divider()
-
-                HStack {
-                    Text(NSLocalizedString("stats.min", comment: ""))
-                        .foregroundColor(.secondaryText)
-
-                    Spacer()
-
-                    Text("\(unit.convertFromKg(minWeight).smartFormatted) \(unit.shortName)")
-                        .fontWeight(.medium)
-                        .foregroundColor(.primaryText)
-                }
-
-                Divider()
-
-                HStack {
-                    Text(NSLocalizedString("stats.max", comment: ""))
-                        .foregroundColor(.secondaryText)
-
-                    Spacer()
-
-                    Text("\(unit.convertFromKg(maxWeight).smartFormatted) \(unit.shortName)")
-                        .fontWeight(.medium)
-                        .foregroundColor(.primaryText)
-                }
-
-                Divider()
-
-                HStack {
-                    Text(NSLocalizedString("goal.weight", comment: ""))
-                        .foregroundColor(.secondaryText)
-
-                    Spacer()
-
-                    if let profile = profile {
-                        Text("\(profile.goalWeightValue.map { unit.convertFromKg($0).smartFormatted } ?? "--") \(unit.shortName)")
-                            .fontWeight(.medium)
-                            .foregroundColor(.primaryText)
-                    }
-                }
-            }
-        }
-        .padding()
-        .cardStyle()
+    private func formattedChange(_ change: Double?) -> String {
+        formattedSigned(change ?? 0, emptyWhenNil: change == nil)
     }
-}
 
-struct SummaryCard: View {
-    let title: String
-    let value: String
-    let unit: String
-    let icon: String
-    var color: Color = .primaryBlue
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(color)
-
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.secondaryText)
-            }
-
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(value)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primaryText)
-
-                Text(unit)
-                    .font(.caption)
-                    .foregroundColor(.secondaryText)
-            }
+    private func formattedSigned(_ value: Double, emptyWhenNil: Bool = false) -> String {
+        if emptyWhenNil {
+            return "--"
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .cardStyle()
+        return (value >= 0 ? "+" : "") + value.smartFormatted
     }
-}
 
-struct MetricSummaryCard: View {
-    let title: String
-    let value: String
-    let unit: String
-    var color: Color = .primaryBlue
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondaryText)
-
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(value)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(color)
-
-                Text(unit)
-                    .font(.caption)
-                    .foregroundColor(.secondaryText)
-            }
+    private func changeColor(_ change: Double?) -> Color {
+        guard let change, abs(change) >= 0.005 else {
+            return .secondaryText
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .cardStyle()
+        return change > 0 ? .red : .green
     }
 }

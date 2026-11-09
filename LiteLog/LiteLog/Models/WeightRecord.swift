@@ -19,6 +19,19 @@ enum MeasurementTimePeriod: String, Codable, CaseIterable {
             return NSLocalizedString("period.random", comment: "")
         }
     }
+
+    var sortOrder: Int {
+        switch self {
+        case .morningFasting:
+            return 0
+        case .afterExercise:
+            return 1
+        case .beforeBed:
+            return 2
+        case .random:
+            return 3
+        }
+    }
 }
 
 @objc(WeightRecord)
@@ -82,9 +95,27 @@ extension Array where Element == WeightRecord {
     
     func groupedByMonth() -> [Date: [WeightRecord]] {
         let calendar = Calendar.current
-        return Dictionary(grouping: self) { record in
+        let grouped = Dictionary(grouping: self) { record in
             let components = calendar.dateComponents([.year, .month], from: record.date)
             return calendar.date(from: components) ?? record.date
+        }
+        return grouped.mapValues { records in
+            records.sorted { lhs, rhs in
+                if !calendar.isDate(lhs.date, inSameDayAs: rhs.date) {
+                    return lhs.date > rhs.date
+                }
+                let lhsOrder = lhs.measurementTimePeriod
+                    .flatMap(MeasurementTimePeriod.init(rawValue:))?.sortOrder ?? .max
+                let rhsOrder = rhs.measurementTimePeriod
+                    .flatMap(MeasurementTimePeriod.init(rawValue:))?.sortOrder ?? .max
+                if lhsOrder != rhsOrder {
+                    return lhsOrder < rhsOrder
+                }
+                if lhs.date != rhs.date {
+                    return lhs.date > rhs.date
+                }
+                return lhs.createdAt > rhs.createdAt
+            }
         }
     }
     
