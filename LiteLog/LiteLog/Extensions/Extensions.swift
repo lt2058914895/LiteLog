@@ -2,6 +2,37 @@ import SwiftUI
 import UIKit
 import Foundation
 
+enum NumericInputFormatter {
+    static let defaultDecimalPlaces = 2
+
+    static func format(
+        _ input: String,
+        maxDecimals: Int = defaultDecimalPlaces
+    ) -> String {
+        let normalized = input.replacingOccurrences(of: ",", with: ".")
+        var filtered = ""
+        var hasDecimalPoint = false
+
+        for character in normalized {
+            if "0123456789".contains(character) {
+                filtered.append(character)
+            } else if character == ".", !hasDecimalPoint, maxDecimals > 0 {
+                filtered.append(character)
+                hasDecimalPoint = true
+            }
+        }
+
+        let parts = filtered.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 2 else {
+            return filtered
+        }
+
+        let integerPart = String(parts[0])
+        let decimalPart = String(parts[1].prefix(maxDecimals))
+        return "\(integerPart).\(decimalPart)"
+    }
+}
+
 extension Notification.Name {
     static let showProfileEditor = Notification.Name("showProfileEditor")
 }

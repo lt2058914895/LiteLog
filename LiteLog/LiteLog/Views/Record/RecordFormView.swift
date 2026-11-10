@@ -1,7 +1,6 @@
 import SwiftUI
 import CoreData
 import UIKit
-import os
 
 struct RecordFormData: Equatable {
     let id: String
@@ -20,34 +19,13 @@ struct RecordFormData: Equatable {
     }
 }
 
-private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "RecordFormView")
-
-extension View {
-    func dismissKeyboardOnTapOutside() -> some View {
-        self.modifier(DismissKeyboardModifier())
-    }
-}
-
-struct DismissKeyboardModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .onTapGesture(coordinateSpace: .global) { _ in
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-            }
-            .background(
-                Color.clear
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                    }
-            )
-    }
-}
-
-extension UIApplication {
-    @objc func dismissKeyboard() {
-        sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-    }
+enum RecordInputField: Hashable {
+    case weight
+    case bodyFat
+    case waist
+    case hip
+    case chest
+    case thigh
 }
 
 struct RecordFormView: View {
@@ -77,6 +55,7 @@ struct RecordFormView: View {
     @State private var selectedTimePeriod: MeasurementTimePeriod = .random
     
     @State private var showAdvancedFields = false
+    @FocusState private var focusedField: RecordInputField?
     
     @Environment(\.colorScheme) private var colorScheme
     
@@ -163,7 +142,7 @@ struct RecordFormView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            LazyVStack(spacing: 16) {
                 
                 weightCard
                 
@@ -185,6 +164,7 @@ struct RecordFormView: View {
             }
             .padding()
         }
+        .scrollDismissesKeyboard(.interactively)
         .background(Color(.systemGroupedBackground))
         .navigationTitle(isEditMode ? NSLocalizedString("record.edit", comment: "") : NSLocalizedString("record.add", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
@@ -192,6 +172,12 @@ struct RecordFormView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 backButton
+            }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button(NSLocalizedString("action.done", comment: "")) {
+                    focusedField = nil
+                }
             }
         }
         .toolbar(.hidden, for: .tabBar)
@@ -222,7 +208,6 @@ struct RecordFormView: View {
                 )
             )
         }
-        .dismissKeyboardOnTapOutside()
     }
     
     private var weightCard: some View {
@@ -238,8 +223,12 @@ struct RecordFormView: View {
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.primaryBlue)
                     .frame(maxWidth: .infinity)
+                    .focused($focusedField, equals: .weight)
                     .onChange(of: weightString) { newValue in
-                        weightString = formatNumericInput(newValue)
+                        let formatted = NumericInputFormatter.format(newValue)
+                        if formatted != newValue {
+                            weightString = formatted
+                        }
                     }
                 
                 Text(unit.shortName)
@@ -339,7 +328,9 @@ struct RecordFormView: View {
                 label: NSLocalizedString("measure.body.fat", comment: ""),
                 placeholder: NSLocalizedString("common.input.placeholder", comment: ""),
                 text: $bodyFatString,
-                unit: "%"
+                unit: "%",
+                focus: $focusedField,
+                focusValue: .bodyFat
             )
             
             Divider()
@@ -348,7 +339,9 @@ struct RecordFormView: View {
                 label: NSLocalizedString("measure.waist", comment: ""),
                 placeholder: NSLocalizedString("common.input.placeholder", comment: ""),
                 text: $waistString,
-                unit: "cm"
+                unit: "cm",
+                focus: $focusedField,
+                focusValue: .waist
             )
             
             Divider()
@@ -357,7 +350,9 @@ struct RecordFormView: View {
                 label: NSLocalizedString("measure.hip", comment: ""),
                 placeholder: NSLocalizedString("common.input.placeholder", comment: ""),
                 text: $hipString,
-                unit: "cm"
+                unit: "cm",
+                focus: $focusedField,
+                focusValue: .hip
             )
             
             Divider()
@@ -366,7 +361,9 @@ struct RecordFormView: View {
                 label: NSLocalizedString("measure.chest", comment: ""),
                 placeholder: NSLocalizedString("common.input.placeholder", comment: ""),
                 text: $chestString,
-                unit: "cm"
+                unit: "cm",
+                focus: $focusedField,
+                focusValue: .chest
             )
             
             Divider()
@@ -375,7 +372,9 @@ struct RecordFormView: View {
                 label: NSLocalizedString("measure.thigh", comment: ""),
                 placeholder: NSLocalizedString("common.input.placeholder", comment: ""),
                 text: $thighString,
-                unit: "cm"
+                unit: "cm",
+                focus: $focusedField,
+                focusValue: .thigh
             )
         }
         .background(cardBackgroundColor)
@@ -545,22 +544,6 @@ struct RecordFormView: View {
         }
     }
     
-    private func formatNumericInput(_ input: String) -> String {
-        let filtered = input.filter { "0123456789.".contains($0) }
-        let parts = filtered.components(separatedBy: ".")
-        if parts.count > 2 {
-            let integerPart = parts.first ?? ""
-            let decimalPart = parts.dropFirst().joined().prefix(2)
-            return "\(integerPart).\(decimalPart)"
-        } else if parts.count == 2 {
-            let integerPart = parts[0]
-            let decimalPart = parts[1].prefix(2)
-            return "\(integerPart).\(decimalPart)"
-        } else {
-            return filtered
-        }
-    }
-
 }
 
 struct MeasurementRow: View {
@@ -568,6 +551,8 @@ struct MeasurementRow: View {
     let placeholder: String
     @Binding var text: String
     let unit: String
+    let focus: FocusState<RecordInputField?>.Binding
+    let focusValue: RecordInputField
     
     var body: some View {
         HStack(spacing: 12) {
@@ -580,8 +565,12 @@ struct MeasurementRow: View {
                 .keyboardType(.decimalPad)
                 .font(.body)
                 .foregroundColor(.primaryText)
+                .focused(focus, equals: focusValue)
                 .onChange(of: text) { newValue in
-                    text = formatNumericInput(newValue)
+                    let formatted = NumericInputFormatter.format(newValue)
+                    if formatted != newValue {
+                        text = formatted
+                    }
                 }
             
             Text(unit)
@@ -598,21 +587,6 @@ struct MeasurementRow: View {
         .padding(12)
     }
     
-    private func formatNumericInput(_ input: String) -> String {
-        let filtered = input.filter { "0123456789.".contains($0) }
-        let parts = filtered.components(separatedBy: ".")
-        if parts.count > 2 {
-            let integerPart = parts.first ?? ""
-            let decimalPart = parts.dropFirst().joined().prefix(2)
-            return "\(integerPart).\(decimalPart)"
-        } else if parts.count == 2 {
-            let integerPart = parts[0]
-            let decimalPart = parts[1].prefix(2)
-            return "\(integerPart).\(decimalPart)"
-        } else {
-            return filtered
-        }
-    }
 }
 
 struct MeasurementPeriodSelector: View {

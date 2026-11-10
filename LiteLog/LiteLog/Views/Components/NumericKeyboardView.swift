@@ -85,7 +85,8 @@ struct NumericKeyboardView: View {
                 value = char
             } else {
                 let parts = value.split(separator: ".")
-                if parts.count == 2 && parts[1].count >= 1 {
+                if parts.count == 2 &&
+                    parts[1].count >= NumericInputFormatter.defaultDecimalPlaces {
                     return
                 }
                 value += char
