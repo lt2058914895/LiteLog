@@ -74,7 +74,7 @@
 "analysis.overweight.high.fat" = "Overweight with High Body Fat";
 "analysis.overweight.high.fat.desc" = "Both BMI and body fat are above their reference ranges. Consider small, sustainable changes to nutrition, activity, and sleep, and consult a healthcare professional if you have concerns.";
 "home.today" = "Today";
-"home.add.weight" = "Add Weight";
+"home.add.weight" = "Log Weight";
 "home.history" = "History";
 "home.no.records" = "No records yet";
 "home.start.record" = "Start tracking your weight today";
@@ -97,8 +97,8 @@
 "home.trend.days" = "%d days";
 "home.trend.empty" = "No period change data yet";
 "record.calendar" = "Calendar";
-"record.add" = "Add Record";
-"record.edit" = "Edit Record";
+"record.add" = "Log Weight";
+"record.edit" = "Edit Weight Entry";
 "record.note" = "Note";
 "record.note.placeholder" = "Add note";
 "record.duplicate.title" = "Duplicate Record";

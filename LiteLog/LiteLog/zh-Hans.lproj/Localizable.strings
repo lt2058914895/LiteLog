@@ -89,7 +89,7 @@
 
 // 首页
 "home.today" = "今日";
-"home.add.weight" = "添加体重";
+"home.add.weight" = "记录体重";
 "home.history" = "历史记录";
 "home.no.records" = "暂无记录";
 "home.start.record" = "开始记录你的体重变化吧";
@@ -114,8 +114,8 @@
 
 // 记录页
 "record.calendar" = "日历";
-"record.add" = "添加记录";
-"record.edit" = "编辑记录";
+"record.add" = "记录体重";
+"record.edit" = "修改记录";
 "record.note" = "备注";
 "record.note.placeholder" = "添加备注";
 "record.duplicate.title" = "重复记录";
@@ -232,7 +232,7 @@
 "action.save" = "保存";
 "action.save.success" = "保存成功";
 "action.cancel" = "取消";
-"action.edit" = "编辑";
+"action.edit" = "修改";
 "action.delete" = "删除";
 "action.done" = "完成";
 "action.confirm" = "确定";
