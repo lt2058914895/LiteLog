@@ -449,6 +449,7 @@ struct ProfileEditorView: View {
             newProfile.goalHipCircumferenceValue = goalHipCircumference
             newProfile.goalChestCircumferenceValue = goalChestCircumference
             newProfile.goalThighCircumferenceValue = goalThighCircumference
+            newProfile.weightUnit = unit.rawValue
         }
         
         do {

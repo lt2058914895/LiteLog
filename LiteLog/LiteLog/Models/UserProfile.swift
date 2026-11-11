@@ -192,10 +192,10 @@ extension UserProfile {
     static func create(in context: NSManagedObjectContext) -> UserProfile {
         let profile = UserProfile(context: context)
         profile.id = UUID()
-        profile.height = 170.0
+        profile.height = 0
         profile.gender = Gender.male.rawValue
-        profile.age = 30
-        profile.goalWeightValue = 65.0
+        profile.age = 0
+        profile.goalWeightValue = nil
         profile.goalBodyFatPercentage = nil
         profile.goalWaistCircumferenceValue = nil
         profile.goalHipCircumferenceValue = nil
@@ -205,11 +205,6 @@ extension UserProfile {
         profile.createdAt = Date()
         profile.updatedAt = Date()
         return profile
-    }
-
-    static var defaultProfile: UserProfile {
-        let context = PersistenceController.shared.viewContext
-        return UserProfile.create(in: context)
     }
 }
 

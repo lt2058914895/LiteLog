@@ -79,11 +79,7 @@ struct WeightGoalEstimate {
         case .reached:
             return NSLocalizedString("home.goal.achieved", comment: "")
         case .insufficientData:
-            return String(
-                format: NSLocalizedString("goal.forecast.insufficient", comment: ""),
-                observedDays,
-                observedPoints
-            )
+            return NSLocalizedString("goal.forecast.insufficient", comment: "")
         case .diverging:
             return NSLocalizedString("goal.forecast.diverging", comment: "")
         case .available:

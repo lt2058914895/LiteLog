@@ -149,7 +149,7 @@
 "stats.scope.all" = "全部";
 "stats.records" = "有效记录";
 "goal.forecast.available" = "按最近28天趋势，约 %@–%@ 周接近目标。";
-"goal.forecast.insufficient" = "当前为 %d 天、%d 条同口径记录；累计满14天且7条记录后可生成预估。";
+"goal.forecast.insufficient" = "继续记录一段时间后即可生成预估；累计满 14 天且至少 7 条记录后显示。";
 "goal.forecast.diverging" = "近期趋势未朝目标变化，暂不预估。";
 // 设置页
 "settings.profile" = "个人资料";

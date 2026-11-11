@@ -143,22 +143,4 @@ extension WeightRecord {
         return record
     }
 
-    static var sampleData: WeightRecord {
-        let context = PersistenceController.shared.viewContext
-        let record = WeightRecord.create(in: context, weight: 70.0)
-        record.bodyFatPercentageValue = 20.0
-        return record
-    }
-
-    static var sampleDataArray: [WeightRecord] {
-        let calendar = Calendar.current
-        let context = PersistenceController.shared.viewContext
-        return (0..<7).map { dayOffset in
-            let date = calendar.date(byAdding: .day, value: -dayOffset, to: Date()) ?? Date()
-            let record = WeightRecord.create(in: context, weight: 70.0 + Double(dayOffset) * 0.2)
-            record.date = date
-            record.bodyFatPercentageValue = 20.0 + Double(dayOffset) * 0.5
-            return record
-        }
-    }
 }

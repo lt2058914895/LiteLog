@@ -128,7 +128,7 @@
 "stats.scope.all" = "All";
 "stats.records" = "Valid Records";
 "goal.forecast.available" = "Based on the last 28 days, your target may be about %@–%@ weeks away.";
-"goal.forecast.insufficient" = "%d days and %d comparable records so far. An estimate becomes available after 14 days and 7 records.";
+"goal.forecast.insufficient" = "Keep logging for a little longer. An estimate appears after at least 14 days and 7 entries.";
 "goal.forecast.diverging" = "The recent trend is not moving toward the target, so no estimate is available.";
 "settings.profile" = "Profile";
 "settings.profile.incomplete" = "Add your health details to unlock BMI and goals";

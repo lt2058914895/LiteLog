@@ -41,10 +41,6 @@ final class SettingsManager: ObservableObject {
                     profile.weightUnit = weightUnit.rawValue
                     profile.updatedAt = Date()
                     try context.save()
-                } else {
-                    let newProfile = UserProfile.create(in: context)
-                    newProfile.weightUnit = weightUnit.rawValue
-                    try context.save()
                 }
             } catch {
                 Self.logger.error("Failed to update weight unit in database: \(error.localizedDescription)")
