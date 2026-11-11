@@ -18,17 +18,6 @@ struct CalendarView: View {
         case unchanged
         case first
 
-        var systemImage: String? {
-            switch self {
-            case .increase:
-                return "arrow.up"
-            case .decrease:
-                return "arrow.down"
-            case .unchanged, .first:
-                return nil
-            }
-        }
-
         var accessibilityKey: String {
             switch self {
             case .increase:
@@ -107,6 +96,10 @@ struct CalendarView: View {
             weekdayHeaderView
 
             daysGridView
+
+            Divider()
+
+            trendLegend
         }
         .padding()
         .cardStyle()
@@ -187,6 +180,51 @@ struct CalendarView: View {
         }
     }
 
+    private var trendLegend: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(NSLocalizedString("calendar.legend.title", comment: ""))
+                .font(.caption.weight(.semibold))
+                .foregroundColor(.secondaryText)
+
+            legendRow(
+                color: .green,
+                text: NSLocalizedString("calendar.legend.down", comment: "")
+            )
+            legendRow(
+                color: .orange,
+                text: NSLocalizedString("calendar.legend.up", comment: "")
+            )
+            legendRow(
+                color: .secondaryText,
+                text: neutralLegendText
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func legendRow(
+        color: Color,
+        text: String
+    ) -> some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(color)
+                .frame(width: 6, height: 6)
+
+            Text(text)
+                .font(.caption2)
+                .foregroundColor(.secondaryText)
+        }
+    }
+
+    private var neutralLegendText: String {
+        String(
+            format: NSLocalizedString("calendar.legend.neutral.format", comment: ""),
+            unit.convertFromKg(0.05).smartFormatted,
+            unit.shortName
+        )
+    }
+
     private func dayCellView(_ date: Date) -> some View {
         let isSelected = selectedDate.map { calendar.isDate(date, inSameDayAs: $0) } ?? false
         let isToday = calendar.isDateInToday(date)
@@ -203,17 +241,9 @@ struct CalendarView: View {
                     .foregroundColor(textColor(isToday: isToday, isSelected: isSelected))
 
                 if let record = record {
-                    let weight = unit.convertFromKg(record.weight).smartFormatted
-                    HStack(spacing: 1) {
-                        Text(weight)
-                            .lineLimit(1)
-
-                        if let systemImage = trend.systemImage {
-                            Image(systemName: systemImage)
-                                .font(.system(size: 8, weight: .bold))
-                        }
-                    }
+                    Text(unit.convertFromKg(record.weight).smartFormatted)
                     .font(.caption2)
+                    .lineLimit(1)
                     .foregroundColor(weightColor(trend: trend, isSelected: isSelected))
                 }
             }
@@ -269,6 +299,12 @@ struct CalendarView: View {
     }
 
     private func selectDate(_ date: Date) {
+        if let selectedDate,
+           calendar.isDate(selectedDate, inSameDayAs: date) {
+            self.selectedDate = nil
+            return
+        }
+
         selectedDate = date
         onDateSelected(date)
     }

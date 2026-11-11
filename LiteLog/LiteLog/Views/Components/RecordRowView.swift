@@ -8,13 +8,6 @@ private let dayFormatter: DateFormatter = {
     return formatter
 }()
 
-private let monthFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.locale = .autoupdatingCurrent
-    formatter.setLocalizedDateFormatFromTemplate("MMM")
-    return formatter
-}()
-
 private let weekdayFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.locale = .autoupdatingCurrent
@@ -47,7 +40,6 @@ struct RecordRowView: View, Equatable {
     @Environment(\.colorScheme) private var colorScheme
     
     private var dayString: String { dayFormatter.string(from: record.date) }
-    private var monthDayString: String { monthFormatter.string(from: record.date) }
     private var weekdayString: String { weekdayFormatter.string(from: record.date) }
     private var weightString: String { unit.convertFromKg(record.weight).smartFormatted }
     private var bodyFatString: String? { record.bodyFatPercentageValue?.smartFormatted }
@@ -120,18 +112,14 @@ struct RecordRowView: View, Equatable {
     
     private var dateBadgeView: some View {
         VStack(spacing: 2) {
-            Text(weekdayString)
-                .font(.caption2)
-                .foregroundColor(Color(.tertiaryLabel))
-            
             Text(dayString)
-                .font(.headline)
-                .fontWeight(.semibold)
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(Color(.secondaryLabel))
-            
-            Text(monthDayString)
-                .font(.caption2)
+
+            Text(weekdayString)
+                .font(.system(size: 9))
                 .foregroundColor(Color(.tertiaryLabel))
+
         }
         .frame(width: 44)
         .padding(.vertical, 6)
@@ -140,7 +128,7 @@ struct RecordRowView: View, Equatable {
     private var weightView: some View {
         HStack(alignment: .firstTextBaseline, spacing: 4) {
             Text(weightString)
-                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .font(.system(size: 20, weight: .bold, design: .rounded))
                 .foregroundColor(.primaryText)
             
             Text(unit.shortName)
@@ -157,17 +145,16 @@ struct RecordRowView: View, Equatable {
             
             VStack(alignment: .leading, spacing: 1) {
                 Text(NSLocalizedString("measure.body.fat", comment: ""))
-                    .font(.caption2)
+                    .font(.system(size: 9))
                     .foregroundColor(.secondaryText)
                 
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text(bodyFat)
-                        .font(.body)
-                        .fontWeight(.bold)
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundColor(.primaryText)
                     
                     Text("%")
-                        .font(.caption)
+                        .font(.system(size: 10))
                         .foregroundColor(.secondaryText)
                 }
             }
@@ -184,7 +171,12 @@ struct RecordRowView: View, Equatable {
                 Spacer().frame(width: 56)
             }
             
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 75))], spacing: 12) {
+            LazyVGrid(
+                columns: [
+                    GridItem(.adaptive(minimum: 68, maximum: 96), spacing: 8)
+                ],
+                spacing: 8
+            ) {
                 if let waist = waistString {
                     measurementCardView(value: waist, unit: "cm", title: NSLocalizedString("measure.waist", comment: ""))
                 }
@@ -208,23 +200,26 @@ struct RecordRowView: View, Equatable {
         VStack(alignment: .center, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value)
-                    .font(.body)
-                    .fontWeight(.semibold)
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.primaryText)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
                 
                 Text(unit)
-                    .font(.caption2)
+                    .font(.system(size: 9))
                     .foregroundColor(.secondaryText)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
             }
             
             Text(title)
-                .font(.caption2)
+                .font(.system(size: 9))
                 .foregroundColor(.secondaryText)
                 .lineLimit(1)
         }
-        .frame(maxWidth: .infinity, minHeight: 48)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, minHeight: 40)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
         .background(colorScheme == .dark ? Color(.tertiarySystemBackground) : Color(.secondarySystemBackground))
         .cornerRadius(10)
     }

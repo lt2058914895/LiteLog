@@ -99,9 +99,13 @@
 "record.calendar" = "Calendar";
 "calendar.trend.up" = "Up from the previous record";
 "calendar.trend.down" = "Down from the previous record";
-"calendar.trend.unchanged" = "Unchanged from the previous record";
+"calendar.trend.unchanged" = "Little fluctuation from the previous record";
 "calendar.trend.first" = "First entry";
 "calendar.accessibility.format" = "%@, %@ %@, %@";
+"calendar.legend.title" = "Weight color guide";
+"calendar.legend.down" = "Green: lower than the last entry";
+"calendar.legend.up" = "Orange: higher than the last entry";
+"calendar.legend.neutral.format" = "Gray: fluctuates by no more than %@ %@, or first entry";
 "record.add" = "Log Weight";
 "record.edit" = "Edit Weight Entry";
 "record.note" = "Note";

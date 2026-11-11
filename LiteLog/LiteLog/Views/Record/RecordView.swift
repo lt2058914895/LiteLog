@@ -9,7 +9,7 @@ struct RecordView: View {
 
     @State private var selectedDate: Date?
     @State private var recordToEditData: RecordFormData?
-    @State private var viewMode: ViewMode = .list
+    @State private var viewMode: ViewMode = .calendar
     @State private var isPresentingAddSheet = false
     @State private var isPresentingEditSheet = false
     @State private var showingProfileEditor = false
@@ -26,8 +26,8 @@ struct RecordView: View {
     }
 
     enum ViewMode: String, CaseIterable {
-        case list = "home.history"
         case calendar = "record.calendar"
+        case list = "home.history"
 
         var localizedKey: String { rawValue }
     }

@@ -116,9 +116,13 @@
 "record.calendar" = "日历";
 "calendar.trend.up" = "较上次上升";
 "calendar.trend.down" = "较上次下降";
-"calendar.trend.unchanged" = "与上次持平";
+"calendar.trend.unchanged" = "较上次浮动很小";
 "calendar.trend.first" = "首次记录";
 "calendar.accessibility.format" = "%@，%@ %@，%@";
+"calendar.legend.title" = "体重颜色说明";
+"calendar.legend.down" = "绿色：比上次下降";
+"calendar.legend.up" = "橙色：比上次上升";
+"calendar.legend.neutral.format" = "灰色：浮动不超过 %@ %@，或为首次记录";
 "record.add" = "记录体重";
 "record.edit" = "修改记录";
 "record.note" = "备注";
