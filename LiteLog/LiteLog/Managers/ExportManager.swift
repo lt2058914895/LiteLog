@@ -12,18 +12,49 @@ final class ExportManager {
     }
 
     func exportToCSV(records: [WeightRecord], unit: WeightUnit) -> URL? {
-        var csvContent = "Date,Weight (\(unit.shortName)),Body Fat (%),Note\n"
+        var csvContent = "\u{FEFF}" + [
+            "Date",
+            "Time",
+            "Period",
+            "Weight (\(unit.shortName))",
+            "Body Fat (%)",
+            "Waist (cm)",
+            "Hip (cm)",
+            "Chest (cm)",
+            "Thigh (cm)",
+            "Note"
+        ].joined(separator: ",") + "\n"
 
         let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.calendar = Calendar(identifier: .gregorian)
+        dateFormatter.timeZone = .autoupdatingCurrent
         dateFormatter.dateFormat = "yyyy-MM-dd"
 
-        for record in records.sorted(by: { $0.date > $1.date }) {
-            let dateString = dateFormatter.string(from: record.date)
-            let weight = unit.convertFromKg(record.weight)
-            let bodyFat = record.bodyFatPercentageValue.map { String(format: "%.1f", $0) } ?? ""
-            let note = record.note?.replacingOccurrences(of: ",", with: ";").replacingOccurrences(of: "\n", with: " ") ?? ""
+        let timeFormatter = DateFormatter()
+        timeFormatter.locale = Locale(identifier: "en_US_POSIX")
+        timeFormatter.calendar = Calendar(identifier: .gregorian)
+        timeFormatter.timeZone = .autoupdatingCurrent
+        timeFormatter.dateFormat = "HH:mm"
 
-            csvContent += "\(dateString),\(String(format: "%.1f", weight)),\(bodyFat),\"\(note)\"\n"
+        for record in records.sorted(by: { $0.date > $1.date }) {
+            let period = record.measurementTimePeriod
+                .flatMap(MeasurementTimePeriod.init(rawValue:))?.displayName
+                ?? record.measurementTimePeriod
+                ?? ""
+            let fields = [
+                dateFormatter.string(from: record.date),
+                timeFormatter.string(from: record.date),
+                csvField(period),
+                csvNumber(unit.convertFromKg(record.weight)),
+                csvNumber(record.bodyFatPercentageValue),
+                csvNumber(record.waistCircumferenceValue),
+                csvNumber(record.hipCircumferenceValue),
+                csvNumber(record.chestCircumferenceValue),
+                csvNumber(record.thighCircumferenceValue),
+                csvField(record.note ?? "")
+            ]
+            csvContent += fields.joined(separator: ",") + "\n"
         }
 
         let fileName = "LiteLog_Export_\(dateFormatter.string(from: Date())).csv"
@@ -36,6 +67,17 @@ final class ExportManager {
             Self.logger.error("Error writing CSV: \(error.localizedDescription)")
             return nil
         }
+    }
+
+    private func csvNumber(_ value: Double?) -> String {
+        guard let value else { return "" }
+        let formatted = String(format: "%.2f", value)
+        return formatted
+            .trimmingTrailingDecimalZeros
+    }
+
+    private func csvField(_ value: String) -> String {
+        "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
     }
 
     func export(
