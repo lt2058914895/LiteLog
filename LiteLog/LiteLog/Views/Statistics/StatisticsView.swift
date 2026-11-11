@@ -450,6 +450,14 @@ struct StatisticsView: View {
                     .font(.subheadline)
                     .foregroundColor(selectedMetric.color)
 
+                Text(selectedMetric.unit(weightUnit: settingsManager.weightUnit))
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.primaryText.opacity(0.82))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(selectedMetric.color.opacity(0.12))
+                    .cornerRadius(8)
+
                 Spacer()
             }
 
@@ -467,7 +475,9 @@ struct StatisticsView: View {
                     color: selectedMetric.color,
                     unit: selectedMetric.unit(weightUnit: settingsManager.weightUnit),
                     title: "",
-                    period: selectedPeriod
+                    period: selectedPeriod,
+                    chartRange: rangeStartDate...rangeEndDate,
+                    showsUnitInHeader: false
                 )
             }
         }
@@ -476,7 +486,7 @@ struct StatisticsView: View {
     private func metricData(for metric: Metric, in entries: [TrendEntry]) -> [(Date, Double)] {
         entries.compactMap { entry in
             metric.value(in: entry, weightUnit: settingsManager.weightUnit).map {
-                (entry.date, $0)
+                (entry.date.startOfDay, $0)
             }
         }
     }

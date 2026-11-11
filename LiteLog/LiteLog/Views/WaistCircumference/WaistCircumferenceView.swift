@@ -45,7 +45,12 @@ struct WaistCircumferenceView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    ModernTrendChartView(data: chartData, color: .primaryBlue, unit: "cm", title: NSLocalizedString("home.trend", comment: ""))
+                    ModernTrendChartView(
+                        data: chartData,
+                        color: .primaryBlue,
+                        unit: "cm",
+                        title: NSLocalizedString("home.trend", comment: "")
+                    )
 
                     historySection
                 }

@@ -45,7 +45,12 @@ struct BodyFatView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    ModernTrendChartView(data: chartData, color: .primaryBlue, unit: "%", title: NSLocalizedString("home.trend", comment: ""))
+                    ModernTrendChartView(
+                        data: chartData,
+                        color: .primaryBlue,
+                        unit: "%",
+                        title: NSLocalizedString("home.trend", comment: "")
+                    )
 
                     historySection
                 }
