@@ -61,7 +61,7 @@ struct UserInfoEditorView: View {
         .alert(NSLocalizedString("error.title", comment: ""), isPresented: $showingError) {
             Button(NSLocalizedString("action.ok", comment: ""), role: .cancel) {}
         } message: {
-            Text(NSLocalizedString("profile.avatar.save.failed", value: "无法保存头像，请重试。", comment: ""))
+            Text(NSLocalizedString("profile.avatar.save.failed", comment: ""))
         }
     }
 

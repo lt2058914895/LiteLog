@@ -119,7 +119,6 @@
 "stats.year" = "Year";
 "stats.average" = "Average";
 "stats.change" = "Change";
-"stats.loss.speed" = "Change Rate";
 "stats.metric" = "Metric";
 "stats.min" = "Min";
 "stats.max" = "Max";
@@ -184,12 +183,10 @@
 "contact.email.label" = "Contact Email";
 "contact.copy.accessibility" = "Copy %@";
 "contact.copy.success" = "Copied %@";
-"settings.email" = "Email";
 "settings.rate" = "Rate on the App Store";
 "settings.rate.desc" = "Your review helps us improve LiteLog";
 "settings.share" = "Share with Friends";
 "settings.share.desc" = "Share LiteLog with friends or family";
-"settings.version" = "Version";
 "settings.version.format" = "Version %@";
 "settings.notification.denied.title" = "Notifications Are Off";
 "settings.notification.denied.message" = "Enable notifications for LiteLog in iOS Settings to use reminders.";
@@ -208,8 +205,6 @@
 "action.delete" = "Delete";
 "action.done" = "Done";
 "action.confirm" = "Confirm";
-"action.submit" = "Submit";
-"action.submitting" = "Submitting...";
 "action.ok" = "OK";
 "error.title" = "Error";
 "error.record.not.found" = "Record not found";

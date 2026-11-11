@@ -140,7 +140,6 @@
 "stats.year" = "年";
 "stats.average" = "平均";
 "stats.change" = "变化";
-"stats.loss.speed" = "减重速度";
 "stats.metric" = "指标";
 "stats.min" = "最小";
 "stats.max" = "最大";
@@ -178,10 +177,10 @@
 "settings.export" = "导出数据";
 "settings.export.desc" = "创建可恢复的 JSON 备份，或导出 CSV 表格";
 "settings.export.sheet.desc" = "选择数据的使用方式。";
-"settings.export.csv" = "导出CSV";
+"settings.export.csv" = "导出 CSV";
 "settings.export.csv.desc" = "适合在表格软件中查看或整理记录。";
 "settings.export.json" = "导出 JSON 备份";
-"settings.export.json.desc" = "包含资料、记录、昵称和头像，可在 LiteLog 中恢复。";
+"settings.export.json.desc" = "包含资料、记录、昵称和头像，可在轻身记中恢复。";
 "settings.export.error" = "导出失败";
 "settings.export.error.message" = "无法创建备份文件，请重试。";
 "settings.restore" = "从备份恢复";
@@ -206,15 +205,13 @@
 "contact.email.label" = "联系邮箱";
 "contact.copy.accessibility" = "复制%@";
 "contact.copy.success" = "已复制%@";
-"settings.email" = "邮箱";
 "settings.rate" = "去 App Store 评分";
-"settings.rate.desc" = "你的评价能帮助 LiteLog 继续改进";
+"settings.rate.desc" = "你的评价能帮助轻身记继续改进";
 "settings.share" = "推荐给好友";
-"settings.share.desc" = "把 LiteLog 分享给需要的人";
-"settings.version" = "版本";
+"settings.share.desc" = "把轻身记分享给需要的人";
 "settings.version.format" = "版本 %@";
 "settings.notification.denied.title" = "通知权限未开启";
-"settings.notification.denied.message" = "请前往 iOS 设置允许 LiteLog 发送通知，才能使用每日提醒。";
+"settings.notification.denied.message" = "请前往 iOS 设置允许轻身记发送通知，才能使用每日提醒。";
 "settings.open.settings" = "打开设置";
 "settings.notification.error.title" = "提醒更新失败";
 
@@ -234,8 +231,6 @@
 "action.delete" = "删除";
 "action.done" = "完成";
 "action.confirm" = "确定";
-"action.submit" = "提交";
-"action.submitting" = "提交中...";
 "action.ok" = "好的";
 
 // 错误
@@ -245,7 +240,7 @@
 "error.save.failed" = "保存失败，请重试";
 
 // 通知
-"notification.body" = "该记录今天的体重了！";
+"notification.body" = "该记录一下今天的体重了！";
 "notification.weight.recorded.title" = "体重已记录";
 "notification.weight.recorded.body" = "今日体重：%.1f kg";
 "notification.milestone.body" = "恭喜！您已达到减重里程碑！";
@@ -258,5 +253,5 @@
 
 "record.count.records.one" = "%d 条记录";
 "record.count.records.other" = "%d 条记录";
-"home.goal.label" = "目标:";
-"home.current.label" = "当前:";
+"home.goal.label" = "目标：";
+"home.current.label" = "当前：";
