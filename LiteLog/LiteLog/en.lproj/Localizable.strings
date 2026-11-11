@@ -180,13 +180,11 @@
 "settings.contact" = "Contact Us";
 "settings.contact.desc" = "Get help or share feedback";
 "contact.page.title" = "How Can We Help?";
-"contact.page.subtitle" = "Found a bug, have a question, or want to suggest a feature? Contact us by email or WeChat. We usually reply within 1–2 business days.";
+"contact.page.subtitle" = "Found a bug, have a question, or want to suggest a feature? Contact us by email. We usually reply within 1–2 business days.";
 "contact.email.label" = "Contact Email";
-"contact.wechat.label" = "WeChat";
 "contact.copy.accessibility" = "Copy %@";
 "contact.copy.success" = "Copied %@";
 "settings.email" = "Email";
-"settings.wechat" = "WeChat";
 "settings.rate" = "Rate on the App Store";
 "settings.rate.desc" = "Your review helps us improve LiteLog";
 "settings.share" = "Share with Friends";

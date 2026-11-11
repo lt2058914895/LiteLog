@@ -6,7 +6,6 @@ struct ContactView: View {
     @State private var copiedItem: ContactItem?
 
     private let email = "2058914895@qq.com"
-    private let wechat = "SweetLili_91"
 
     var body: some View {
         ZStack {
@@ -23,16 +22,6 @@ struct ContactView: View {
                             icon: emailIcon,
                             title: NSLocalizedString("contact.email.label", comment: ""),
                             value: email
-                        )
-
-                        Divider()
-                            .padding(.leading, 60)
-
-                        contactRow(
-                            item: .wechat,
-                            icon: wechatIcon,
-                            title: NSLocalizedString("contact.wechat.label", comment: ""),
-                            value: wechat
                         )
                     }
                     .background(colorScheme == .dark ? Color(.secondarySystemGroupedBackground) : .white)
@@ -132,12 +121,6 @@ struct ContactView: View {
         }
     }
 
-    private var wechatIcon: some View {
-        Image(systemName: "message.fill")
-            .font(.system(size: 29, weight: .medium))
-            .foregroundColor(Color(hex: "4CCB5B"))
-    }
-
     private func copy(_ value: String, item: ContactItem) {
         UIPasteboard.general.string = value
         HapticManager.light()
@@ -187,14 +170,11 @@ struct ContactView: View {
 
 private enum ContactItem: Equatable {
     case email
-    case wechat
 
     var displayName: String {
         switch self {
         case .email:
             return NSLocalizedString("contact.email.label", comment: "")
-        case .wechat:
-            return NSLocalizedString("contact.wechat.label", comment: "")
         }
     }
 }

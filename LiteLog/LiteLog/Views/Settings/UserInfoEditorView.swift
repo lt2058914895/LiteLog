@@ -77,7 +77,7 @@ struct UserInfoEditorView: View {
             Button {
                 showImagePicker = true
             } label: {
-                ZStack(alignment: .bottomTrailing) {
+                ZStack {
                     if let image = displayedAvatar {
                         Image(uiImage: image)
                             .resizable()
@@ -98,16 +98,6 @@ struct UserInfoEditorView: View {
                         }
                     }
 
-                    ZStack {
-                        Circle()
-                            .fill(Color.primaryBlue)
-                            .frame(width: 36, height: 36)
-                            .shadow(color: Color.primaryBlue.opacity(0.3), radius: 4, x: 0, y: 2)
-                        Image(systemName: "photo")
-                            .resizable()
-                            .frame(width: 18, height: 18)
-                            .foregroundColor(.white)
-                    }
                 }
             }
             .buttonStyle(.plain)

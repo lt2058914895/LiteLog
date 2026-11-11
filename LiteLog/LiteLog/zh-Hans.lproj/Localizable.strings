@@ -202,13 +202,11 @@
 "settings.contact" = "联系我们";
 "settings.contact.desc" = "遇到问题或有建议，欢迎联系我们";
 "contact.page.title" = "有什么可以帮你？";
-"contact.page.subtitle" = "遇到问题、发现 Bug，或有功能建议，欢迎通过邮件或微信联系我。通常会在 1–2 个工作日内回复。";
+"contact.page.subtitle" = "遇到问题、发现 Bug，或有功能建议，欢迎通过邮件联系我。通常会在 1–2 个工作日内回复。";
 "contact.email.label" = "联系邮箱";
-"contact.wechat.label" = "微信";
 "contact.copy.accessibility" = "复制%@";
 "contact.copy.success" = "已复制%@";
 "settings.email" = "邮箱";
-"settings.wechat" = "微信";
 "settings.rate" = "去 App Store 评分";
 "settings.rate.desc" = "你的评价能帮助 LiteLog 继续改进";
 "settings.share" = "推荐给好友";
