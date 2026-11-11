@@ -55,13 +55,11 @@ struct ProfileEditorView: View {
                 }
                 .padding()
             }
+            .scrollDismissesKeyboard(.interactively)
             
             if showingSuccessToast {
                 successToast
             }
-        }
-        .onTapGesture {
-            hideKeyboard()
         }
         .navigationTitle(NSLocalizedString("settings.profile", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
@@ -69,6 +67,12 @@ struct ProfileEditorView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 backButton
+            }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button(NSLocalizedString("action.done", comment: "")) {
+                    focusedField = nil
+                }
             }
         }
         .toolbar(.hidden, for: .tabBar)
@@ -210,7 +214,6 @@ struct ProfileEditorView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(focusedField == .height ? Color.primaryBlue : Color.clear, lineWidth: 2)
-                .animation(.easeInOut(duration: 0.2), value: focusedField)
         )
         .shadow(color: focusedField == .height ? Color.primaryBlue.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
     }
@@ -273,7 +276,6 @@ struct ProfileEditorView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(focusedField == .goalWeight ? Color.primaryBlue : Color.clear, lineWidth: 2)
-                .animation(.easeInOut(duration: 0.2), value: focusedField)
         )
         .shadow(color: focusedField == .goalWeight ? Color.primaryBlue.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
     }
@@ -302,7 +304,6 @@ struct ProfileEditorView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(focusedField == .goalBodyFat ? Color.primaryBlue : Color.clear, lineWidth: 2)
-                .animation(.easeInOut(duration: 0.2), value: focusedField)
         )
         .shadow(color: focusedField == .goalBodyFat ? Color.primaryBlue.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
     }
@@ -331,7 +332,6 @@ struct ProfileEditorView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(focusedField == field ? Color.primaryBlue : Color.clear, lineWidth: 2)
-                .animation(.easeInOut(duration: 0.2), value: focusedField)
         )
         .shadow(color: focusedField == field ? Color.primaryBlue.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
     }

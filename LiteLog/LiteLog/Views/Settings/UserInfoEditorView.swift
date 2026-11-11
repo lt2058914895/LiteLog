@@ -34,6 +34,7 @@ struct UserInfoEditorView: View {
                 }
                 .padding()
             }
+            .scrollDismissesKeyboard(.interactively)
             .ignoresSafeArea(.keyboard)
 
             if showingSuccessToast {
