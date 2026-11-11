@@ -114,6 +114,11 @@
 
 // 记录页
 "record.calendar" = "日历";
+"calendar.trend.up" = "较上次上升";
+"calendar.trend.down" = "较上次下降";
+"calendar.trend.unchanged" = "与上次持平";
+"calendar.trend.first" = "首次记录";
+"calendar.accessibility.format" = "%@，%@ %@，%@";
 "record.add" = "记录体重";
 "record.edit" = "修改记录";
 "record.note" = "备注";

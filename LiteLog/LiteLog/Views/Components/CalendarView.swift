@@ -9,8 +9,39 @@ struct CalendarView: View {
     @State private var currentMonth = Date()
 
     private let calendar: Calendar = Calendar.current
-    private let recordDates: Set<Date>
     private let recordsByDate: [Date: WeightRecord]
+    private let trendByDate: [Date: WeightTrend]
+
+    private enum WeightTrend {
+        case increase
+        case decrease
+        case unchanged
+        case first
+
+        var systemImage: String? {
+            switch self {
+            case .increase:
+                return "arrow.up"
+            case .decrease:
+                return "arrow.down"
+            case .unchanged, .first:
+                return nil
+            }
+        }
+
+        var accessibilityKey: String {
+            switch self {
+            case .increase:
+                return "calendar.trend.up"
+            case .decrease:
+                return "calendar.trend.down"
+            case .unchanged:
+                return "calendar.trend.unchanged"
+            case .first:
+                return "calendar.trend.first"
+            }
+        }
+    }
 
     init(records: [WeightRecord], unit: WeightUnit, selectedDate: Binding<Date?>, onDateSelected: @escaping (Date) -> Void) {
         self.records = records
@@ -19,17 +50,36 @@ struct CalendarView: View {
         self.onDateSelected = onDateSelected
         
         let cal = Calendar.current
-        self.recordDates = Set(records.map { cal.startOfDay(for: $0.date) })
-        self.recordsByDate = records.reduce(into: [Date: WeightRecord]()) { dict, record in
+        let dailyRecords = records.reduce(into: [Date: WeightRecord]()) { dict, record in
             let key = cal.startOfDay(for: record.date)
             if let existing = dict[key] {
-                if record.date > existing.date {
+                if record.date > existing.date ||
+                    (record.date == existing.date && record.createdAt > existing.createdAt) {
                     dict[key] = record
                 }
             } else {
                 dict[key] = record
             }
         }
+        self.recordsByDate = dailyRecords
+
+        var trends: [Date: WeightTrend] = [:]
+        var previousWeight: Double?
+        for day in dailyRecords.keys.sorted() {
+            guard let weight = dailyRecords[day]?.weight else { continue }
+            if let previousWeight {
+                let change = weight - previousWeight
+                if abs(change) < 0.05 {
+                    trends[day] = .unchanged
+                } else {
+                    trends[day] = change > 0 ? .increase : .decrease
+                }
+            } else {
+                trends[day] = .first
+            }
+            previousWeight = weight
+        }
+        self.trendByDate = trends
     }
 
     private var daysInMonth: [Date] {
@@ -139,10 +189,11 @@ struct CalendarView: View {
 
     private func dayCellView(_ date: Date) -> some View {
         let isSelected = selectedDate.map { calendar.isDate(date, inSameDayAs: $0) } ?? false
-        _ = recordDates.contains(calendar.startOfDay(for: date))
         let isToday = calendar.isDateInToday(date)
         let dayNumber = calendar.component(.day, from: date)
-        let record = recordsByDate[calendar.startOfDay(for: date)]
+        let day = calendar.startOfDay(for: date)
+        let record = recordsByDate[day]
+        let trend = trendByDate[day] ?? .first
 
         return Button(action: { selectDate(date) }) {
             VStack(spacing: 2) {
@@ -152,9 +203,18 @@ struct CalendarView: View {
                     .foregroundColor(textColor(isToday: isToday, isSelected: isSelected))
 
                 if let record = record {
-                    Text(unit.convertFromKg(record.weight).smartFormatted)
-                        .font(.caption2)
-                        .foregroundColor(isSelected ? .white : .secondaryText)
+                    let weight = unit.convertFromKg(record.weight).smartFormatted
+                    HStack(spacing: 1) {
+                        Text(weight)
+                            .lineLimit(1)
+
+                        if let systemImage = trend.systemImage {
+                            Image(systemName: systemImage)
+                                .font(.system(size: 8, weight: .bold))
+                        }
+                    }
+                    .font(.caption2)
+                    .foregroundColor(weightColor(trend: trend, isSelected: isSelected))
                 }
             }
             .frame(width: 44, height: 48)
@@ -163,6 +223,39 @@ struct CalendarView: View {
                     .fill(isSelected ? Color.primaryBlue : Color.primaryBlue.opacity(0.15))
             )
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel(date: date, record: record, trend: trend))
+    }
+
+    private func weightColor(trend: WeightTrend, isSelected: Bool) -> Color {
+        if isSelected {
+            return .white
+        }
+        switch trend {
+        case .increase:
+            return .orange
+        case .decrease:
+            return .green
+        case .unchanged, .first:
+            return .secondaryText
+        }
+    }
+
+    private func accessibilityLabel(
+        date: Date,
+        record: WeightRecord?,
+        trend: WeightTrend
+    ) -> String {
+        guard let record else {
+            return date.mediumDateString
+        }
+        return String(
+            format: NSLocalizedString("calendar.accessibility.format", comment: ""),
+            date.mediumDateString,
+            unit.convertFromKg(record.weight).smartFormatted,
+            unit.shortName,
+            NSLocalizedString(trend.accessibilityKey, comment: "")
+        )
     }
 
     private func textColor(isToday: Bool, isSelected: Bool) -> Color {

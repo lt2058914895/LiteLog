@@ -97,6 +97,11 @@
 "home.trend.days" = "%d days";
 "home.trend.empty" = "No period change data yet";
 "record.calendar" = "Calendar";
+"calendar.trend.up" = "Up from the previous record";
+"calendar.trend.down" = "Down from the previous record";
+"calendar.trend.unchanged" = "Unchanged from the previous record";
+"calendar.trend.first" = "First entry";
+"calendar.accessibility.format" = "%@, %@ %@, %@";
 "record.add" = "Log Weight";
 "record.edit" = "Edit Weight Entry";
 "record.note" = "Note";
