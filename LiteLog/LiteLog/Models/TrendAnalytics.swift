@@ -156,24 +156,21 @@ enum TrendAnalytics {
     static func dailyEntries(
         from entries: [TrendEntry],
         scope: MeasurementScope,
-        calendar: Calendar = .current
+        calendar: Calendar = .current,
+        including isIncluded: (TrendEntry) -> Bool = { _ in true }
     ) -> [TrendEntry] {
         let grouped = Dictionary(grouping: entries) {
             calendar.startOfDay(for: $0.date)
         }
 
         return grouped.compactMap { _, dayEntries in
-            switch scope {
-            case .all:
-                return latest(from: dayEntries)
-            default:
+            let scopedEntries = dayEntries.filter { entry in
                 guard let preferredPeriod = scope.preferredPeriod else {
-                    return latest(from: dayEntries)
+                    return true
                 }
-                return latest(from: dayEntries.filter {
-                    $0.measurementTimePeriod == preferredPeriod
-                })
+                return entry.measurementTimePeriod == preferredPeriod
             }
+            return latest(from: scopedEntries.filter(isIncluded))
         }
         .sorted { $0.date < $1.date }
     }

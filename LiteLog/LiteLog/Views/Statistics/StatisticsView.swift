@@ -104,7 +104,16 @@ struct StatisticsView: View {
     }
 
     private var scopedDailyEntries: [TrendEntry] {
-        TrendAnalytics.dailyEntries(from: allEntries, scope: selectedScope)
+        TrendAnalytics.dailyEntries(
+            from: allEntries,
+            scope: selectedScope,
+            including: { entry in
+                selectedMetric.value(
+                    in: entry,
+                    weightUnit: settingsManager.weightUnit
+                ) != nil
+            }
+        )
     }
 
     private var rangeStartDate: Date {

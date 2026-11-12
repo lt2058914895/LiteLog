@@ -138,14 +138,19 @@ struct CalendarView: View {
         return formatter.string(from: currentMonth)
     }
 
-    private var monthlySummarySection: some View {
-        let monthRecords = recordsByDate
-            .filter {
-                calendar.isDate($0.key, equalTo: currentMonth, toGranularity: .month)
+    private var monthlyRecords: [(date: Date, record: WeightRecord)] {
+        daysInMonth.compactMap { date in
+            let day = calendar.startOfDay(for: date)
+            guard let record = recordsByDate[day] else {
+                return nil
             }
-            .sorted { $0.key < $1.key }
-            .map(\.value)
-        let weights = monthRecords.map { unit.convertFromKg($0.weight) }
+            return (day, record)
+        }
+    }
+
+    private var monthlySummarySection: some View {
+        let monthRecords = monthlyRecords
+        let weights = monthRecords.map { unit.convertFromKg($0.record.weight) }
         let change: Double? = {
             guard weights.count >= 2,
                   let first = weights.first,
