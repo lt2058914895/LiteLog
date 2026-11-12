@@ -18,6 +18,7 @@ struct ModernTrendChartView: View {
     private let plotTopSpacing: CGFloat = 8
     private let xAxisLabelSpacing: CGFloat = 20
     private let xAxisBottomSpacing: CGFloat = 8
+    private let xAxisEdgePadding: CGFloat = 12
 
     init(
         data: [(Date, Double)],
@@ -161,7 +162,13 @@ struct ModernTrendChartView: View {
                 .symbolSize(72)
             }
         }
-        .chartXScale(domain: xDomain)
+        .chartXScale(
+            domain: xDomain,
+            range: .plotDimension(
+                startPadding: xAxisEdgePadding,
+                endPadding: xAxisEdgePadding
+            )
+        )
         .chartYScale(domain: axisScale.displayMin...axisScale.displayMax)
         .chartLegend(.hidden)
         .chartYAxis {
@@ -273,11 +280,7 @@ struct ModernTrendChartView: View {
 
     private var xDomain: ClosedRange<Date> {
         if let chartRange {
-            let span = chartRange.upperBound.timeIntervalSince(chartRange.lowerBound)
-            let padding = max(span * 0.02, 6 * 3_600)
-            let lowerBound = chartRange.lowerBound.addingTimeInterval(-padding)
-            let upperBound = chartRange.upperBound.addingTimeInterval(padding)
-            return lowerBound...upperBound
+            return chartRange
         }
 
         guard let first = data.first?.0, let last = data.last?.0 else {
@@ -287,23 +290,14 @@ struct ModernTrendChartView: View {
         if first == last {
             return first.addingTimeInterval(-43_200)...last.addingTimeInterval(43_200)
         }
-        let span = last.timeIntervalSince(first)
-        let padding = max(span * 0.06, 6 * 3_600)
-        return first.addingTimeInterval(-padding)...last.addingTimeInterval(padding)
+        return first...last
     }
 
     private var xAxisDates: [Date] {
         if let chartRange {
             let span = chartRange.upperBound.timeIntervalSince(chartRange.lowerBound)
-            let count: Int
-            switch period {
-            case .week:
-                count = 3
-            case .year:
-                count = 5
-            default:
-                count = 4
-            }
+            let weekCount = period?.weekCount ?? 4
+            let count = weekCount <= 1 ? 3 : (weekCount <= 4 ? 4 : 5)
             return (0..<count).map { index in
                 chartRange.lowerBound.addingTimeInterval(
                     span * Double(index) / Double(count - 1)
@@ -333,7 +327,8 @@ struct ModernTrendChartView: View {
         let domainEnd = xDomain.upperBound
         let span = max(domainEnd.timeIntervalSince(domainStart), 1)
         let progress = date.timeIntervalSince(domainStart) / span
-        return plotFrame.minX + CGFloat(progress) * plotFrame.width
+        let usableWidth = max(plotFrame.width - xAxisEdgePadding * 2, 1)
+        return plotFrame.minX + xAxisEdgePadding + CGFloat(progress) * usableWidth
     }
 
     private func updateSelection(
@@ -362,7 +357,8 @@ struct ModernTrendChartView: View {
     private func formatAxisDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = .autoupdatingCurrent
-        formatter.setLocalizedDateFormatFromTemplate(period == .year ? "MMM" : "Md")
+        let template = (period?.weekCount ?? 0) > 8 ? "MMM" : "Md"
+        formatter.setLocalizedDateFormatFromTemplate(template)
         return formatter.string(from: date).trimmingTrailingDecimalZeros
     }
 

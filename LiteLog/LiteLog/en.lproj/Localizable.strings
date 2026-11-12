@@ -106,6 +106,7 @@
 "calendar.legend.down" = "Green: lower than the last entry";
 "calendar.legend.up" = "Orange: higher than the last entry";
 "calendar.legend.neutral.format" = "Gray: fluctuates by no more than %@ %@, or first entry";
+"calendar.month.summary" = "Monthly Overview";
 "record.add" = "Log Weight";
 "record.edit" = "Edit Weight Entry";
 "record.note" = "Note";
@@ -122,10 +123,8 @@
 "period.after_exercise" = "After Exercise";
 "period.before_bed" = "Before Bed";
 "period.random" = "Random";
-"stats.week" = "Week";
-"stats.month" = "Month";
-"stats.quarter" = "Quarter";
-"stats.year" = "Year";
+"stats.7days" = "7 Days";
+"stats.weeks.format" = "%d Weeks";
 "stats.average" = "Average";
 "stats.change" = "Change";
 "stats.metric" = "Metric";

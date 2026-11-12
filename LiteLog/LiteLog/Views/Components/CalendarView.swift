@@ -99,6 +99,8 @@ struct CalendarView: View {
 
             Divider()
 
+            monthlySummarySection
+
             trendLegend
         }
         .padding()
@@ -134,6 +136,141 @@ struct CalendarView: View {
         formatter.locale = .autoupdatingCurrent
         formatter.setLocalizedDateFormatFromTemplate("yMMMM")
         return formatter.string(from: currentMonth)
+    }
+
+    private var monthlySummarySection: some View {
+        let monthRecords = recordsByDate
+            .filter {
+                calendar.isDate($0.key, equalTo: currentMonth, toGranularity: .month)
+            }
+            .sorted { $0.key < $1.key }
+            .map(\.value)
+        let weights = monthRecords.map { unit.convertFromKg($0.weight) }
+        let change: Double? = {
+            guard weights.count >= 2,
+                  let first = weights.first,
+                  let last = weights.last else {
+                return nil
+            }
+            return last - first
+        }()
+
+        return VStack(alignment: .leading, spacing: 10) {
+            Text(NSLocalizedString("calendar.month.summary", comment: ""))
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(.primaryText)
+
+            HStack(spacing: 12) {
+                monthlyPrimaryMetric(
+                    title: NSLocalizedString("stats.average", comment: ""),
+                    value: weights.average?.smartFormatted ?? "--",
+                    unit: unit.shortName,
+                    color: .primaryBlue
+                )
+
+                Divider()
+                    .frame(height: 44)
+
+                monthlyPrimaryMetric(
+                    title: NSLocalizedString("stats.change", comment: ""),
+                    value: formattedMonthlyChange(change),
+                    unit: unit.shortName,
+                    color: changeColor(change)
+                )
+            }
+
+            HStack(spacing: 8) {
+                monthlySecondaryMetric(
+                    title: NSLocalizedString("stats.min", comment: ""),
+                    value: weights.min().map { $0.smartFormatted } ?? "--",
+                    unit: unit.shortName
+                )
+
+                monthlySecondaryMetric(
+                    title: NSLocalizedString("stats.max", comment: ""),
+                    value: weights.max().map { $0.smartFormatted } ?? "--",
+                    unit: unit.shortName
+                )
+
+                monthlySecondaryMetric(
+                    title: NSLocalizedString("stats.records", comment: ""),
+                    value: localizedRecordCount(monthRecords.count),
+                    unit: ""
+                )
+            }
+        }
+        .padding(12)
+        .background(Color.primaryBlue.opacity(0.06))
+        .cornerRadius(12)
+    }
+
+    private func monthlyPrimaryMetric(
+        title: String,
+        value: String,
+        unit: String,
+        color: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondaryText)
+
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(value)
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundColor(color)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+
+                Text(unit)
+                    .font(.caption2)
+                    .foregroundColor(.secondaryText)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func monthlySecondaryMetric(
+        title: String,
+        value: String,
+        unit: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption2)
+                .foregroundColor(.secondaryText)
+
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.65)
+
+                if !unit.isEmpty {
+                    Text(unit)
+                        .font(.caption2)
+                        .foregroundColor(.secondaryText)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 8)
+        .background(Color.primaryBlue.opacity(0.07))
+        .cornerRadius(9)
+    }
+
+    private func formattedMonthlyChange(_ change: Double?) -> String {
+        guard let change else { return "--" }
+        return (change > 0 ? "+" : "") + change.smartFormatted
+    }
+
+    private func changeColor(_ change: Double?) -> Color {
+        guard let change, abs(change) >= 0.005 else {
+            return .secondaryText
+        }
+        return change > 0 ? .red : .green
     }
 
     private var weekdayHeaderView: some View {

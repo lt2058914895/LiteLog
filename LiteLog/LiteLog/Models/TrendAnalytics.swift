@@ -31,6 +31,7 @@ enum MeasurementScope: String, CaseIterable, Identifiable {
     case morningFasting
     case afterExercise
     case beforeBed
+    case random
 
     var id: String { rawValue }
 
@@ -44,6 +45,8 @@ enum MeasurementScope: String, CaseIterable, Identifiable {
             return "period.after_exercise"
         case .beforeBed:
             return "period.before_bed"
+        case .random:
+            return "period.random"
         }
     }
 
@@ -57,6 +60,8 @@ enum MeasurementScope: String, CaseIterable, Identifiable {
             return .afterExercise
         case .beforeBed:
             return .beforeBed
+        case .random:
+            return .random
         }
     }
 }

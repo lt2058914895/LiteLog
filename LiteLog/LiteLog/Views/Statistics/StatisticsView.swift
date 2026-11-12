@@ -8,23 +8,42 @@ struct StatisticsView: View {
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: true)])
     private var records: FetchedResults<WeightRecord>
 
-    @State private var selectedPeriod: Period = .week
+    @State private var selectedPeriod: Period = .sevenDays
     @State private var selectedMetric: Metric = .weight
     @State private var selectedScope: MeasurementScope = .all
-    @State private var selectedYear = Calendar.current.component(.year, from: Date())
-    @State private var showYearPicker = false
     @State private var showingProfileEditor = false
 
-    private let minYear = 2000
-    private let maxYear = Calendar.current.component(.year, from: Date())
+    private let filterOptionSpacing: CGFloat = 8
+    private let filterOptionHorizontalPadding: CGFloat = 12
+    private let filterOptionVerticalPadding: CGFloat = 6
+    private let filterOptionCornerRadius: CGFloat = 8
 
-    enum Period: String, CaseIterable {
-        case week = "stats.week"
-        case month = "stats.month"
-        case quarter = "stats.quarter"
-        case year = "stats.year"
+    enum Period: Hashable {
+        case sevenDays
+        case weeks(Int)
 
-        var localizedKey: String { rawValue }
+        static let allOptions: [Period] = [.sevenDays] + (2...52).map(Period.weeks)
+
+        var weekCount: Int {
+            switch self {
+            case .sevenDays:
+                return 1
+            case .weeks(let count):
+                return count
+            }
+        }
+
+        var localizedLabel: String {
+            switch self {
+            case .sevenDays:
+                return NSLocalizedString("stats.7days", comment: "")
+            case .weeks(let count):
+                return String(
+                    format: NSLocalizedString("stats.weeks.format", comment: ""),
+                    count
+                )
+            }
+        }
     }
 
     enum Metric: String, CaseIterable, Identifiable {
@@ -90,39 +109,18 @@ struct StatisticsView: View {
 
     private var rangeStartDate: Date {
         let calendar = Calendar.current
-        switch selectedPeriod {
-        case .week:
-            return calendar.date(byAdding: .day, value: -6, to: Date().startOfDay) ?? Date().startOfDay
-        case .month:
-            return calendar.date(byAdding: .day, value: -29, to: Date().startOfDay) ?? Date().startOfDay
-        case .quarter:
-            return calendar.date(byAdding: .day, value: -89, to: Date().startOfDay) ?? Date().startOfDay
-        case .year:
-            var components = DateComponents()
-            components.year = selectedYear
-            components.month = 1
-            components.day = 1
-            return calendar.date(from: components) ?? Date()
-        }
+        let dayCount = selectedPeriod.weekCount * 7
+        return calendar.date(byAdding: .day, value: -(dayCount - 1), to: rangeEndDate) ?? rangeEndDate
     }
 
     private var rangeEndDate: Date {
-        let calendar = Calendar.current
-        switch selectedPeriod {
-        case .week, .month, .quarter:
-            return Date().endOfDay
-        case .year:
-            var components = DateComponents()
-            components.year = selectedYear
-            components.month = 12
-            components.day = 31
-            return calendar.date(from: components)?.endOfDay ?? Date()
-        }
+        Date().startOfDay
     }
 
     private var scopedRangeEntries: [TrendEntry] {
         scopedDailyEntries.filter {
-            $0.date >= rangeStartDate && $0.date <= rangeEndDate
+            let day = $0.date.startOfDay
+            return day >= rangeStartDate && day <= rangeEndDate
         }
     }
 
@@ -186,95 +184,36 @@ struct StatisticsView: View {
             .navigationDestination(isPresented: $showingProfileEditor) {
                 UserInfoEditorView()
             }
-            .onChange(of: selectedPeriod) { newValue in
-                if newValue != .year {
-                    selectedYear = maxYear
-                }
-            }
-            .sheet(isPresented: $showYearPicker) {
-                yearPickerSheet
-            }
         }
     }
 
     private var periodPicker: some View {
-        VStack(spacing: 12) {
-            Picker(NSLocalizedString("stats.period", comment: ""), selection: $selectedPeriod) {
-                ForEach(Period.allCases, id: \.self) { period in
-                    Text(NSLocalizedString(period.localizedKey, comment: ""))
-                        .tag(period)
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: filterOptionSpacing) {
+                ForEach(Period.allOptions, id: \.self) { period in
+                    Button {
+                        selectedPeriod = period
+                    } label: {
+                        periodSegmentLabel(
+                            title: period.localizedLabel,
+                            isSelected: selectedPeriod == period
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
-            .pickerStyle(.segmented)
-
-            if selectedPeriod == .year {
-                yearPicker
-            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var yearPicker: some View {
-        HStack(spacing: 12) {
-            Button(action: { selectedYear -= 1 }) {
-                Image(systemName: "chevron.left")
-                    .foregroundColor(selectedYear <= minYear ? .gray : .primaryBlue)
-                    .frame(width: 32, height: 32)
-                    .background(selectedYear <= minYear ? Color.gray.opacity(0.1) : Color.primaryBlue.opacity(0.1))
-                    .cornerRadius(8)
-            }
-            .disabled(selectedYear <= minYear)
-
-            Button(action: { showYearPicker = true }) {
-                Text("\(selectedYear)")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primaryText)
-                    .frame(maxWidth: .infinity)
-            }
-
-            Button(action: { selectedYear += 1 }) {
-                Image(systemName: "chevron.right")
-                    .foregroundColor(selectedYear >= maxYear ? .gray : .primaryBlue)
-                    .frame(width: 32, height: 32)
-                    .background(selectedYear >= maxYear ? Color.gray.opacity(0.1) : Color.primaryBlue.opacity(0.1))
-                    .cornerRadius(8)
-            }
-            .disabled(selectedYear >= maxYear)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : .white)
-        .cornerRadius(12)
-    }
-
-    private var yearPickerSheet: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                Picker(NSLocalizedString("stats.year", comment: ""), selection: $selectedYear) {
-                    ForEach(minYear...maxYear, id: \.self) { year in
-                        Text("\(year)").tag(year)
-                    }
-                }
-                .pickerStyle(.wheel)
-                .padding()
-
-                Button(NSLocalizedString("action.done", comment: "")) {
-                    showYearPicker = false
-                }
-                .primaryButtonStyle()
-                .padding()
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle(NSLocalizedString("stats.year", comment: ""))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(NSLocalizedString("action.cancel", comment: "")) {
-                        showYearPicker = false
-                    }
-                }
-            }
-        }
+    private func periodSegmentLabel(title: String, isSelected: Bool) -> some View {
+        filterChipStyle(
+            Text(title)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false),
+            isSelected: isSelected,
+            accentColor: .primaryBlue
+        )
     }
 
     private var metricPicker: some View {
@@ -284,16 +223,14 @@ struct StatisticsView: View {
                 .foregroundColor(.secondaryText)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: filterOptionSpacing) {
                     ForEach(Metric.allCases) { metric in
                         Button(action: { selectedMetric = metric }) {
-                            Text(NSLocalizedString(metric.localizedKey, comment: ""))
-                                .font(.caption)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(selectedMetric == metric ? selectedMetric.color.opacity(0.2) : chipBackground)
-                                .foregroundColor(selectedMetric == metric ? selectedMetric.color : .secondaryText)
-                                .cornerRadius(8)
+                            filterChipStyle(
+                                Text(NSLocalizedString(metric.localizedKey, comment: "")),
+                                isSelected: selectedMetric == metric,
+                                accentColor: metric.color
+                            )
                         }
                         .buttonStyle(.plain)
                     }
@@ -311,16 +248,14 @@ struct StatisticsView: View {
                 .foregroundColor(.secondaryText)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: filterOptionSpacing) {
                     ForEach(MeasurementScope.allCases) { scope in
                         Button(action: { selectedScope = scope }) {
-                            Text(NSLocalizedString(scope.localizedKey, comment: ""))
-                                .font(.caption)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(selectedScope == scope ? Color.primaryBlue.opacity(0.18) : chipBackground)
-                                .foregroundColor(selectedScope == scope ? .primaryBlue : .secondaryText)
-                                .cornerRadius(8)
+                            filterChipStyle(
+                                Text(NSLocalizedString(scope.localizedKey, comment: "")),
+                                isSelected: selectedScope == scope,
+                                accentColor: .primaryBlue
+                            )
                         }
                         .buttonStyle(.plain)
                     }
@@ -328,6 +263,21 @@ struct StatisticsView: View {
             }
 
         }
+    }
+
+    private func filterChipStyle<Content: View>(
+        _ content: Content,
+        isSelected: Bool,
+        accentColor: Color
+    ) -> some View {
+        content
+            .font(.caption.weight(isSelected ? .semibold : .medium))
+            .padding(.horizontal, filterOptionHorizontalPadding)
+            .padding(.vertical, filterOptionVerticalPadding)
+            .background(isSelected ? accentColor.opacity(0.18) : chipBackground)
+            .foregroundColor(isSelected ? accentColor : .secondaryText)
+            .cornerRadius(filterOptionCornerRadius)
+            .contentShape(Rectangle())
     }
 
     private var chipBackground: Color {
