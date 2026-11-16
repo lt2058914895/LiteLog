@@ -177,7 +177,6 @@
 "settings.restore.success.message.one" = "%d record was restored.";
 "settings.restore.success.message.other" = "%d records were restored.";
 "settings.restore.error.title" = "Restore Failed";
-"settings.backup.hint" = "Data is stored only on this device. Export a JSON backup before changing devices or removing the app.";
 "backup.error.version" = "This backup format is not supported.";
 "backup.error.empty" = "The backup does not contain any data.";
 "backup.error.profile" = "The profile data in this backup is invalid.";
@@ -193,7 +192,7 @@
 "contact.copy.success" = "Copied %@";
 "settings.rate" = "Rate on the App Store";
 "settings.rate.desc" = "Your review helps us improve LiteLog";
-"settings.share" = "Share with Friends";
+"settings.share" = "Share App";
 "settings.share.desc" = "Share LiteLog with friends or family";
 "settings.version.format" = "Version %@";
 "settings.notification.denied.title" = "Notifications Are Off";

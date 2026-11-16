@@ -264,6 +264,36 @@ struct SettingsView: View {
             settingsCard {
                 Button {
                     HapticManager.light()
+                    showingExportOptions = true
+                } label: {
+                    SettingsRowLabel(
+                        icon: "square.and.arrow.up.fill",
+                        tint: .green,
+                        title: NSLocalizedString("settings.export", comment: ""),
+                        subtitle: NSLocalizedString("settings.export.desc", comment: "")
+                    )
+                }
+                .buttonStyle(.plain)
+
+                divider
+
+                Button {
+                    HapticManager.light()
+                    showingRestoreSheet = true
+                } label: {
+                    SettingsRowLabel(
+                        icon: "arrow.counterclockwise.circle.fill",
+                        tint: .primaryBlue,
+                        title: NSLocalizedString("settings.restore", comment: ""),
+                        subtitle: NSLocalizedString("settings.restore.desc", comment: "")
+                    )
+                }
+                .buttonStyle(.plain)
+
+                divider
+
+                Button {
+                    HapticManager.light()
                     shareApp()
                 } label: {
                     SettingsRowLabel(
@@ -306,45 +336,8 @@ struct SettingsView: View {
                     )
                 }
                 .buttonStyle(.plain)
-
-                divider
-
-                Button {
-                    HapticManager.light()
-                    showingExportOptions = true
-                } label: {
-                    SettingsRowLabel(
-                        icon: "square.and.arrow.up.fill",
-                        tint: .green,
-                        title: NSLocalizedString("settings.export", comment: ""),
-                        subtitle: NSLocalizedString("settings.export.desc", comment: "")
-                    )
-                }
-                .buttonStyle(.plain)
-
-                divider
-
-                Button {
-                    HapticManager.light()
-                    showingRestoreSheet = true
-                } label: {
-                    SettingsRowLabel(
-                        icon: "arrow.counterclockwise.circle.fill",
-                        tint: .primaryBlue,
-                        title: NSLocalizedString("settings.restore", comment: ""),
-                        subtitle: NSLocalizedString("settings.restore.desc", comment: "")
-                    )
-                }
-                .buttonStyle(.plain)
             }
 
-            Label(
-                NSLocalizedString("settings.backup.hint", comment: ""),
-                systemImage: "info.circle"
-            )
-            .font(.caption)
-            .foregroundColor(.secondaryText)
-            .padding(.horizontal, 4)
         }
     }
 

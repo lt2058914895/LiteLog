@@ -107,7 +107,7 @@ struct BodyFatView: View {
             } else {
                 LazyVStack(spacing: 12) {
                     ForEach(viewModel.sortedFilteredBodyFatRecords, id: \.0) { date, monthRecords in
-                        Section {
+                        Section(header: monthHeaderView(date, count: monthRecords.count)) {
                             ForEach(monthRecords, id: \.record.objectID) { item in
                                 EquatableView(content: RecordRowView(record: item.record, unit: unit, weightChange: item.weightChange))
                                     .contentShape(Rectangle())
@@ -126,8 +126,6 @@ struct BodyFatView: View {
                                         )
                                     }
                             }
-                        } header: {
-                            monthHeaderView(date, count: monthRecords.count)
                         }
                     }
                 }

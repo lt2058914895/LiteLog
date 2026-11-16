@@ -199,7 +199,6 @@
 "settings.restore.success.message.one" = "已恢复 %d 条记录。";
 "settings.restore.success.message.other" = "已恢复 %d 条记录。";
 "settings.restore.error.title" = "恢复失败";
-"settings.backup.hint" = "数据仅保存在当前设备。更换设备或卸载 App 前，请先导出 JSON 备份。";
 "backup.error.version" = "不支持此备份文件版本。";
 "backup.error.empty" = "备份中不包含可恢复的数据。";
 "backup.error.profile" = "备份中的个人资料无效。";
@@ -215,7 +214,7 @@
 "contact.copy.success" = "已复制%@";
 "settings.rate" = "去 App Store 评分";
 "settings.rate.desc" = "你的评价能帮助轻身记继续改进";
-"settings.share" = "推荐给好友";
+"settings.share" = "分享App";
 "settings.share.desc" = "把轻身记分享给需要的人";
 "settings.version.format" = "版本 %@";
 "settings.notification.denied.title" = "通知权限未开启";

@@ -1,6 +1,7 @@
 import Foundation
 import os
 
+@MainActor
 final class ExportManager {
     static let shared = ExportManager()
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.litelog.app", category: "ExportManager")
