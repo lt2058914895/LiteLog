@@ -279,8 +279,6 @@
 "pro.preview.icloud.profile" = "Profile";
 "pro.preview.icloud.settings" = "Name & Avatar";
 "pro.preview.icloud.benefit.combined" = "Automatically backs up after each saved record.";
-"pro.preview.pdf.title" = "Body Data Report";
-"pro.preview.pdf.subtitle" = "Turn weight, body fat, and measurement changes into a shareable report.";
 "pro.preview.pdf.generating" = "Generating full report…";
 "pro.preview.pdf.cta" = "Unlock Pro to Export Full PDF";
 "pro.preview.pdf.not.ready" = "The PDF is not ready yet. Please try again.";
@@ -289,7 +287,6 @@
 "pro.preview.pdf.range.all" = "All Records";
 "pro.preview.pdf.range.days.format" = "Last %d days";
 "pro.preview.pdf.range.weeks.format" = "Last %d weeks";
-"pro.preview.pro.note" = "Pro unlocked. This benefit is ready to use.";
 
 "pro.icloud.title" = "iCloud Drive backup";
 "pro.icloud.desc" = "Saved automatically through iCloud Drive. The developer cannot read it.";
@@ -329,7 +326,6 @@
 "pro.pdf.failed" = "The report could not be generated. Please try again.";
 "pro.pdf.empty" = "Add at least one record before generating a report.";
 "pro.pdf.empty.range" = "There are no records in the selected date range. Choose a longer range.";
-"pro.pdf.success" = "Report generated";
 
 "report.title" = "Body Data Report";
 "report.generated.format" = "Generated: %@";
@@ -344,15 +340,9 @@
 "report.latest.weight" = "Latest Weight";
 "report.change" = "Period Change";
 "report.average" = "Average Weight";
-"report.coverage" = "Data Coverage";
 "report.coverage.summary.format" = "Coverage: %d days · %d records";
-"report.days.format" = "Days tracked: %d";
-"report.entries.format" = "Entries: %d";
 "report.min.max.format" = "Range %@–%@ %@";
 "report.no.comparison" = "No comparison";
-"report.records" = "Records";
-"report.first.weight" = "Starting";
-"report.goal.weight" = "Goal";
 "report.chart" = "Weight Trend";
 "report.chart.body.fat" = "Body Fat Trend";
 "report.chart.waist" = "Waist Trend";

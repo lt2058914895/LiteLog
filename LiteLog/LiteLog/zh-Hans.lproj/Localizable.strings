@@ -310,8 +310,6 @@
 "pro.preview.icloud.profile" = "个人资料";
 "pro.preview.icloud.settings" = "昵称与头像";
 "pro.preview.icloud.benefit.combined" = "保存记录后自动备份";
-"pro.preview.pdf.title" = "身体数据报告";
-"pro.preview.pdf.subtitle" = "把体重、体脂和围度变化整理成一份可分享的报告";
 "pro.preview.pdf.generating" = "正在生成完整报告…";
 "pro.preview.pdf.cta" = "解锁 Pro，导出完整 PDF";
 "pro.preview.pdf.not.ready" = "PDF 尚未生成完成，请稍后再试。";
@@ -320,7 +318,6 @@
 "pro.preview.pdf.range.all" = "全部记录";
 "pro.preview.pdf.range.days.format" = "最近 %d 天";
 "pro.preview.pdf.range.weeks.format" = "最近 %d 周";
-"pro.preview.pro.note" = "Pro 已解锁，可直接使用此权益";
 
 "pro.icloud.title" = "iCloud 云盘备份";
 "pro.icloud.desc" = "通过 iCloud 云盘自动保存，开发者无法读取。";
@@ -360,7 +357,6 @@
 "pro.pdf.failed" = "报告生成失败，请稍后重试。";
 "pro.pdf.empty" = "先添加至少一条记录，再生成报告。";
 "pro.pdf.empty.range" = "所选时间范围内没有记录，请选择更长的时间范围。";
-"pro.pdf.success" = "报告已生成";
 
 "report.title" = "身体数据报告";
 "report.generated.format" = "生成日期：%@";
@@ -375,15 +371,9 @@
 "report.latest.weight" = "最新体重";
 "report.change" = "区间变化";
 "report.average" = "平均体重";
-"report.coverage" = "数据覆盖";
 "report.coverage.summary.format" = "数据覆盖：%d 天 · %d 条记录";
-"report.days.format" = "统计 %d 天";
-"report.entries.format" = "记录 %d 条";
 "report.min.max.format" = "区间 %@–%@ %@";
 "report.no.comparison" = "暂无对比";
-"report.records" = "记录数";
-"report.first.weight" = "起始体重";
-"report.goal.weight" = "目标体重";
 "report.chart" = "体重趋势";
 "report.chart.body.fat" = "体脂率趋势";
 "report.chart.waist" = "腰围趋势";
