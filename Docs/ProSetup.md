@@ -1,6 +1,6 @@
 # LiteLog Pro 上线配置
 
-本版本已实现 StoreKit 2 一次性购买、付费墙、iCloud 自动备份、PDF 报告和评分引导。以下项目仍需在 Apple Developer 与 App Store Connect 中完成。
+本版本已实现 StoreKit 2 一次性购买、付费墙、iCloud 自动备份、身体数据报告和评分引导。以下项目仍需在 Apple Developer 与 App Store Connect 中完成。
 
 ## 1. 商品配置
 
@@ -40,19 +40,20 @@
 2. 选择 Product > Scheme > Edit Scheme。
 3. 在 Run > Options 中选择 StoreKit Configuration。
 4. 选择 `LiteLog/LiteLog.storekit`。
-5. 运行 App，在设置页进入 Pro 付费墙，验证动态价格、购买、恢复购买和 PDF 报告。
+5. 运行 App，在设置页进入 Pro 付费墙，验证动态价格、购买、恢复购买和身体数据报告。
 
 `.storekit` 文件包含商品 `lt.LiteLog.pro.lifetime`，中国区显示价格为 ¥38，并启用家庭共享。StoreKit 配置只在本地开发环境生效；发布版本会读取 App Store Connect 的真实商品。
 
 ## 4. 功能验收
 
 - 免费用户可以继续使用记录、统计、提醒、CSV/JSON 导出和本地恢复。
-- 未解锁 Pro 时，点击 iCloud 或 PDF 行会打开付费墙。
+- 未解锁 Pro 时，点击 iCloud 行会展示备份内容预览；点击身体数据报告行会生成并展示完整的只读 PDF；点击预览页底部解锁按钮后才打开付费墙。
+- Pro 用户点击 iCloud/PDF 行也进入同一个功能页，底部按钮分别变为“立即备份”和“分享 / 导出 PDF”。
 - 完成购买或恢复购买后，设置页显示 Pro 已解锁。
 - Pro 用户保存记录后会尝试 iCloud 备份；备份失败不会阻断记录保存。
 - 后台自动备份有 15 分钟节流；设置页“立即备份”可强制写入。
 - iCloud 恢复前会二次确认，并显示恢复条数。
-- PDF 报告至少需要一条记录；生成失败会显示可读错误。
+- 身体数据报告至少需要一条记录；生成失败会显示可读错误。
 - 评分引导只在记录保存后判断：至少 7 条记录、首条记录满 3 天、两次提示间隔 120 天。
 
 ## 5. 隐私与支持
@@ -71,8 +72,8 @@
 2. 使用真实证书 Archive，确认签名中包含 iCloud entitlement。
 3. 上传到 App Store Connect。
 4. 在“App 内购买”中关联首屏商品，并提交审核。
-5. 在审核备注中说明 Pro 为一次性买断，iCloud 备份使用用户自己的 iCloud，PDF 报告在设置页生成。
-6. 准备付费墙截图、购买成功状态和 PDF 分享流程截图。
+5. 在审核备注中说明 Pro 为一次性买断，iCloud 备份使用用户自己的 iCloud，身体数据报告在设置页生成。
+6. 准备付费墙截图、购买成功状态和身体数据报告分享流程截图。
 
 ## 7. 本版不做
 

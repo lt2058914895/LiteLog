@@ -24,9 +24,10 @@ struct SettingsView: View {
     @State private var exportURL: IdentifiableURL?
     @State private var settingsAlert: SettingsAlert?
     @State private var showingPaywall = false
+    @State private var previewedProFeature: ProFeaturePreview?
+    @State private var showingProFeaturePreview = false
+    @State private var openPaywallAfterPreview = false
     @State private var showingICloudRestoreConfirm = false
-    @State private var isGeneratingReport = false
-    @State private var reportURL: IdentifiableURL?
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -58,13 +59,28 @@ struct SettingsView: View {
             .navigationDestination(isPresented: $showingContact) {
                 ContactView()
             }
+            .navigationDestination(isPresented: $showingProFeaturePreview) {
+                if let feature = previewedProFeature {
+                    ProFeaturePreviewView(
+                        feature: feature,
+                        recordCount: records.count
+                    ) {
+                        openPaywallAfterPreview = true
+                        showingProFeaturePreview = false
+                    }
+                    .environmentObject(proStore)
+                    .environmentObject(settingsManager)
+                    .environment(\.managedObjectContext, context)
+                }
+            }
+            .onChange(of: showingProFeaturePreview) { isPresented in
+                guard !isPresented else { return }
+                handleProPreviewDismissed()
+            }
             .onReceive(NotificationCenter.default.publisher(for: .showProfileEditor)) { _ in
                 showingProfileEditor = true
             }
             .adaptiveSheet(item: $exportURL) { item in
-                ShareSheet(items: [item.url])
-            }
-            .adaptiveSheet(item: $reportURL) { item in
                 ShareSheet(items: [item.url])
             }
             .sheet(isPresented: $showingPaywall) {
@@ -359,9 +375,7 @@ struct SettingsView: View {
                             ProgressView()
                                 .scaleEffect(0.8)
                         } else {
-                            Image(systemName: proStore.isPro ? "chevron.right" : "lock.fill")
-                                .font(.caption.weight(.semibold))
-                                .foregroundColor(.secondaryText)
+                            proRowAccessory
                         }
                     }
                     .padding(16)
@@ -400,32 +414,20 @@ struct SettingsView: View {
                             Text(NSLocalizedString("pro.pdf.title", comment: ""))
                                 .font(.body.weight(.medium))
                                 .foregroundColor(.primary)
-                            Text(
-                                isGeneratingReport
-                                    ? NSLocalizedString("pro.pdf.generating", comment: "")
-                                    : NSLocalizedString("pro.pdf.desc", comment: "")
-                            )
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .lineLimit(2)
+                            Text(NSLocalizedString("pro.pdf.desc", comment: ""))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .lineLimit(2)
                         }
 
                         Spacer(minLength: 8)
 
-                        if isGeneratingReport {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        } else {
-                            Image(systemName: proStore.isPro ? "chevron.right" : "lock.fill")
-                                .font(.caption.weight(.semibold))
-                                .foregroundColor(.secondaryText)
-                        }
+                        proRowAccessory
                     }
                     .padding(16)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .disabled(isGeneratingReport)
             }
         }
     }
@@ -548,6 +550,24 @@ struct SettingsView: View {
             format: NSLocalizedString("pro.icloud.last.backup", comment: ""),
             "\(lastBackupDate.shortDateString) \(lastBackupDate.timeString)"
         )
+    }
+
+    private var proRowAccessory: some View {
+        HStack(spacing: 6) {
+            if !proStore.isPro {
+                Text("Pro")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(.primaryBlue)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.primaryBlue.opacity(0.12))
+                    .clipShape(Capsule())
+            }
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundColor(.secondaryText)
+        }
     }
 
     private func goalWeightText(_ profile: UserProfile) -> String {
@@ -709,22 +729,7 @@ struct SettingsView: View {
     }
 
     private func handleICloudBackupTap() {
-        guard proStore.isPro else {
-            showingPaywall = true
-            return
-        }
-
-        do {
-            try iCloudBackupManager.backup(
-                context: context,
-                settings: settingsManager,
-                force: true
-            )
-            HapticManager.success()
-            settingsAlert = .iCloudBackupSucceeded
-        } catch {
-            settingsAlert = .iCloudBackupFailed(error.localizedDescription)
-        }
+        presentProFeature(.iCloudBackup)
     }
 
     private func restoreFromICloud() {
@@ -741,28 +746,26 @@ struct SettingsView: View {
     }
 
     private func handlePDFReportTap() {
-        guard proStore.isPro else {
-            showingPaywall = true
+        guard !records.isEmpty else {
+            settingsAlert = .pdfGenerationFailed(
+                NSLocalizedString("pro.pdf.empty", comment: "")
+            )
             return
         }
-        guard !isGeneratingReport else { return }
 
-        isGeneratingReport = true
-        Task {
-            await Task.yield()
+        presentProFeature(.pdfReport)
+    }
 
-            do {
-                let url = try PDFReportManager.shared.generateReport(
-                    context: context,
-                    settings: settingsManager
-                )
-                reportURL = IdentifiableURL(url)
-                HapticManager.success()
-            } catch {
-                settingsAlert = .pdfGenerationFailed(error.localizedDescription)
-            }
+    private func presentProFeature(_ feature: ProFeaturePreview) {
+        previewedProFeature = feature
+        showingProFeaturePreview = true
+    }
 
-            isGeneratingReport = false
+    private func handleProPreviewDismissed() {
+        guard openPaywallAfterPreview else { return }
+        openPaywallAfterPreview = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            showingPaywall = true
         }
     }
 
@@ -1002,8 +1005,6 @@ private enum SettingsAlert: Identifiable {
     case restoreFailed(String)
     case notificationPermissionDenied
     case notificationFailed(String)
-    case iCloudBackupSucceeded
-    case iCloudBackupFailed(String)
     case iCloudRestoreSucceeded(Int)
     case iCloudRestoreFailed(String)
     case pdfGenerationFailed(String)
@@ -1015,8 +1016,6 @@ private enum SettingsAlert: Identifiable {
         case .restoreFailed: return "restoreFailed"
         case .notificationPermissionDenied: return "notificationPermissionDenied"
         case .notificationFailed: return "notificationFailed"
-        case .iCloudBackupSucceeded: return "iCloudBackupSucceeded"
-        case .iCloudBackupFailed: return "iCloudBackupFailed"
         case .iCloudRestoreSucceeded: return "iCloudRestoreSucceeded"
         case .iCloudRestoreFailed: return "iCloudRestoreFailed"
         case .pdfGenerationFailed: return "pdfGenerationFailed"
@@ -1035,10 +1034,6 @@ private enum SettingsAlert: Identifiable {
             return NSLocalizedString("settings.notification.denied.title", comment: "")
         case .notificationFailed:
             return NSLocalizedString("settings.notification.error.title", comment: "")
-        case .iCloudBackupSucceeded:
-            return NSLocalizedString("pro.icloud.backup.success", comment: "")
-        case .iCloudBackupFailed:
-            return NSLocalizedString("pro.icloud.backup.failed", comment: "")
         case .iCloudRestoreSucceeded:
             return NSLocalizedString("settings.restore.success.title", comment: "")
         case .iCloudRestoreFailed:
@@ -1056,14 +1051,11 @@ private enum SettingsAlert: Identifiable {
             return localizedRestoreCount(count)
         case .restoreFailed(let message),
              .notificationFailed(let message),
-             .iCloudBackupFailed(let message),
              .iCloudRestoreFailed(let message),
              .pdfGenerationFailed(let message):
             return message
         case .notificationPermissionDenied:
             return NSLocalizedString("settings.notification.denied.message", comment: "")
-        case .iCloudBackupSucceeded:
-            return NSLocalizedString("pro.icloud.backup.success.message", comment: "")
         case .iCloudRestoreSucceeded(let count):
             return String(
                 format: NSLocalizedString("pro.icloud.restore.success", comment: ""),

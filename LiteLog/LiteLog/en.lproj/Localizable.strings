@@ -238,11 +238,11 @@
 "pro.family.sharing" = "Family Sharing supported";
 "pro.purchase.note" = "One-time purchase · Lifetime access · Family Sharing";
 "pro.future.note" = "Future Pro features are included at no extra cost.";
-"pro.description" = "Automatic backup, professional reports, and every future Pro feature.";
+"pro.description" = "Automatic backup, body data reports, and every future Pro feature.";
 "pro.feature.icloud.title" = "Automatic iCloud backup";
 "pro.feature.icloud.desc" = "Back up automatically to your own iCloud and restore on a new device.";
-"pro.feature.pdf.title" = "PDF progress report";
-"pro.feature.pdf.desc" = "Generate a report with a trend chart and record table for your archive or coach.";
+"pro.feature.pdf.title" = "Body Data Report";
+"pro.feature.pdf.desc" = "Generate a PDF with weight, body fat, and measurement trends for archiving or sharing.";
 "pro.feature.future.title" = "Future Pro features";
 "pro.feature.future.desc" = "Buy once and receive future Pro features at no extra cost.";
 "pro.purchase.format" = "Unlock Pro · %@";
@@ -267,11 +267,38 @@
 
 "pro.section.title" = "Pro Benefits";
 "pro.section.subtitle" = "Buy once. No subscription.";
-"pro.section.locked.desc" = "Unlock automatic iCloud backup, PDF reports, and future Pro features.";
+"pro.section.locked.desc" = "Unlock automatic iCloud backup, body data reports, and future Pro features.";
 "pro.section.owned" = "Pro unlocked";
 "pro.section.owned.desc" = "Thank you for supporting independent development.";
 "pro.section.unlock" = "Learn about Pro";
 "pro.section.manage" = "Manage Pro";
+
+"pro.preview.eyebrow" = "Pro Feature Preview";
+"pro.preview.eyebrow.pro" = "Pro Unlocked";
+"pro.preview.included" = "Included";
+"pro.preview.icloud.title" = "Automatic iCloud backup";
+"pro.preview.icloud.subtitle" = "Keep your records safe when switching or reinstalling";
+"pro.preview.icloud.phone" = "This iPhone";
+"pro.preview.icloud.cloud" = "Your iCloud";
+"pro.preview.icloud.records" = "Weight records";
+"pro.preview.icloud.profile" = "Profile";
+"pro.preview.icloud.settings" = "Preferences";
+"pro.preview.icloud.private" = "Stored only in your iCloud. The developer cannot read it.";
+"pro.preview.icloud.benefit.auto" = "Automatically backs up after each saved record";
+"pro.preview.icloud.benefit.restore" = "Restore in one tap on a new device or reinstall";
+"pro.preview.icloud.benefit.private" = "Private storage in your iCloud to prevent data loss";
+"pro.preview.icloud.cta" = "Unlock Pro and Start Backup";
+"pro.preview.pdf.title" = "Body Data Report";
+"pro.preview.pdf.subtitle" = "Turn weight, body fat, and measurement changes into a shareable report.";
+"pro.preview.pdf.generating" = "Generating full report…";
+"pro.preview.pdf.cta" = "Unlock Pro to Export Full PDF";
+"pro.preview.pdf.not.ready" = "The PDF is not ready yet. Please try again.";
+"pro.preview.pdf.range.title" = "Report Date Range";
+"pro.preview.pdf.range.label" = "Date Range";
+"pro.preview.pdf.range.all" = "All Records";
+"pro.preview.pdf.range.days.format" = "Last %d days";
+"pro.preview.pdf.range.weeks.format" = "Last %d weeks";
+"pro.preview.pro.note" = "Pro unlocked. This benefit is ready to use.";
 
 "pro.icloud.title" = "Automatic iCloud backup";
 "pro.icloud.desc" = "Saved automatically to your own iCloud. The developer cannot read it.";
@@ -292,27 +319,34 @@
 "pro.icloud.restore.failed" = "Restore from iCloud failed";
 "pro.icloud.no.backup" = "No iCloud backup was found.";
 
-"pro.pdf.title" = "PDF progress report";
-"pro.pdf.desc" = "Generate a PDF with a trend chart and records.";
+"pro.pdf.title" = "Body Data Report";
+"pro.pdf.desc" = "Generate a PDF with body data trends and records.";
 "pro.pdf.generate" = "Generate Report";
+"pro.pdf.share" = "Share / Export PDF";
 "pro.pdf.generating" = "Generating…";
 "pro.pdf.failed" = "The report could not be generated. Please try again.";
 "pro.pdf.empty" = "Add at least one record before generating a report.";
+"pro.pdf.empty.range" = "There are no records in the selected date range. Choose a longer range.";
 "pro.pdf.success" = "Report generated";
 
-"report.title" = "Progress Report";
-"report.title.continued" = "Progress Report (continued)";
+"report.title" = "Body Data Report";
 "report.generated.format" = "Generated: %@";
 "report.range.format" = "Range: %@ - %@";
-"report.summary" = "Overview";
+"report.summary" = "Period Overview";
+"report.summary.start.format" = "Started at %@";
 "report.profile" = "Profile";
 "report.profile.name.format" = "Name: %@";
 "report.profile.body.format" = "Height: %@ cm    Age: %d    Gender: %@";
 "report.profile.goal.format" = "Goal weight: %@    Goal body fat: %@";
 "report.no.profile" = "Profile is incomplete.";
-"report.latest.weight" = "Latest";
-"report.change" = "Change";
-"report.average" = "Average";
+"report.latest.weight" = "Latest Weight";
+"report.change" = "Period Change";
+"report.average" = "Average Weight";
+"report.coverage" = "Data Coverage";
+"report.days.format" = "Days tracked: %d";
+"report.entries.format" = "Entries: %d";
+"report.min.max.format" = "Range %@–%@ %@";
+"report.no.comparison" = "No comparison";
 "report.records" = "Records";
 "report.first.weight" = "Starting";
 "report.goal.weight" = "Goal";
@@ -330,3 +364,4 @@
 "report.disclaimer" = "This report is for personal tracking only and is not medical advice.";
 
 "action.close" = "Close";
+"action.retry" = "Retry";

@@ -10,19 +10,36 @@ final class PDFReportManager {
 
     func generateReport(
         context: NSManagedObjectContext,
-        settings: SettingsManager
+        settings: SettingsManager,
+        lookbackDays: Int? = nil
     ) throws -> URL {
         let recordRequest = WeightRecord.fetchRequest()
         recordRequest.sortDescriptors = [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: true)]
+
+        if let lookbackDays {
+            let calendar = Calendar.current
+            let today = calendar.startOfDay(for: Date())
+            let startDate = calendar.date(
+                byAdding: .day,
+                value: -(max(lookbackDays, 1) - 1),
+                to: today
+            ) ?? today
+            let endExclusive = calendar.date(byAdding: .day, value: 1, to: today) ?? Date().endOfDay
+            recordRequest.predicate = NSPredicate(
+                format: "date >= %@ AND date < %@",
+                startDate as NSDate,
+                endExclusive as NSDate
+            )
+        }
+
         let records = try context.fetch(recordRequest)
-        guard !records.isEmpty else { throw ReportError.noRecords }
+        guard !records.isEmpty else {
+            throw lookbackDays == nil ? ReportError.noRecords : ReportError.noRecordsInRange
+        }
 
         let profile = try context.fetch(UserProfile.fetchRequest()).first
         let entries = TrendAnalytics.entries(from: records)
         let dailyEntries = TrendAnalytics.dailyEntries(from: entries, scope: .all)
-        let goalEstimate = profile?.goalWeightValue.map {
-            TrendAnalytics.estimateWeightGoal(from: dailyEntries, targetWeight: $0)
-        }
 
         let snapshot = ReportSnapshot(
             generatedAt: Date(),
@@ -30,14 +47,13 @@ final class PDFReportManager {
             dailyEntries: dailyEntries,
             profile: profile.map(ReportProfile.init),
             displayName: settings.displayName,
-            unit: settings.weightUnit,
-            goalEstimate: goalEstimate
+            unit: settings.weightUnit
         )
 
         let data = PDFReportRenderer(snapshot: snapshot).render()
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyyMMdd-HHmm"
+        formatter.dateFormat = "yyyyMMdd-HHmmssSSS"
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("LiteLog_Report_\(formatter.string(from: Date())).pdf")
         try data.write(to: url, options: [.atomic, .completeFileProtection])
@@ -76,7 +92,12 @@ private final class PDFReportRenderer {
         context.cgContext.setFillColor(UIColor.white.cgColor)
         context.cgContext.fill(pageRect)
 
-        let isFirstPage = pageNumber == 1
+        guard pageNumber == 1 else {
+            y = margin
+            drawFooter()
+            return
+        }
+
         drawText(
             NSLocalizedString("app.name", comment: ""),
             in: CGRect(x: margin, y: 30, width: 120, height: 16),
@@ -84,7 +105,7 @@ private final class PDFReportRenderer {
             color: ReportPalette.accent
         )
         drawText(
-            NSLocalizedString(isFirstPage ? "report.title" : "report.title.continued", comment: ""),
+            NSLocalizedString("report.title", comment: ""),
             in: CGRect(x: margin, y: 46, width: contentWidth, height: 32),
             font: .systemFont(ofSize: 23, weight: .bold),
             color: ReportPalette.primaryText
@@ -132,6 +153,7 @@ private final class PDFReportRenderer {
         drawProfile()
 
         if snapshot.entries.count >= 2 {
+            y += 10
             drawSectionTitle(NSLocalizedString("report.chart", comment: ""))
             ensureSpace(190)
             let chartRect = CGRect(x: margin, y: y, width: contentWidth, height: 160)
@@ -144,34 +166,156 @@ private final class PDFReportRenderer {
     }
 
     private func drawSummaryCards() {
-        let weights = snapshot.entries.map(\.weight)
-        let average = weights.average.map { snapshot.unit.convertFromKg($0).smartFormatted } ?? "--"
-        let latest = snapshot.entries.last.map { snapshot.unit.convertFromKg($0.weight).smartFormatted } ?? "--"
-        let first = snapshot.entries.first.map { snapshot.unit.convertFromKg($0.weight).smartFormatted } ?? "--"
-        let change = snapshot.entries.first.flatMap { firstEntry in
-            snapshot.entries.last.map { lastEntry in
-                let value = snapshot.unit.convertFromKg(lastEntry.weight - firstEntry.weight)
-                return (value > 0 ? "+" : "") + value.smartFormatted
-            }
+        let dailyEntries = snapshot.dailyEntries
+        let dailyWeights = dailyEntries.map(\.weight)
+        let firstWeight = dailyEntries.first?.weight
+        let latestWeight = dailyEntries.last?.weight
+
+        let changeText: String
+        if let firstWeight, let latestWeight, dailyEntries.count > 1 {
+            let change = snapshot.unit.convertFromKg(latestWeight - firstWeight)
+            changeText = formattedChange(change, suffix: " \(snapshot.unit.shortName)")
+        } else {
+            changeText = NSLocalizedString(
+                dailyEntries.isEmpty ? "report.no.data" : "report.no.comparison",
+                comment: ""
+            )
+        }
+
+        drawWeightSummary(
+            firstWeight: firstWeight,
+            latestWeight: latestWeight,
+            changeText: changeText
+        )
+
+        let bodyFatSamples = snapshot.entries.compactMap(\.bodyFatPercentage)
+        let waistSamples = snapshot.entries.compactMap(\.waistCircumference)
+        let averageWeight = dailyWeights.average.map {
+            "\(snapshot.unit.convertFromKg($0).smartFormatted) \(snapshot.unit.shortName)"
+        } ?? "--"
+        let minimumWeight = dailyWeights.min().map {
+            snapshot.unit.convertFromKg($0).smartFormatted
+        } ?? "--"
+        let maximumWeight = dailyWeights.max().map {
+            snapshot.unit.convertFromKg($0).smartFormatted
         } ?? "--"
 
-        let cards: [(String, String, String)] = [
-            (NSLocalizedString("report.latest.weight", comment: ""), latest, snapshot.unit.shortName),
-            (NSLocalizedString("report.change", comment: ""), change, snapshot.unit.shortName),
-            (NSLocalizedString("report.average", comment: ""), average, snapshot.unit.shortName),
-            (NSLocalizedString("report.records", comment: ""), "\(snapshot.entries.count)", ""),
-            (NSLocalizedString("report.first.weight", comment: ""), first, snapshot.unit.shortName),
-            (NSLocalizedString("report.goal.weight", comment: ""), snapshot.profile?.goalWeight.map { snapshot.unit.convertFromKg($0).smartFormatted } ?? "--", snapshot.unit.shortName)
+        let metrics = [
+            ReportSummaryMetric(
+                title: NSLocalizedString("report.body.fat", comment: ""),
+                value: bodyFatSamples.last.map { "\($0.smartFormatted)%" } ?? "--",
+                detail: comparisonDetail(samples: bodyFatSamples, suffix: "%")
+            ),
+            ReportSummaryMetric(
+                title: NSLocalizedString("report.waist", comment: ""),
+                value: waistSamples.last.map { "\($0.smartFormatted) cm" } ?? "--",
+                detail: comparisonDetail(samples: waistSamples, suffix: " cm")
+            ),
+            ReportSummaryMetric(
+                title: NSLocalizedString("report.average", comment: ""),
+                value: averageWeight,
+                detail: String(
+                    format: NSLocalizedString("report.min.max.format", comment: ""),
+                    minimumWeight,
+                    maximumWeight,
+                    snapshot.unit.shortName
+                )
+            ),
+            ReportSummaryMetric(
+                title: NSLocalizedString("report.coverage", comment: ""),
+                value: String(
+                    format: NSLocalizedString("report.days.format", comment: ""),
+                    dailyEntries.count
+                ),
+                detail: String(
+                    format: NSLocalizedString("report.entries.format", comment: ""),
+                    snapshot.entries.count
+                )
+            )
         ]
 
+        drawSummaryMetricCards(metrics)
+        y += 2
+    }
+
+    private func drawWeightSummary(
+        firstWeight: Double?,
+        latestWeight: Double?,
+        changeText: String
+    ) {
+        let cardHeight: CGFloat = 94
+        ensureSpace(cardHeight + 12)
+        let rect = CGRect(x: margin, y: y, width: contentWidth, height: cardHeight)
+
+        ReportPalette.accentSoft.setFill()
+        UIBezierPath(roundedRect: rect, cornerRadius: 12).fill()
+
+        drawText(
+            NSLocalizedString("report.latest.weight", comment: ""),
+            in: CGRect(x: rect.minX + 16, y: rect.minY + 12, width: rect.width / 2 - 24, height: 12),
+            font: .systemFont(ofSize: 8),
+            color: ReportPalette.secondaryText
+        )
+
+        let latestText = latestWeight.map {
+            "\(snapshot.unit.convertFromKg($0).smartFormatted) \(snapshot.unit.shortName)"
+        } ?? "--"
+        drawText(
+            latestText,
+            in: CGRect(x: rect.minX + 16, y: rect.minY + 26, width: rect.width / 2 - 24, height: 32),
+            font: .systemFont(ofSize: 25, weight: .bold),
+            color: ReportPalette.accent
+        )
+
+        if let firstWeight {
+            let startText = String(
+                format: NSLocalizedString("report.summary.start.format", comment: ""),
+                "\(snapshot.unit.convertFromKg(firstWeight).smartFormatted) \(snapshot.unit.shortName)"
+            )
+            drawText(
+                startText,
+                in: CGRect(x: rect.minX + 16, y: rect.maxY - 24, width: rect.width / 2 - 24, height: 12),
+                font: .systemFont(ofSize: 7.5),
+                color: ReportPalette.secondaryText
+            )
+        }
+
+        let divider = UIBezierPath()
+        divider.move(to: CGPoint(x: rect.midX, y: rect.minY + 14))
+        divider.addLine(to: CGPoint(x: rect.midX, y: rect.maxY - 14))
+        ReportPalette.separator.setStroke()
+        divider.lineWidth = 0.6
+        divider.stroke()
+
+        let rightWidth = rect.width / 2 - 32
+        drawText(
+            NSLocalizedString("report.change", comment: ""),
+            in: CGRect(x: rect.midX + 16, y: rect.minY + 14, width: rightWidth, height: 12),
+            font: .systemFont(ofSize: 8),
+            color: ReportPalette.secondaryText,
+            alignment: .right
+        )
+        drawText(
+            changeText,
+            in: CGRect(x: rect.midX + 16, y: rect.minY + 36, width: rightWidth, height: 24),
+            font: .systemFont(ofSize: 16, weight: .bold),
+            color: ReportPalette.accent,
+            alignment: .right
+        )
+
+        y += cardHeight + 12
+    }
+
+    private func drawSummaryMetricCards(_ metrics: [ReportSummaryMetric]) {
         let gap: CGFloat = 10
         let cardWidth = (contentWidth - gap) / 2
-        let cardHeight: CGFloat = 58
+        let cardHeight: CGFloat = 68
 
-        for (index, card) in cards.enumerated() {
+        for (index, metric) in metrics.enumerated() {
             if index.isMultiple(of: 2) {
                 ensureSpace(cardHeight + gap)
             }
+
             let column = index % 2
             let rect = CGRect(
                 x: margin + CGFloat(column) * (cardWidth + gap),
@@ -183,25 +327,48 @@ private final class PDFReportRenderer {
             UIBezierPath(roundedRect: rect, cornerRadius: 10).fill()
 
             drawText(
-                card.0,
+                metric.title,
                 in: CGRect(x: rect.minX + 12, y: rect.minY + 10, width: rect.width - 24, height: 12),
                 font: .systemFont(ofSize: 8),
                 color: ReportPalette.secondaryText
             )
-            let valueText = card.2.isEmpty ? card.1 : "\(card.1) \(card.2)"
             drawText(
-                valueText,
-                in: CGRect(x: rect.minX + 12, y: rect.minY + 25, width: rect.width - 24, height: 22),
-                font: .systemFont(ofSize: 16, weight: .bold),
+                metric.value,
+                in: CGRect(x: rect.minX + 12, y: rect.minY + 23, width: rect.width - 24, height: 22),
+                font: .systemFont(ofSize: 15, weight: .bold),
                 color: ReportPalette.accent
             )
+            drawText(
+                metric.detail,
+                in: CGRect(x: rect.minX + 12, y: rect.minY + 46, width: rect.width - 24, height: 13),
+                font: .systemFont(ofSize: 7.5),
+                color: ReportPalette.secondaryText
+            )
 
-            if column == 1 || index == cards.count - 1 {
+            if column == 1 || index == metrics.count - 1 {
                 y += cardHeight + gap
             }
         }
+    }
 
-        y += 2
+    private func comparisonDetail(samples: [Double], suffix: String) -> String {
+        guard samples.count > 1 else {
+            return NSLocalizedString(
+                samples.isEmpty ? "report.no.data" : "report.no.comparison",
+                comment: ""
+            )
+        }
+
+        return formattedChange(samples[samples.count - 1] - samples[0], suffix: suffix)
+    }
+
+    private func formattedChange(_ value: Double, suffix: String) -> String {
+        if abs(value) < 0.005 {
+            return "→ 0\(suffix)"
+        }
+
+        let arrow = value > 0 ? "↑" : "↓"
+        return "\(arrow) \(abs(value).smartFormatted)\(suffix)"
     }
 
     private func drawProfile() {
@@ -241,17 +408,6 @@ private final class PDFReportRenderer {
                 color: ReportPalette.primaryText
             )
             y += 18
-        }
-
-        if let estimate = snapshot.goalEstimate {
-            ensureSpace(24)
-            drawText(
-                estimate.summaryText,
-                in: CGRect(x: margin, y: y + 2, width: contentWidth, height: 30),
-                font: .systemFont(ofSize: 9),
-                color: ReportPalette.secondaryText
-            )
-            y += 32
         }
     }
 
@@ -461,10 +617,17 @@ private final class PDFReportRenderer {
 
 private enum ReportPalette {
     static let accent = UIColor(red: 0.29, green: 0.56, blue: 0.89, alpha: 1)
+    static let accentSoft = UIColor(red: 0.94, green: 0.97, blue: 1, alpha: 1)
     static let primaryText = UIColor(white: 0.14, alpha: 1)
     static let secondaryText = UIColor(white: 0.44, alpha: 1)
     static let separator = UIColor(white: 0.88, alpha: 1)
     static let cardBackground = UIColor(white: 0.965, alpha: 1)
+}
+
+private struct ReportSummaryMetric {
+    let title: String
+    let value: String
+    let detail: String
 }
 
 private struct ReportSnapshot {
@@ -474,7 +637,6 @@ private struct ReportSnapshot {
     let profile: ReportProfile?
     let displayName: String
     let unit: WeightUnit
-    let goalEstimate: WeightGoalEstimate?
 }
 
 private struct ReportProfile {
@@ -495,11 +657,14 @@ private struct ReportProfile {
 
 enum ReportError: LocalizedError {
     case noRecords
+    case noRecordsInRange
 
     var errorDescription: String? {
         switch self {
         case .noRecords:
             return NSLocalizedString("pro.pdf.empty", comment: "")
+        case .noRecordsInRange:
+            return NSLocalizedString("pro.pdf.empty.range", comment: "")
         }
     }
 }
