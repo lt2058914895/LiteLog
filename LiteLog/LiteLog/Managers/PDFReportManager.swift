@@ -163,6 +163,7 @@ private final class PDFReportRenderer {
 
         drawSectionTitle(NSLocalizedString("report.table", comment: ""))
         drawTable()
+        drawFinalDisclaimer()
     }
 
     private func drawSummaryCards() {
@@ -580,17 +581,20 @@ private final class PDFReportRenderer {
     private func drawFooter() {
         let footerY = pageRect.height - 30
         drawText(
-            NSLocalizedString("report.disclaimer", comment: ""),
-            in: CGRect(x: margin, y: footerY, width: contentWidth - 60, height: 16),
-            font: .systemFont(ofSize: 7.5),
-            color: ReportPalette.secondaryText
-        )
-        drawText(
             String(format: NSLocalizedString("report.page", comment: ""), pageNumber),
             in: CGRect(x: pageRect.width - margin - 54, y: footerY, width: 54, height: 16),
             font: .systemFont(ofSize: 8),
             color: ReportPalette.secondaryText,
             alignment: .right
+        )
+    }
+
+    private func drawFinalDisclaimer() {
+        drawText(
+            NSLocalizedString("report.disclaimer", comment: ""),
+            in: CGRect(x: margin, y: pageRect.height - 30, width: contentWidth - 60, height: 16),
+            font: .systemFont(ofSize: 7.5),
+            color: ReportPalette.secondaryText
         )
     }
 

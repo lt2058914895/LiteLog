@@ -36,11 +36,6 @@ struct ProFeaturePreviewView: View {
             .background(Color(.systemGroupedBackground))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
-            .navigationTitle(
-                feature == .pdfReport
-                    ? NSLocalizedString("pro.preview.pdf.title", comment: "")
-                    : ""
-            )
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     backButton
@@ -137,22 +132,6 @@ struct ProFeaturePreviewView: View {
                 .foregroundColor(.secondaryText)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-
-            HStack(spacing: 4) {
-                Image(systemName: proStore.isPro ? "checkmark.seal.fill" : "sparkles")
-                Text(
-                    NSLocalizedString(
-                        proStore.isPro ? "pro.preview.eyebrow.pro" : "pro.preview.eyebrow",
-                        comment: ""
-                    )
-                )
-            }
-            .font(.caption.weight(.semibold))
-            .foregroundColor(proStore.isPro ? .green : .purple)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background((proStore.isPro ? Color.green : Color.purple).opacity(0.1))
-            .clipShape(Capsule())
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 4)
