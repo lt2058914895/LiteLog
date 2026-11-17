@@ -25,14 +25,16 @@ struct LiteLogApp: App {
                 .onChange(of: scenePhase) { phase in
                     if phase == .background {
                         persistenceController.saveContext()
-                        try? ICloudBackupManager.shared.backup(
-                            context: persistenceController.viewContext,
-                            settings: settingsManager
-                        )
+                        Task {
+                            try? await ICloudBackupManager.shared.backup(
+                                context: persistenceController.viewContext,
+                                settings: settingsManager
+                            )
+                        }
                     } else if phase == .active {
                         Task {
                             await proStore.refreshEntitlements()
-                            ICloudBackupManager.shared.refreshAvailability()
+                            await ICloudBackupManager.shared.refreshAvailabilityWithRetry()
                         }
                     }
                 }

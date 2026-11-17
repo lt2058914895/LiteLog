@@ -24,8 +24,8 @@ struct SettingsView: View {
     @State private var exportURL: IdentifiableURL?
     @State private var settingsAlert: SettingsAlert?
     @State private var showingPaywall = false
-    @State private var previewedProFeature: ProFeaturePreview?
-    @State private var showingProFeaturePreview = false
+    @State private var showingPDFReport = false
+    @State private var showingICloudBackup = false
     @State private var openPaywallAfterPreview = false
     @State private var showingICloudRestoreConfirm = false
 
@@ -59,21 +59,21 @@ struct SettingsView: View {
             .navigationDestination(isPresented: $showingContact) {
                 ContactView()
             }
-            .navigationDestination(isPresented: $showingProFeaturePreview) {
-                if let feature = previewedProFeature {
-                    ProFeaturePreviewView(
-                        feature: feature,
-                        recordCount: records.count
-                    ) {
-                        openPaywallAfterPreview = true
-                        showingProFeaturePreview = false
-                    }
-                    .environmentObject(proStore)
+            .navigationDestination(isPresented: $showingICloudBackup) {
+                ICloudBackupView(recordCount: records.count)
                     .environmentObject(settingsManager)
                     .environment(\.managedObjectContext, context)
-                }
             }
-            .onChange(of: showingProFeaturePreview) { isPresented in
+            .navigationDestination(isPresented: $showingPDFReport) {
+                ProFeaturePreviewView {
+                    openPaywallAfterPreview = true
+                    showingPDFReport = false
+                }
+                .environmentObject(proStore)
+                .environmentObject(settingsManager)
+                .environment(\.managedObjectContext, context)
+            }
+            .onChange(of: showingPDFReport) { isPresented in
                 guard !isPresented else { return }
                 handleProPreviewDismissed()
             }
@@ -149,7 +149,7 @@ struct SettingsView: View {
             .task {
                 await refreshNotificationAuthorization()
                 await proStore.prepare()
-                iCloudBackupManager.refreshAvailability()
+                await iCloudBackupManager.refreshAvailabilityWithRetry()
             }
         }
     }
@@ -194,24 +194,24 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var proEntry: some View {
-        if proStore.isPro {
+        Button {
+            HapticManager.light()
+            showingPaywall = true
+        } label: {
             proEntryBadge
-        } else {
-            Button {
-                HapticManager.light()
-                showingPaywall = true
-            } label: {
-                proEntryBadge
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(NSLocalizedString("pro.section.unlock", comment: ""))
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(
+            NSLocalizedString(
+                proStore.isPro ? "pro.section.manage" : "pro.section.unlock",
+                comment: ""
+            )
+        )
     }
 
     private var proEntryBadge: some View {
         HStack(spacing: 5) {
-            Image(systemName: proStore.isPro ? "checkmark.seal.fill" : "sparkles")
-                .foregroundColor(proStore.isPro ? .green : .primaryBlue)
+            proEntryIcon
 
             Text(
                 NSLocalizedString(
@@ -230,6 +230,18 @@ struct SettingsView: View {
             Capsule()
                 .stroke(Color.white.opacity(proStore.isPro ? 0.3 : 0), lineWidth: 1)
         )
+    }
+
+    @ViewBuilder
+    private var proEntryIcon: some View {
+        if proStore.isPro {
+            Image(systemName: "checkmark.circle.fill")
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(.white, Color(hex: "2ECC71"))
+        } else {
+            Image(systemName: "sparkles")
+                .foregroundColor(.primaryBlue)
+        }
     }
 
     private var healthProfileSection: some View {
@@ -354,57 +366,6 @@ struct SettingsView: View {
             settingsCard {
                 Button {
                     HapticManager.light()
-                    handleICloudBackupTap()
-                } label: {
-                    HStack(spacing: 14) {
-                        SettingsIcon(systemName: "icloud.and.arrow.up.fill", tint: .primaryBlue)
-
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(NSLocalizedString("pro.icloud.title", comment: ""))
-                                .font(.body.weight(.medium))
-                                .foregroundColor(.primary)
-                            Text(iCloudRowSubtitle)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .lineLimit(2)
-                        }
-
-                        Spacer(minLength: 8)
-
-                        if iCloudBackupManager.isBackingUp {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        } else {
-                            proRowAccessory
-                        }
-                    }
-                    .padding(16)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .disabled(iCloudBackupManager.isBackingUp)
-
-                if proStore.isPro {
-                    divider
-
-                    Button {
-                        HapticManager.light()
-                        showingICloudRestoreConfirm = true
-                    } label: {
-                        SettingsRowLabel(
-                            icon: "icloud.and.arrow.down.fill",
-                            tint: .teal,
-                            title: NSLocalizedString("pro.icloud.restore", comment: ""),
-                            subtitle: NSLocalizedString("pro.icloud.restore.desc", comment: "")
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                divider
-
-                Button {
-                    HapticManager.light()
                     handlePDFReportTap()
                 } label: {
                     HStack(spacing: 14) {
@@ -437,6 +398,87 @@ struct SettingsView: View {
             sectionTitle("settings.section.data")
 
             settingsCard {
+                Button {
+                    HapticManager.light()
+                    handleICloudBackupTap()
+                } label: {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "icloud.and.arrow.up.fill", tint: .primaryBlue)
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(NSLocalizedString("pro.icloud.title", comment: ""))
+                                .font(.body.weight(.medium))
+                                .foregroundColor(.primary)
+                            Text(iCloudRowSubtitle)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .lineLimit(2)
+                        }
+
+                        Spacer(minLength: 8)
+
+                        if iCloudBackupManager.isBackingUp || iCloudBackupManager.isRestoring {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(.secondaryText)
+                        }
+                    }
+                    .padding(16)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(iCloudBackupManager.isBackingUp || iCloudBackupManager.isRestoring)
+
+                divider
+
+                Button {
+                    HapticManager.light()
+                    showingICloudRestoreConfirm = true
+                } label: {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "icloud.and.arrow.down.fill", tint: .teal)
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(
+                                iCloudBackupManager.isRestoring
+                                    ? NSLocalizedString("pro.icloud.restoring", comment: "")
+                                    : NSLocalizedString("pro.icloud.restore", comment: "")
+                            )
+                            .font(.body.weight(.medium))
+                            .foregroundColor(.primary)
+
+                            Text(
+                                iCloudBackupManager.isRestoring
+                                    ? NSLocalizedString("pro.icloud.restoring.desc", comment: "")
+                                    : NSLocalizedString("pro.icloud.restore.desc", comment: "")
+                            )
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                        }
+
+                        Spacer(minLength: 8)
+
+                        if iCloudBackupManager.isRestoring {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(.secondaryText)
+                        }
+                    }
+                    .padding(16)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(iCloudBackupManager.isRestoring || iCloudBackupManager.isBackingUp)
+
+                divider
+
                 Button {
                     HapticManager.light()
                     showingExportOptions = true
@@ -537,8 +579,8 @@ struct SettingsView: View {
     }
 
     private var iCloudRowSubtitle: String {
-        guard proStore.isPro else {
-            return NSLocalizedString("pro.icloud.desc", comment: "")
+        if iCloudBackupManager.isRestoring {
+            return NSLocalizedString("pro.icloud.restoring.desc", comment: "")
         }
         guard iCloudBackupManager.isAvailable else {
             return NSLocalizedString("pro.icloud.unavailable.message", comment: "")
@@ -729,19 +771,23 @@ struct SettingsView: View {
     }
 
     private func handleICloudBackupTap() {
-        presentProFeature(.iCloudBackup)
+        showingICloudBackup = true
     }
 
     private func restoreFromICloud() {
-        do {
-            let recordCount = try iCloudBackupManager.restore(
-                context: context,
-                settings: settingsManager
-            )
-            HapticManager.success()
-            settingsAlert = .iCloudRestoreSucceeded(recordCount)
-        } catch {
-            settingsAlert = .iCloudRestoreFailed(error.localizedDescription)
+        guard !iCloudBackupManager.isRestoring else { return }
+
+        Task {
+            do {
+                let recordCount = try await iCloudBackupManager.restore(
+                    context: context,
+                    settings: settingsManager
+                )
+                HapticManager.success()
+                settingsAlert = .iCloudRestoreSucceeded(recordCount)
+            } catch {
+                settingsAlert = .iCloudRestoreFailed(error.localizedDescription)
+            }
         }
     }
 
@@ -753,12 +799,7 @@ struct SettingsView: View {
             return
         }
 
-        presentProFeature(.pdfReport)
-    }
-
-    private func presentProFeature(_ feature: ProFeaturePreview) {
-        previewedProFeature = feature
-        showingProFeaturePreview = true
+        showingPDFReport = true
     }
 
     private func handleProPreviewDismissed() {

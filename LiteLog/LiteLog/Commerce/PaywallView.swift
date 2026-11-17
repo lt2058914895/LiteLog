@@ -108,14 +108,6 @@ struct PaywallView: View {
     private var featureList: some View {
         VStack(spacing: 0) {
             featureRow(
-                titleKey: "pro.feature.icloud.title",
-                descriptionKey: "pro.feature.icloud.desc"
-            )
-
-            Divider()
-                .padding(.leading, 58)
-
-            featureRow(
                 titleKey: "pro.feature.pdf.title",
                 descriptionKey: "pro.feature.pdf.desc"
             )

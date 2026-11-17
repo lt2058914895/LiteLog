@@ -2,37 +2,28 @@ import CoreData
 import PDFKit
 import SwiftUI
 
-enum ProFeaturePreview: String, Identifiable {
-    case iCloudBackup
-    case pdfReport
-
-    var id: String { rawValue }
-}
-
 struct ProFeaturePreviewView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var settingsManager: SettingsManager
     @EnvironmentObject private var proStore: ProEntitlementStore
 
-    let feature: ProFeaturePreview
-    let recordCount: Int
     let onUnlock: () -> Void
 
     @State private var reportURL: URL?
     @State private var isGeneratingReport = false
     @State private var reportError: String?
+    @State private var reportRequestID = UUID()
     @State private var selectedReportRange: PDFReportTimeRange = .all
     @State private var pendingReportRange: PDFReportTimeRange = .all
     @State private var showingReportRangePicker = false
-    @State private var isBackingUp = false
     @State private var sharedReportURL: IdentifiableURL?
     @State private var showingAlert = false
     @State private var alertTitle = ""
     @State private var alertMessage = ""
 
     var body: some View {
-        content
+        pdfReportContent
             .background(Color(.systemGroupedBackground))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
@@ -51,7 +42,6 @@ struct ProFeaturePreviewView: View {
                 Text(alertMessage)
             }
             .task {
-                guard feature == .pdfReport else { return }
                 generateReportIfNeeded()
             }
     }
@@ -63,31 +53,6 @@ struct ProFeaturePreviewView: View {
             Image(systemName: "chevron.left")
                 .font(.system(size: 18, weight: .medium))
                 .foregroundColor(.primaryBlue)
-        }
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        switch feature {
-        case .iCloudBackup:
-            iCloudContent
-        case .pdfReport:
-            pdfReportContent
-        }
-    }
-
-    private var iCloudContent: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                header
-                iCloudPreview
-                iCloudBenefitList
-            }
-            .padding(20)
-            .padding(.bottom, 16)
-        }
-        .safeAreaInset(edge: .bottom) {
-            actionBar
         }
     }
 
@@ -108,33 +73,6 @@ struct ProFeaturePreviewView: View {
         .safeAreaInset(edge: .bottom) {
             actionBar
         }
-    }
-
-    private var header: some View {
-        VStack(spacing: 10) {
-            ZStack {
-                Circle()
-                    .fill(iconGradient)
-                    .frame(width: 58, height: 58)
-
-                Image(systemName: iconName)
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundColor(.white)
-            }
-
-            Text(NSLocalizedString(titleKey, comment: ""))
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundColor(.primaryText)
-                .multilineTextAlignment(.center)
-
-            Text(NSLocalizedString(subtitleKey, comment: ""))
-                .font(.subheadline)
-                .foregroundColor(.secondaryText)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 4)
     }
 
     private var pdfReportRangeSelector: some View {
@@ -249,93 +187,6 @@ struct ProFeaturePreviewView: View {
         }
     }
 
-    private var iCloudPreview: some View {
-        VStack(spacing: 18) {
-            HStack(spacing: 12) {
-                previewNode(
-                    icon: "iphone",
-                    labelKey: "pro.preview.icloud.phone",
-                    tint: .primaryBlue
-                )
-
-                Image(systemName: "arrow.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundColor(.tertiaryText)
-
-                previewNode(
-                    icon: "icloud.fill",
-                    labelKey: "pro.preview.icloud.cloud",
-                    tint: Color(hex: "4FB6A8")
-                )
-            }
-
-            VStack(spacing: 0) {
-                dataRow(
-                    icon: "chart.bar.fill",
-                    titleKey: "pro.preview.icloud.records",
-                    value: recordCountText
-                )
-
-                Divider()
-                    .padding(.leading, 30)
-
-                dataRow(
-                    icon: "person.fill",
-                    titleKey: "pro.preview.icloud.profile",
-                    value: NSLocalizedString("pro.preview.included", comment: "")
-                )
-
-                Divider()
-                    .padding(.leading, 30)
-
-                dataRow(
-                    icon: "slider.horizontal.3",
-                    titleKey: "pro.preview.icloud.settings",
-                    value: NSLocalizedString("pro.preview.included", comment: "")
-                )
-            }
-
-            HStack(spacing: 6) {
-                Image(systemName: "lock.shield.fill")
-                    .foregroundColor(Color(hex: "4FB6A8"))
-
-                Text(NSLocalizedString("pro.preview.icloud.private", comment: ""))
-                    .font(.caption)
-                    .foregroundColor(.secondaryText)
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .padding(18)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color(.separator).opacity(0.16), lineWidth: 1)
-        )
-    }
-
-    private var iCloudBenefitList: some View {
-        VStack(spacing: 0) {
-            benefitRow(textKey: "pro.preview.icloud.benefit.auto")
-
-            Divider()
-                .padding(.leading, 50)
-
-            benefitRow(textKey: "pro.preview.icloud.benefit.restore")
-
-            Divider()
-                .padding(.leading, 50)
-
-            benefitRow(textKey: "pro.preview.icloud.benefit.private")
-        }
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color(.separator).opacity(0.16), lineWidth: 1)
-        )
-    }
-
     private var actionBar: some View {
         VStack(spacing: 8) {
             Button {
@@ -369,15 +220,9 @@ struct ProFeaturePreviewView: View {
 
     private var actionTitle: String {
         if !proStore.isPro {
-            return NSLocalizedString(ctaKey, comment: "")
+            return NSLocalizedString("pro.preview.pdf.cta", comment: "")
         }
-
-        switch feature {
-        case .iCloudBackup:
-            return NSLocalizedString("pro.icloud.backup.now", comment: "")
-        case .pdfReport:
-            return NSLocalizedString("pro.pdf.share", comment: "")
-        }
+        return NSLocalizedString("pro.pdf.share", comment: "")
     }
 
     private var actionNote: String {
@@ -388,32 +233,15 @@ struct ProFeaturePreviewView: View {
     }
 
     private var actionIconName: String {
-        if !proStore.isPro {
-            return "sparkles"
-        }
-
-        switch feature {
-        case .iCloudBackup:
-            return "icloud.and.arrow.up.fill"
-        case .pdfReport:
-            return "square.and.arrow.up"
-        }
+        proStore.isPro ? "square.and.arrow.up" : "sparkles"
     }
 
     private var shouldShowActionProgress: Bool {
-        guard proStore.isPro else { return false }
-        return isBackingUp || (feature == .pdfReport && isGeneratingReport)
+        proStore.isPro && isGeneratingReport
     }
 
     private var isPrimaryActionDisabled: Bool {
-        guard proStore.isPro else { return false }
-
-        switch feature {
-        case .iCloudBackup:
-            return isBackingUp
-        case .pdfReport:
-            return isGeneratingReport || reportURL == nil
-        }
+        proStore.isPro && (isGeneratingReport || reportURL == nil)
     }
 
     private func performPrimaryAction() {
@@ -421,37 +249,7 @@ struct ProFeaturePreviewView: View {
             onUnlock()
             return
         }
-
-        switch feature {
-        case .iCloudBackup:
-            backUpNow()
-        case .pdfReport:
-            shareReport()
-        }
-    }
-
-    private func backUpNow() {
-        guard !isBackingUp else { return }
-        isBackingUp = true
-        defer { isBackingUp = false }
-
-        do {
-            try ICloudBackupManager.shared.backup(
-                context: context,
-                settings: settingsManager,
-                force: true
-            )
-            HapticManager.success()
-            showAlert(
-                title: NSLocalizedString("pro.icloud.backup.success", comment: ""),
-                message: NSLocalizedString("pro.icloud.backup.success.message", comment: "")
-            )
-        } catch {
-            showAlert(
-                title: NSLocalizedString("pro.icloud.backup.failed", comment: ""),
-                message: error.localizedDescription
-            )
-        }
+        shareReport()
     }
 
     private func shareReport() {
@@ -472,83 +270,13 @@ struct ProFeaturePreviewView: View {
         showingAlert = true
     }
 
-    private func previewNode(icon: String, labelKey: String, tint: Color) -> some View {
-        VStack(spacing: 8) {
-            ZStack {
-                Circle()
-                    .fill(tint.opacity(0.12))
-                    .frame(width: 40, height: 40)
-
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(tint)
-            }
-
-            Text(NSLocalizedString(labelKey, comment: ""))
-                .font(.caption2.weight(.medium))
-                .foregroundColor(.secondaryText)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(tint.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-    }
-
-    private func dataRow(icon: String, titleKey: String, value: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.caption.weight(.semibold))
-                .foregroundColor(.primaryBlue)
-                .frame(width: 20)
-
-            Text(NSLocalizedString(titleKey, comment: ""))
-                .font(.subheadline)
-                .foregroundColor(.primaryText)
-
-            Spacer(minLength: 8)
-
-            Text(value)
-                .font(.subheadline.weight(.semibold))
-                .foregroundColor(.secondaryText)
-        }
-        .padding(.vertical, 10)
-    }
-
-    private func benefitRow(textKey: String) -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(Color.green)
-                    .frame(width: 20, height: 20)
-
-                Image(systemName: "checkmark")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(.white)
-            }
-
-            Text(NSLocalizedString(textKey, comment: ""))
-                .font(.subheadline)
-                .foregroundColor(.primaryText)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-    }
-
-    private var recordCountText: String {
-        let key = recordCount == 1
-            ? "record.count.records.one"
-            : "record.count.records.other"
-        return String(format: NSLocalizedString(key, comment: ""), recordCount)
-    }
-
     private func generateReportIfNeeded(force: Bool = false) {
-        guard !isGeneratingReport else { return }
+        guard force || !isGeneratingReport else { return }
         guard force || reportURL == nil else { return }
 
         let lookbackDays = selectedReportRange.lookbackDays
+        let requestID = UUID()
+        reportRequestID = requestID
         isGeneratingReport = true
         reportError = nil
 
@@ -556,17 +284,21 @@ struct ProFeaturePreviewView: View {
             await Task.yield()
 
             do {
-                let url = try PDFReportManager.shared.generateReport(
+                let url = try await PDFReportManager.shared.generateReport(
                     context: context,
                     settings: settingsManager,
                     lookbackDays: lookbackDays
                 )
+                guard reportRequestID == requestID else { return }
                 reportURL = url
             } catch {
+                guard reportRequestID == requestID else { return }
                 reportError = error.localizedDescription
             }
 
-            isGeneratingReport = false
+            if reportRequestID == requestID {
+                isGeneratingReport = false
+            }
         }
     }
 
@@ -578,59 +310,6 @@ struct ProFeaturePreviewView: View {
         reportURL = nil
         reportError = nil
         generateReportIfNeeded(force: true)
-    }
-
-    private var titleKey: String {
-        switch feature {
-        case .iCloudBackup:
-            return "pro.preview.icloud.title"
-        case .pdfReport:
-            return "pro.preview.pdf.title"
-        }
-    }
-
-    private var subtitleKey: String {
-        switch feature {
-        case .iCloudBackup:
-            return "pro.preview.icloud.subtitle"
-        case .pdfReport:
-            return "pro.preview.pdf.subtitle"
-        }
-    }
-
-    private var ctaKey: String {
-        switch feature {
-        case .iCloudBackup:
-            return "pro.preview.icloud.cta"
-        case .pdfReport:
-            return "pro.preview.pdf.cta"
-        }
-    }
-
-    private var iconName: String {
-        switch feature {
-        case .iCloudBackup:
-            return "icloud.and.arrow.up.fill"
-        case .pdfReport:
-            return "doc.richtext.fill"
-        }
-    }
-
-    private var iconGradient: LinearGradient {
-        switch feature {
-        case .iCloudBackup:
-            return LinearGradient(
-                colors: [Color.primaryBlue, Color(hex: "4FB6A8")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .pdfReport:
-            return LinearGradient(
-                colors: [Color(hex: "F39C5A"), Color(hex: "E36F6F")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        }
     }
 }
 

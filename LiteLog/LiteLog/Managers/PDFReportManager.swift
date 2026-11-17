@@ -12,10 +12,12 @@ final class PDFReportManager {
         context: NSManagedObjectContext,
         settings: SettingsManager,
         lookbackDays: Int? = nil
-    ) throws -> URL {
+    ) async throws -> URL {
         let recordRequest = WeightRecord.fetchRequest()
         recordRequest.sortDescriptors = [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: true)]
 
+        var reportStartDate: Date?
+        var reportEndDate: Date?
         if let lookbackDays {
             let calendar = Calendar.current
             let today = calendar.startOfDay(for: Date())
@@ -30,6 +32,8 @@ final class PDFReportManager {
                 startDate as NSDate,
                 endExclusive as NSDate
             )
+            reportStartDate = startDate
+            reportEndDate = today
         }
 
         let records = try context.fetch(recordRequest)
@@ -47,16 +51,22 @@ final class PDFReportManager {
             dailyEntries: dailyEntries,
             profile: profile.map(ReportProfile.init),
             displayName: settings.displayName,
-            unit: settings.weightUnit
+            unit: settings.weightUnit,
+            reportStartDate: reportStartDate,
+            reportEndDate: reportEndDate
         )
 
-        let data = PDFReportRenderer(snapshot: snapshot).render()
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyyMMdd-HHmmssSSS"
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("LiteLog_Report_\(formatter.string(from: Date())).pdf")
-        try data.write(to: url, options: [.atomic, .completeFileProtection])
+
+        try await Task.detached(priority: .userInitiated) {
+            let data = PDFReportRenderer(snapshot: snapshot).render()
+            try data.write(to: url, options: [.atomic, .completeFileProtection])
+        }.value
+
         return url
     }
 }
@@ -132,8 +142,8 @@ private final class PDFReportRenderer {
     }
 
     private func drawContent() {
-        let firstDate = snapshot.entries.first?.date ?? snapshot.generatedAt
-        let lastDate = snapshot.entries.last?.date ?? snapshot.generatedAt
+        let firstDate = snapshot.reportStartDate ?? snapshot.entries.first?.date ?? snapshot.generatedAt
+        let lastDate = snapshot.reportEndDate ?? snapshot.entries.last?.date ?? snapshot.generatedAt
         drawText(
             String(
                 format: NSLocalizedString("report.range.format", comment: ""),
@@ -152,7 +162,7 @@ private final class PDFReportRenderer {
         drawSectionTitle(NSLocalizedString("report.profile", comment: ""))
         drawProfile()
 
-        if snapshot.entries.count >= 2 {
+        if snapshot.dailyEntries.count >= 2 {
             y += 10
             drawSectionTitle(NSLocalizedString("report.chart", comment: ""))
             ensureSpace(190)
@@ -413,7 +423,7 @@ private final class PDFReportRenderer {
     }
 
     private func drawChart(entries: [TrendEntry], rect: CGRect, unit: WeightUnit) {
-        let points = Array(entries.suffix(90))
+        let points = entries
         guard points.count >= 2 else { return }
 
         let values = points.map { unit.convertFromKg($0.weight) }
@@ -447,9 +457,13 @@ private final class PDFReportRenderer {
             )
         }
 
+        let firstDate = points[0].date
+        let lastDate = points[points.count - 1].date
+        let dateSpan = max(lastDate.timeIntervalSince(firstDate), 1)
+
         let line = UIBezierPath()
         for (index, point) in points.enumerated() {
-            let fraction = points.count == 1 ? 0.5 : CGFloat(index) / CGFloat(points.count - 1)
+            let fraction = CGFloat(point.date.timeIntervalSince(firstDate) / dateSpan)
             let value = unit.convertFromKg(point.weight)
             let normalized = (value - lower) / (upper - lower)
             let position = CGPoint(
@@ -500,8 +514,8 @@ private final class PDFReportRenderer {
 
         drawTableHeader(columns: columns, tableWidth: tableWidth, headerHeight: headerHeight)
 
-        let recentEntries = snapshot.entries.sorted { $0.date > $1.date }.prefix(30)
-        for (index, entry) in recentEntries.enumerated() {
+        let reportEntries = snapshot.entries.sorted { $0.date > $1.date }
+        for (index, entry) in reportEntries.enumerated() {
             if y + rowHeight > pageRect.height - 48 {
                 beginPage()
                 drawTableHeader(columns: columns, tableWidth: tableWidth, headerHeight: headerHeight)
@@ -641,6 +655,8 @@ private struct ReportSnapshot {
     let profile: ReportProfile?
     let displayName: String
     let unit: WeightUnit
+    let reportStartDate: Date?
+    let reportEndDate: Date?
 }
 
 private struct ReportProfile {

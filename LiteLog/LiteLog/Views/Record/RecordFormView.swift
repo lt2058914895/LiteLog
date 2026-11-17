@@ -502,10 +502,12 @@ struct RecordFormView: View {
         HapticManager.success()
         onSave?()
         ReviewPromptManager.shared.considerPrompt(context: context)
-        try? ICloudBackupManager.shared.backup(
-            context: context,
-            settings: settingsManager
-        )
+        Task {
+            try? await ICloudBackupManager.shared.backup(
+                context: context,
+                settings: settingsManager
+            )
+        }
         dismiss()
     }
 

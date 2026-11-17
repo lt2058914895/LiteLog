@@ -10,12 +10,12 @@
       "internalID" : "8748D0A6-4251-44C9-9C67-02B2BFD5A7C8",
       "localizations" : [
         {
-          "description" : "一次买断，解锁 iCloud 自动备份、PDF 进度报告和后续 Pro 功能。",
+          "description" : "一次买断，解锁身体数据报告和后续 Pro 功能。",
           "displayName" : "轻身记 Pro",
           "locale" : "zh_CN"
         },
         {
-          "description" : "iCloud backup, PDF reports, and future Pro features.",
+          "description" : "Body Data Reports & future Pro. One-time purchase.",
           "displayName" : "LiteLog Pro",
           "locale" : "en_US"
         }
