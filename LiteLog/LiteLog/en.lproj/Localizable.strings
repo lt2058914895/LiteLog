@@ -265,7 +265,7 @@
 "pro.error.unknown" = "Something went wrong. Please try again.";
 "pro.error.required" = "Unlock Pro first.";
 
-"pro.section.title" = "LiteLog Pro";
+"pro.section.title" = "Pro Benefits";
 "pro.section.subtitle" = "Buy once. No subscription.";
 "pro.section.locked.desc" = "Unlock automatic iCloud backup, PDF reports, and future Pro features.";
 "pro.section.owned" = "Pro unlocked";

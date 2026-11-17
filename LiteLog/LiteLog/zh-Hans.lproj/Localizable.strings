@@ -296,7 +296,7 @@
 "pro.error.unknown" = "操作失败，请稍后重试。";
 "pro.error.required" = "请先解锁 Pro。";
 
-"pro.section.title" = "轻身记 Pro";
+"pro.section.title" = "Pro 权益";
 "pro.section.subtitle" = "一次买断，不订阅";
 "pro.section.locked.desc" = "解锁 iCloud 自动备份、PDF 进度报告和后续 Pro 功能。";
 "pro.section.owned" = "Pro 已解锁";

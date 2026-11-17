@@ -139,35 +139,81 @@ struct SettingsView: View {
     }
 
     private var profileHero: some View {
-        Button {
-            HapticManager.light()
-            showingUserInfoEditor = true
-        } label: {
-            HStack(spacing: 16) {
+        HStack(alignment: .center, spacing: 16) {
+            Button {
+                HapticManager.light()
+                showingUserInfoEditor = true
+            } label: {
                 avatarView(size: 68)
                     .overlay(Circle().stroke(Color.white.opacity(0.8), lineWidth: 2))
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(settingsManager.displayName)
-                        .font(.title2.weight(.bold))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(.white.opacity(0.8))
             }
-            .padding(20)
-            .background(LinearGradient.profileHeader)
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .shadow(color: Color.primaryBlue.opacity(0.22), radius: 14, x: 0, y: 8)
+            .buttonStyle(.plain)
+            .accessibilityLabel(NSLocalizedString("profile.title", comment: ""))
+
+            Button {
+                HapticManager.light()
+                showingUserInfoEditor = true
+            } label: {
+                Text(settingsManager.displayName)
+                    .font(.title2.weight(.bold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(NSLocalizedString("profile.title", comment: ""))
+            .layoutPriority(1)
+
+            Spacer(minLength: 8)
+
+            proEntry
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(NSLocalizedString("profile.title", comment: ""))
+        .padding(20)
+        .background(LinearGradient.profileHeader)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .shadow(color: Color.primaryBlue.opacity(0.22), radius: 14, x: 0, y: 8)
+    }
+
+    @ViewBuilder
+    private var proEntry: some View {
+        if proStore.isPro {
+            proEntryBadge
+        } else {
+            Button {
+                HapticManager.light()
+                showingPaywall = true
+            } label: {
+                proEntryBadge
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(NSLocalizedString("pro.section.unlock", comment: ""))
+        }
+    }
+
+    private var proEntryBadge: some View {
+        HStack(spacing: 5) {
+            Image(systemName: proStore.isPro ? "checkmark.seal.fill" : "sparkles")
+                .foregroundColor(proStore.isPro ? .green : .primaryBlue)
+
+            Text(
+                NSLocalizedString(
+                    proStore.isPro ? "pro.section.owned" : "pro.section.unlock",
+                    comment: ""
+                )
+            )
+            .foregroundColor(proStore.isPro ? .white : .primaryBlue)
+        }
+        .font(.caption.weight(.semibold))
+        .padding(.horizontal, 9)
+        .padding(.vertical, 5)
+        .background(Color.white.opacity(proStore.isPro ? 0.16 : 0.94))
+        .clipShape(Capsule())
+        .overlay(
+            Capsule()
+                .stroke(Color.white.opacity(proStore.isPro ? 0.3 : 0), lineWidth: 1)
+        )
     }
 
     private var healthProfileSection: some View {
@@ -290,65 +336,6 @@ struct SettingsView: View {
             sectionTitle("pro.section.title")
 
             settingsCard {
-                Button {
-                    guard !proStore.isPro else { return }
-                    HapticManager.light()
-                    showingPaywall = true
-                } label: {
-                    HStack(spacing: 14) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(Color.primaryBlue.opacity(0.12))
-                                .frame(width: 36, height: 36)
-
-                            Image(systemName: proStore.isPro ? "checkmark.seal.fill" : "sparkles")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(proStore.isPro ? .green : .primaryBlue)
-                        }
-
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(
-                                NSLocalizedString(
-                                    proStore.isPro ? "pro.section.owned" : "pro.section.subtitle",
-                                    comment: ""
-                                )
-                            )
-                            .font(.body.weight(.semibold))
-                            .foregroundColor(.primary)
-
-                            Text(
-                                NSLocalizedString(
-                                    proStore.isPro ? "pro.section.owned.desc" : "pro.section.locked.desc",
-                                    comment: ""
-                                )
-                            )
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        }
-
-                        Spacer(minLength: 8)
-
-                        if proStore.isPro {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundColor(.green)
-                        } else {
-                            Text(NSLocalizedString("pro.section.unlock", comment: ""))
-                                .font(.caption.weight(.semibold))
-                                .foregroundColor(.primaryBlue)
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.semibold))
-                                .foregroundColor(.secondaryText)
-                        }
-                    }
-                    .padding(16)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-
-                divider
-
                 Button {
                     HapticManager.light()
                     handleICloudBackupTap()
