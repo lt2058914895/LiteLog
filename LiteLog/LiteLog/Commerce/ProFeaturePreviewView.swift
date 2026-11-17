@@ -25,6 +25,7 @@ struct ProFeaturePreviewView: View {
     var body: some View {
         pdfReportContent
             .background(Color(.systemGroupedBackground))
+            .navigationTitle(NSLocalizedString("pro.pdf.title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
@@ -188,30 +189,23 @@ struct ProFeaturePreviewView: View {
     }
 
     private var actionBar: some View {
-        VStack(spacing: 8) {
-            Button {
-                HapticManager.light()
-                performPrimaryAction()
-            } label: {
-                HStack(spacing: 7) {
-                    if shouldShowActionProgress {
-                        ProgressView()
-                            .tint(.white)
-                    } else {
-                        Image(systemName: actionIconName)
-                    }
-
-                    Text(actionTitle)
+        Button {
+            HapticManager.light()
+            performPrimaryAction()
+        } label: {
+            HStack(spacing: 7) {
+                if shouldShowActionProgress {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    Image(systemName: actionIconName)
                 }
-                .primaryButtonStyle()
-            }
-            .disabled(isPrimaryActionDisabled)
 
-            Text(actionNote)
-                .font(.caption.weight(.medium))
-                .foregroundColor(.secondaryText)
-                .multilineTextAlignment(.center)
+                Text(actionTitle)
+            }
+            .primaryButtonStyle()
         }
+        .disabled(isPrimaryActionDisabled)
         .padding(.horizontal, 20)
         .padding(.top, 12)
         .padding(.bottom, 8)
@@ -223,13 +217,6 @@ struct ProFeaturePreviewView: View {
             return NSLocalizedString("pro.preview.pdf.cta", comment: "")
         }
         return NSLocalizedString("pro.pdf.share", comment: "")
-    }
-
-    private var actionNote: String {
-        if proStore.isPro {
-            return NSLocalizedString("pro.preview.pro.note", comment: "")
-        }
-        return NSLocalizedString("pro.purchase.note", comment: "")
     }
 
     private var actionIconName: String {
