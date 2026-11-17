@@ -7,6 +7,8 @@ struct SettingsView: View {
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var settingsManager: SettingsManager
     @StateObject private var notificationManager = NotificationManager.shared
+    @StateObject private var proStore = ProEntitlementStore.shared
+    @StateObject private var iCloudBackupManager = ICloudBackupManager.shared
 
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \UserProfile.id, ascending: true)]) private var userProfile: FetchedResults<UserProfile>
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \WeightRecord.date, ascending: false)]) private var records: FetchedResults<WeightRecord>
@@ -21,6 +23,10 @@ struct SettingsView: View {
     @State private var restoreRequested = false
     @State private var exportURL: IdentifiableURL?
     @State private var settingsAlert: SettingsAlert?
+    @State private var showingPaywall = false
+    @State private var showingICloudRestoreConfirm = false
+    @State private var isGeneratingReport = false
+    @State private var reportURL: IdentifiableURL?
 
     private var profile: UserProfile? { userProfile.first }
     private var unit: WeightUnit { settingsManager.weightUnit }
@@ -32,6 +38,7 @@ struct SettingsView: View {
                     profileHero
                     healthProfileSection
                     notificationSection
+                    proSection
                     dataSection
                     aboutSection
                 }
@@ -56,6 +63,13 @@ struct SettingsView: View {
             }
             .adaptiveSheet(item: $exportURL) { item in
                 ShareSheet(items: [item.url])
+            }
+            .adaptiveSheet(item: $reportURL) { item in
+                ShareSheet(items: [item.url])
+            }
+            .sheet(isPresented: $showingPaywall) {
+                PaywallView()
+                    .environmentObject(proStore)
             }
             .sheet(isPresented: $showingExportOptions, onDismiss: handleExportSheetDismissed) {
                 ExportOptionsSheet { format in
@@ -104,8 +118,22 @@ struct SettingsView: View {
                     settingsAlert = .restoreFailed(error.localizedDescription)
                 }
             }
+            .confirmationDialog(
+                NSLocalizedString("pro.icloud.restore.confirm.title", comment: ""),
+                isPresented: $showingICloudRestoreConfirm,
+                titleVisibility: .visible
+            ) {
+                Button(NSLocalizedString("pro.icloud.restore", comment: ""), role: .destructive) {
+                    restoreFromICloud()
+                }
+                Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
+            } message: {
+                Text(NSLocalizedString("pro.icloud.restore.confirm.message", comment: ""))
+            }
             .task {
                 await refreshNotificationAuthorization()
+                await proStore.prepare()
+                iCloudBackupManager.refreshAvailability()
             }
         }
     }
@@ -257,6 +285,164 @@ struct SettingsView: View {
         }
     }
 
+    private var proSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle("pro.section.title")
+
+            settingsCard {
+                Button {
+                    guard !proStore.isPro else { return }
+                    HapticManager.light()
+                    showingPaywall = true
+                } label: {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(Color.primaryBlue.opacity(0.12))
+                                .frame(width: 36, height: 36)
+
+                            Image(systemName: proStore.isPro ? "checkmark.seal.fill" : "sparkles")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(proStore.isPro ? .green : .primaryBlue)
+                        }
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(
+                                NSLocalizedString(
+                                    proStore.isPro ? "pro.section.owned" : "pro.section.subtitle",
+                                    comment: ""
+                                )
+                            )
+                            .font(.body.weight(.semibold))
+                            .foregroundColor(.primary)
+
+                            Text(
+                                NSLocalizedString(
+                                    proStore.isPro ? "pro.section.owned.desc" : "pro.section.locked.desc",
+                                    comment: ""
+                                )
+                            )
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        Spacer(minLength: 8)
+
+                        if proStore.isPro {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundColor(.green)
+                        } else {
+                            Text(NSLocalizedString("pro.section.unlock", comment: ""))
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(.primaryBlue)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(.secondaryText)
+                        }
+                    }
+                    .padding(16)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                divider
+
+                Button {
+                    HapticManager.light()
+                    handleICloudBackupTap()
+                } label: {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "icloud.and.arrow.up.fill", tint: .primaryBlue)
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(NSLocalizedString("pro.icloud.title", comment: ""))
+                                .font(.body.weight(.medium))
+                                .foregroundColor(.primary)
+                            Text(iCloudRowSubtitle)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .lineLimit(2)
+                        }
+
+                        Spacer(minLength: 8)
+
+                        if iCloudBackupManager.isBackingUp {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: proStore.isPro ? "chevron.right" : "lock.fill")
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(.secondaryText)
+                        }
+                    }
+                    .padding(16)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(iCloudBackupManager.isBackingUp)
+
+                if proStore.isPro {
+                    divider
+
+                    Button {
+                        HapticManager.light()
+                        showingICloudRestoreConfirm = true
+                    } label: {
+                        SettingsRowLabel(
+                            icon: "icloud.and.arrow.down.fill",
+                            tint: .teal,
+                            title: NSLocalizedString("pro.icloud.restore", comment: ""),
+                            subtitle: NSLocalizedString("pro.icloud.restore.desc", comment: "")
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                divider
+
+                Button {
+                    HapticManager.light()
+                    handlePDFReportTap()
+                } label: {
+                    HStack(spacing: 14) {
+                        SettingsIcon(systemName: "doc.richtext.fill", tint: .orange)
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(NSLocalizedString("pro.pdf.title", comment: ""))
+                                .font(.body.weight(.medium))
+                                .foregroundColor(.primary)
+                            Text(
+                                isGeneratingReport
+                                    ? NSLocalizedString("pro.pdf.generating", comment: "")
+                                    : NSLocalizedString("pro.pdf.desc", comment: "")
+                            )
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                        }
+
+                        Spacer(minLength: 8)
+
+                        if isGeneratingReport {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: proStore.isPro ? "chevron.right" : "lock.fill")
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(.secondaryText)
+                        }
+                    }
+                    .padding(16)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(isGeneratingReport)
+            }
+        }
+    }
+
     private var dataSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             sectionTitle("settings.section.data")
@@ -359,6 +545,22 @@ struct SettingsView: View {
             return NSLocalizedString("settings.profile.incomplete", comment: "")
         }
         return NSLocalizedString("settings.profile.edit.hint", comment: "")
+    }
+
+    private var iCloudRowSubtitle: String {
+        guard proStore.isPro else {
+            return NSLocalizedString("pro.icloud.desc", comment: "")
+        }
+        guard iCloudBackupManager.isAvailable else {
+            return NSLocalizedString("pro.icloud.unavailable.message", comment: "")
+        }
+        guard let lastBackupDate = iCloudBackupManager.lastBackupDate else {
+            return NSLocalizedString("pro.icloud.never", comment: "")
+        }
+        return String(
+            format: NSLocalizedString("pro.icloud.last.backup", comment: ""),
+            "\(lastBackupDate.shortDateString) \(lastBackupDate.timeString)"
+        )
     }
 
     private func goalWeightText(_ profile: UserProfile) -> String {
@@ -516,6 +718,64 @@ struct SettingsView: View {
             settingsAlert = .restoreSucceeded(recordCount)
         } catch {
             settingsAlert = .restoreFailed(error.localizedDescription)
+        }
+    }
+
+    private func handleICloudBackupTap() {
+        guard proStore.isPro else {
+            showingPaywall = true
+            return
+        }
+
+        do {
+            try iCloudBackupManager.backup(
+                context: context,
+                settings: settingsManager,
+                force: true
+            )
+            HapticManager.success()
+            settingsAlert = .iCloudBackupSucceeded
+        } catch {
+            settingsAlert = .iCloudBackupFailed(error.localizedDescription)
+        }
+    }
+
+    private func restoreFromICloud() {
+        do {
+            let recordCount = try iCloudBackupManager.restore(
+                context: context,
+                settings: settingsManager
+            )
+            HapticManager.success()
+            settingsAlert = .iCloudRestoreSucceeded(recordCount)
+        } catch {
+            settingsAlert = .iCloudRestoreFailed(error.localizedDescription)
+        }
+    }
+
+    private func handlePDFReportTap() {
+        guard proStore.isPro else {
+            showingPaywall = true
+            return
+        }
+        guard !isGeneratingReport else { return }
+
+        isGeneratingReport = true
+        Task {
+            await Task.yield()
+
+            do {
+                let url = try PDFReportManager.shared.generateReport(
+                    context: context,
+                    settings: settingsManager
+                )
+                reportURL = IdentifiableURL(url)
+                HapticManager.success()
+            } catch {
+                settingsAlert = .pdfGenerationFailed(error.localizedDescription)
+            }
+
+            isGeneratingReport = false
         }
     }
 
@@ -755,6 +1015,11 @@ private enum SettingsAlert: Identifiable {
     case restoreFailed(String)
     case notificationPermissionDenied
     case notificationFailed(String)
+    case iCloudBackupSucceeded
+    case iCloudBackupFailed(String)
+    case iCloudRestoreSucceeded(Int)
+    case iCloudRestoreFailed(String)
+    case pdfGenerationFailed(String)
 
     var id: String {
         switch self {
@@ -763,6 +1028,11 @@ private enum SettingsAlert: Identifiable {
         case .restoreFailed: return "restoreFailed"
         case .notificationPermissionDenied: return "notificationPermissionDenied"
         case .notificationFailed: return "notificationFailed"
+        case .iCloudBackupSucceeded: return "iCloudBackupSucceeded"
+        case .iCloudBackupFailed: return "iCloudBackupFailed"
+        case .iCloudRestoreSucceeded: return "iCloudRestoreSucceeded"
+        case .iCloudRestoreFailed: return "iCloudRestoreFailed"
+        case .pdfGenerationFailed: return "pdfGenerationFailed"
         }
     }
 
@@ -778,6 +1048,16 @@ private enum SettingsAlert: Identifiable {
             return NSLocalizedString("settings.notification.denied.title", comment: "")
         case .notificationFailed:
             return NSLocalizedString("settings.notification.error.title", comment: "")
+        case .iCloudBackupSucceeded:
+            return NSLocalizedString("pro.icloud.backup.success", comment: "")
+        case .iCloudBackupFailed:
+            return NSLocalizedString("pro.icloud.backup.failed", comment: "")
+        case .iCloudRestoreSucceeded:
+            return NSLocalizedString("settings.restore.success.title", comment: "")
+        case .iCloudRestoreFailed:
+            return NSLocalizedString("pro.icloud.restore.failed", comment: "")
+        case .pdfGenerationFailed:
+            return NSLocalizedString("pro.pdf.failed", comment: "")
         }
     }
 
@@ -787,10 +1067,21 @@ private enum SettingsAlert: Identifiable {
             return NSLocalizedString("settings.export.error.message", comment: "")
         case .restoreSucceeded(let count):
             return localizedRestoreCount(count)
-        case .restoreFailed(let message), .notificationFailed(let message):
+        case .restoreFailed(let message),
+             .notificationFailed(let message),
+             .iCloudBackupFailed(let message),
+             .iCloudRestoreFailed(let message),
+             .pdfGenerationFailed(let message):
             return message
         case .notificationPermissionDenied:
             return NSLocalizedString("settings.notification.denied.message", comment: "")
+        case .iCloudBackupSucceeded:
+            return NSLocalizedString("pro.icloud.backup.success.message", comment: "")
+        case .iCloudRestoreSucceeded(let count):
+            return String(
+                format: NSLocalizedString("pro.icloud.restore.success", comment: ""),
+                count
+            )
         }
     }
 }

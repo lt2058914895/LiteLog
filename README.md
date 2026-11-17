@@ -1,23 +1,43 @@
-# LiteLog
+# LiteLog / 轻身记
 
-LiteLog 是一款本地优先的轻量体重与身体数据记录应用。
+一款本地优先的轻量体重与身体数据记录应用。支持体重、体脂、腰围、臀围、胸围、个人目标、趋势分析和每日提醒。
+
+## 免费与 Pro
+
+核心记录、统计、提醒、CSV/JSON 导出与本地恢复保持免费，不收回已有功能。
+
+- **LiteLog Pro**：一次性买断，不订阅，商品 ID 为 `lt.LiteLog.pro.lifetime`。
+- **iCloud 自动备份**：保存记录后以及 App 进入后台时，将 JSON 备份写入用户自己的 iCloud Documents 容器；开发者无法读取。
+- **PDF 进度报告**：生成包含概览、个人资料、体重趋势图和最近记录的 PDF，可通过系统分享面板保存或发送。
+- **后续 Pro 功能**：一次购买后持续获得后续新增的 Pro 功能。
+
+价格由 App Store Connect 配置，本地测试配置使用中国区 ¥38。支付、家庭共享、退款和恢复购买均由 Apple 处理。
 
 ## 数据与隐私
 
-- 体重、体脂、围度、目标和备注保存在设备本地 Core Data。
-- 不连接 LiteLog 后端，不上传健康数据。
-- 不创建账号，不采集设备标识或使用日志。
+- 健康数据默认保存在设备本地 Core Data，LiteLog 不运营接收健康数据的后端。
+- 不创建 LiteLog 账号，不采集设备标识，不接入广告或行为追踪 SDK。
+- Pro 的 iCloud 备份位于用户自己的 iCloud 容器中，开发者没有读取权限。
+- App 仅读取 StoreKit 交易结果来确认 Pro 权益，不接触支付卡信息。
 - 头像仅保存在 App 沙盒中，可在个人资料页更换或删除。
-- 记录照片功能已移除。
-- 数据可通过 CSV 或 JSON 导出；JSON 备份可在重装或更换设备后恢复。
 - Core Data 和头像文件启用 iOS 文件保护。
+- 数据可通过 CSV 或 JSON 导出，也可从本地或 iCloud JSON 备份恢复。
 - BMI 标准会根据设备区域选择中国标准或 WHO 标准。
-- 日期和星期格式跟随设备语言与区域。
-- 支持删除单条记录和本地头像。
-- 同一天可按晨起空腹、运动后、睡前等时段分别记录。
-- 统计支持按记录时段筛选、原始趋势图和目标趋势预估。
-- 首页提供 7/30/90 天阶段变化和目标趋势预估。
+- 目标趋势预估仅用于个人记录参考，不构成医疗建议。
 
-目标预估基于近期记录趋势生成，仅用于个人记录参考，不构成健康建议。
+## 构建
 
-设备自身的系统备份是否包含 App 数据，由用户的 iOS 备份设置决定。卸载 App 前应先导出 JSON 备份。
+- Xcode 16.4 或更高版本。
+- iOS 16.6 及以上。
+- 打开 `LiteLog/LiteLog.xcodeproj`，不要使用残留的 `LiteLog.xcworkspace`。
+
+```sh
+xcodebuild -project LiteLog/LiteLog.xcodeproj \
+  -scheme LiteLog \
+  -configuration Debug \
+  -sdk iphonesimulator \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+```
+
+上线所需的产品、iCloud、StoreKit 测试与提交流程见 `Docs/ProSetup.md`。

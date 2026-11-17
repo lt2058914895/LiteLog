@@ -463,9 +463,7 @@ struct RecordFormView: View {
             return
         }
 
-        HapticManager.success()
-        onSave?()
-        dismiss()
+        completeSave()
     }
 
     private func updateRecord() {
@@ -497,8 +495,17 @@ struct RecordFormView: View {
             return
         }
 
+        completeSave()
+    }
+
+    private func completeSave() {
         HapticManager.success()
         onSave?()
+        ReviewPromptManager.shared.considerPrompt(context: context)
+        try? ICloudBackupManager.shared.backup(
+            context: context,
+            settings: settingsManager
+        )
         dismiss()
     }
 

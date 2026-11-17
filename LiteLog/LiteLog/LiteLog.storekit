@@ -1,0 +1,43 @@
+{
+  "identifier" : "7A3B1B8E-5FD3-4B3D-9DB7-B3AE9D7C2F41",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "38.00",
+      "familyShareable" : true,
+      "internalID" : "8748D0A6-4251-44C9-9C67-02B2BFD5A7C8",
+      "localizations" : [
+        {
+          "description" : "一次买断，解锁 iCloud 自动备份、PDF 进度报告和后续 Pro 功能。",
+          "displayName" : "轻身记 Pro",
+          "locale" : "zh_CN"
+        },
+        {
+          "description" : "iCloud backup, PDF reports, and future Pro features.",
+          "displayName" : "LiteLog Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "lt.LiteLog.pro.lifetime",
+      "referenceName" : "LiteLog Pro Lifetime",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "zh_CN",
+    "_storefront" : "CHN",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 1,
+    "minor" : 0
+  }
+}

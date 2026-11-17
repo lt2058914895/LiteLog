@@ -24,6 +24,25 @@ final class LocalBackupManager {
         profile: UserProfile?,
         settings: SettingsManager
     ) throws -> URL {
+        let data = try exportBackupData(
+            records: records,
+            profile: profile,
+            settings: settings
+        )
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("LiteLog_Backup_\(formatter.string(from: Date())).json")
+        try data.write(to: url, options: [.atomic, .completeFileProtection])
+        return url
+    }
+
+    func exportBackupData(
+        records: [WeightRecord],
+        profile: UserProfile?,
+        settings: SettingsManager
+    ) throws -> Data {
         guard !records.isEmpty ||
                 profile != nil ||
                 settings.avatarImage != nil ||
@@ -42,14 +61,7 @@ final class LocalBackupManager {
             records: records.map(BackupRecord.init)
         )
 
-        let data = try encoder.encode(backup)
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyyMMdd-HHmmss"
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("LiteLog_Backup_\(formatter.string(from: Date())).json")
-        try data.write(to: url, options: [.atomic, .completeFileProtection])
-        return url
+        return try encoder.encode(backup)
     }
 
     func restoreBackup(
@@ -70,6 +82,18 @@ final class LocalBackupManager {
         }
 
         let data = try Data(contentsOf: url)
+        return try restoreBackup(from: data, context: context, settings: settings)
+    }
+
+    func restoreBackup(
+        from data: Data,
+        context: NSManagedObjectContext,
+        settings: SettingsManager
+    ) throws -> Int {
+        guard data.count <= 25 * 1024 * 1024 else {
+            throw BackupError.fileTooLarge
+        }
+
         let decoded = try decodeBackup(from: data)
         let backup = decoded.document
 
