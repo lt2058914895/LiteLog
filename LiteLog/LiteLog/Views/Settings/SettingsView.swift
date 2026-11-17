@@ -41,6 +41,7 @@ struct SettingsView: View {
                     notificationSection
                     proSection
                     dataSection
+                    supportSection
                     aboutSection
                 }
                 .padding(.horizontal, 16)
@@ -506,9 +507,15 @@ struct SettingsView: View {
                     )
                 }
                 .buttonStyle(.plain)
+            }
+        }
+    }
 
-                divider
+    private var supportSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle("settings.section.support")
 
+            settingsCard {
                 Button {
                     HapticManager.light()
                     shareApp()
@@ -554,7 +561,6 @@ struct SettingsView: View {
                 }
                 .buttonStyle(.plain)
             }
-
         }
     }
 

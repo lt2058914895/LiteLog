@@ -142,7 +142,8 @@
 "settings.profile.edit.hint" = "Review and update your height, age, and goals";
 "settings.section.health" = "Health Profile";
 "settings.section.notifications" = "Reminders";
-"settings.section.data" = "Data & Support";
+"settings.section.data" = "Data";
+"settings.section.support" = "Support";
 "settings.height.required" = "Please enter your height";
 "settings.height.invalid" = "Please enter a valid height";
 "settings.male" = "Male";
@@ -344,6 +345,7 @@
 "report.change" = "Period Change";
 "report.average" = "Average Weight";
 "report.coverage" = "Data Coverage";
+"report.coverage.summary.format" = "Coverage: %d days · %d records";
 "report.days.format" = "Days tracked: %d";
 "report.entries.format" = "Entries: %d";
 "report.min.max.format" = "Range %@–%@ %@";
@@ -352,6 +354,12 @@
 "report.first.weight" = "Starting";
 "report.goal.weight" = "Goal";
 "report.chart" = "Weight Trend";
+"report.chart.body.fat" = "Body Fat Trend";
+"report.chart.waist" = "Waist Trend";
+"report.chart.hip" = "Hip Trend";
+"report.chart.chest" = "Chest Trend";
+"report.chart.thigh" = "Thigh Trend";
+"report.change.detail" = "First vs latest";
 "report.table" = "Record Details";
 "report.date" = "Date";
 "report.period.column" = "Period";
@@ -360,6 +368,7 @@
 "report.waist" = "Waist";
 "report.hip" = "Hip";
 "report.chest" = "Chest";
+"report.thigh" = "Thigh";
 "report.no.data" = "No data";
 "report.page" = "Page %d";
 "report.disclaimer" = "This report is for personal tracking only and is not medical advice.";
